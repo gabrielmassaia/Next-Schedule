@@ -16,14 +16,19 @@ import AddPatientButton from "./_components/add-patient-button";
 import { PatientsTable } from "./_components/patients-table";
 
 export default async function PatientsPage() {
-  const session = await requirePlan();
-
-  const clinicId = session?.user?.clinic?.id;
+  const { activeClinic, plan } = await requirePlan("essential");
+  if (!activeClinic) {
+    return null;
+  }
 
   const patients = await db.query.patientsTable.findMany({
-    where: eq(patientsTable.clinicId, clinicId!),
+    where: eq(patientsTable.clinicId, activeClinic.id),
     orderBy: (patients, { desc }) => [desc(patients.createdAt)],
   });
+
+  const maxPatients = plan.limits.patientsPerClinic;
+  const hasReachedLimit =
+    typeof maxPatients === "number" && patients.length >= maxPatients;
 
   return (
     <PageContainer>
@@ -35,7 +40,14 @@ export default async function PatientsPage() {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddPatientButton />
+          <AddPatientButton
+            disabled={hasReachedLimit}
+            helperText={
+              hasReachedLimit
+                ? "Limite de pacientes do plano atingido. Faça upgrade para cadastrar mais."
+                : undefined
+            }
+          />
         </PageActions>
       </PageHeader>
       <PatientsTable patients={patients} />

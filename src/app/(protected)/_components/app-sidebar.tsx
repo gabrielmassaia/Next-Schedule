@@ -33,6 +33,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 // Menu items.
 const items = [
@@ -62,6 +63,7 @@ export function AppSidebar() {
   const router = useRouter();
   const session = authClient.useSession();
   const pathname = usePathname();
+  const { clinics, activeClinic, setActiveClinic } = useActiveClinic();
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -128,7 +130,7 @@ export function AppSidebar() {
                   </Avatar>
                   <div>
                     <p className="text-sm">
-                      {session.data?.user?.clinic?.name}
+                      {activeClinic?.name ?? "Selecione uma clínica"}
                     </p>
                     <p className="text-muted-foreground text-xs">
                       {session.data?.user.email}
@@ -136,7 +138,31 @@ export function AppSidebar() {
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="w-64">
+                {clinics.length ? (
+                  clinics.map((clinic) => (
+                    <DropdownMenuItem
+                      key={clinic.id}
+                      onClick={async () => {
+                        try {
+                          await setActiveClinic(clinic.id);
+                        } catch (error) {
+                          console.error(error);
+                        }
+                      }}
+                    >
+                      {clinic.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>
+                    Nenhuma clínica cadastrada
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => router.push("/clinic-form")}
+                >
+                  Adicionar clínica
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut />
                   <span>Sair</span>

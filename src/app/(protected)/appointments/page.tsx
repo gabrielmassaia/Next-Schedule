@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 
 import { requirePlan } from "@/_helpers/require-plan";
 import { DataTable } from "@/components/ui/data-table";
@@ -19,23 +18,20 @@ import AddAppointmentButton from "./_components/add-appointment-button";
 import { appointmentsTableColumns } from "./_components/table-columns";
 
 const AppointmentsPage = async () => {
-  const session = await requirePlan();
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (!session.user.clinic) {
-    redirect("/clinic-form");
+  const { activeClinic } = await requirePlan("essential");
+  if (!activeClinic) {
+    return null;
   }
 
   const [patients, doctors, appointments] = await Promise.all([
     db.query.patientsTable.findMany({
-      where: eq(patientsTable.clinicId, session.user.clinic.id),
+      where: eq(patientsTable.clinicId, activeClinic.id),
     }),
     db.query.doctorsTable.findMany({
-      where: eq(doctorsTable.clinicId, session.user.clinic.id),
+      where: eq(doctorsTable.clinicId, activeClinic.id),
     }),
     db.query.appointmentsTable.findMany({
-      where: eq(appointmentsTable.clinicId, session.user.clinic.id),
+      where: eq(appointmentsTable.clinicId, activeClinic.id),
       with: {
         patient: true,
         doctor: true,

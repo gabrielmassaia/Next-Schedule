@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { doctorsTable, patientsTable } from "@/db/schema";
 import { cn } from "@/lib/utils";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z.object({
   patientId: z.string().min(1, {
@@ -79,6 +80,7 @@ const AddAppointmentForm = ({
   onSuccess,
   isOpen,
 }: AddAppointmentFormProps) => {
+  const { activeClinicId } = useActiveClinic();
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -96,13 +98,19 @@ const AddAppointmentForm = ({
   const selectedDate = form.watch("date");
 
   const { data: availableTimes } = useQuery({
-    queryKey: ["available-times", selectedDate, selectedDoctorId],
+    queryKey: [
+      "available-times",
+      selectedDate,
+      selectedDoctorId,
+      activeClinicId,
+    ],
     queryFn: () =>
       getAvailableTimes({
         date: dayjs(selectedDate).format("YYYY-MM-DD"),
         doctorId: selectedDoctorId,
+        clinicId: activeClinicId!,
       }),
-    enabled: !!selectedDate && !!selectedDoctorId,
+    enabled: !!selectedDate && !!selectedDoctorId && !!activeClinicId,
   });
 
   // Atualizar o preço quando o médico for selecionado
@@ -143,8 +151,14 @@ const AddAppointmentForm = ({
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica para criar o agendamento");
+      return;
+    }
+
     createAppointmentAction.execute({
       ...values,
+      clinicId: activeClinicId,
       appointmentPriceInCents: values.appointmentPrice * 100,
     });
   };

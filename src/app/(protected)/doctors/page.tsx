@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 
 import { requirePlan } from "@/_helpers/require-plan";
 import {
@@ -18,19 +17,18 @@ import AddDoctorButton from "./_components/add-doctor-button";
 import DoctorCard from "./_components/doctor-card";
 
 export default async function DoctorsPage() {
-  const session = await requirePlan();
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-
-  if (!session.user.clinic) {
-    redirect("/clinic-form");
+  const { activeClinic, plan } = await requirePlan("essential");
+  if (!activeClinic) {
+    return null;
   }
 
   const doctors = await db.query.doctorsTable.findMany({
-    where: eq(doctorsTable.clinicId, session?.user.clinic?.id),
+    where: eq(doctorsTable.clinicId, activeClinic.id),
   });
+
+  const maxDoctors = plan.limits.doctorsPerClinic;
+  const hasReachedLimit =
+    typeof maxDoctors === "number" && doctors.length >= maxDoctors;
 
   return (
     <PageContainer>
@@ -42,7 +40,14 @@ export default async function DoctorsPage() {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddDoctorButton />
+          <AddDoctorButton
+            disabled={hasReachedLimit}
+            helperText={
+              hasReachedLimit
+                ? "Limite de médicos do plano atingido. Faça upgrade para cadastrar mais."
+                : undefined
+            }
+          />
         </PageActions>
       </PageHeader>
       <PageContent>

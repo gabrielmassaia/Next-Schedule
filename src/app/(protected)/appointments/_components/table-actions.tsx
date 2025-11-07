@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { appointmentsTable } from "@/db/schema";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
   patient: {
@@ -49,6 +50,7 @@ interface AppointmentsTableActionsProps {
 const AppointmentsTableActions = ({
   appointment,
 }: AppointmentsTableActionsProps) => {
+  const { activeClinicId } = useActiveClinic();
   const deleteAppointmentAction = useAction(deleteAppointment, {
     onSuccess: () => {
       toast.success("Agendamento deletado com sucesso.");
@@ -60,7 +62,14 @@ const AppointmentsTableActions = ({
 
   const handleDeleteAppointmentClick = () => {
     if (!appointment) return;
-    deleteAppointmentAction.execute({ id: appointment.id });
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de excluir agendamentos");
+      return;
+    }
+    deleteAppointmentAction.execute({
+      id: appointment.id,
+      clinicId: activeClinicId,
+    });
   };
 
   return (

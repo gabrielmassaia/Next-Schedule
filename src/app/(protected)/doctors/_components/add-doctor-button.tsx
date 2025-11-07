@@ -8,18 +8,41 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 
 import UpsertDoctorForm from "./upsert-doctor-form";
 
-export default function AddDoctorButton() {
+interface AddDoctorButtonProps {
+  disabled?: boolean;
+  helperText?: string;
+}
+
+export default function AddDoctorButton({
+  disabled = false,
+  helperText,
+}: AddDoctorButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleOpenChange = (open: boolean) => {
+    if (disabled) {
+      return;
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus />
-          Adicionar Doutor
-        </Button>
-      </DialogTrigger>
-      <UpsertDoctorForm onSuccess={() => setIsOpen(false)} />
-    </Dialog>
+    <div className="flex flex-col">
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button
+            disabled={disabled}
+            variant={disabled ? "secondary" : "default"}
+          >
+            <Plus />
+            Adicionar Doutor
+          </Button>
+        </DialogTrigger>
+        <UpsertDoctorForm onSuccess={() => setIsOpen(false)} />
+      </Dialog>
+      {helperText && disabled && (
+        <p className="mt-2 text-sm text-muted-foreground">{helperText}</p>
+      )}
+    </div>
   );
 }
