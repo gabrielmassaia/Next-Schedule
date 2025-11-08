@@ -23,9 +23,9 @@ export default async function SubscriptionPage() {
           Transforme o agendamento da sua clínica com inteligência artificial
         </h1>
         <p className="mb-6 text-lg text-gray-600 md:text-xl">
-          O Next Schedule combina automação, relatórios em tempo real e um agente
-          de IA que responde pacientes em segundos. Escolha o plano ideal e
-          conquiste uma operação eficiente desde o primeiro atendimento.
+          O Next Schedule combina automação, relatórios em tempo real e um
+          agente de IA que responde pacientes em segundos. Escolha o plano ideal
+          e conquiste uma operação eficiente desde o primeiro atendimento.
         </p>
         <div className="grid gap-4 text-left md:grid-cols-3">
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm">
@@ -34,11 +34,15 @@ export default async function SubscriptionPage() {
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm">
             <p className="font-semibold">Operação sem atritos</p>
-            <p>Integre profissionais, salas e clínicas em um painel intuitivo.</p>
+            <p>
+              Integre profissionais, salas e clínicas em um painel intuitivo.
+            </p>
           </div>
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
             <p className="font-semibold">Mais pacientes presentes</p>
-            <p>Confirmações automáticas reduzem faltas com lembretes humanizados.</p>
+            <p>
+              Confirmações automáticas reduzem faltas com lembretes humanizados.
+            </p>
           </div>
         </div>
       </div>
@@ -61,32 +65,38 @@ export default async function SubscriptionPage() {
           Por que clínicas líderes escolhem o Next Schedule?
         </h2>
         <p className="mt-4 text-sm text-gray-600 md:text-base">
-          Nossos clientes registram uma economia média de 15 horas semanais com o
-          agente de IA, que confirma consultas, envia lembretes personalizados e
-          mantém sua agenda sempre cheia. Você tem visibilidade total dos dados
-          para tomar decisões rápidas.
+          Nossos clientes registram uma economia média de 15 horas semanais com
+          o agente de IA, que confirma consultas, envia lembretes personalizados
+          e mantém sua agenda sempre cheia. Você tem visibilidade total dos
+          dados para tomar decisões rápidas.
         </p>
         <div className="mt-6 grid gap-4 text-left sm:grid-cols-3">
           <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-900">Integração total</p>
+            <p className="text-sm font-semibold text-gray-900">
+              Integração total
+            </p>
             <p className="mt-2 text-sm text-gray-600">
               Conecte prontuários, pagamentos e comunicação em um só lugar.
             </p>
           </div>
           <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-900">Escala ilimitada</p>
+            <p className="text-sm font-semibold text-gray-900">
+              Escala ilimitada
+            </p>
             <p className="mt-2 text-sm text-gray-600">
               Gerencie múltiplas unidades mantendo padrões e governança.
             </p>
           </div>
           <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-900">Onboarding assistido</p>
+            <p className="text-sm font-semibold text-gray-900">
+              Onboarding assistido
+            </p>
             <p className="mt-2 text-sm text-gray-600">
               Equipe especializada acompanha a configuração do seu fluxo ideal.
             </p>
           </div>
         </div>
-        <p className="mt-8 text-xs uppercase tracking-widest text-gray-400">
+        <p className="mt-8 text-xs tracking-widest text-gray-400 uppercase">
           Garantia de satisfação de 30 dias ou seu dinheiro de volta
         </p>
       </div>

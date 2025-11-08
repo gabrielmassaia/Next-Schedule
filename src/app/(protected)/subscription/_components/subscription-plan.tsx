@@ -24,13 +24,16 @@ export function SubscriptionPlan({
   isActive,
   className,
 }: SubscriptionPlanProps) {
-  const highlightBySlug: Record<SubscriptionPlanType["slug"], {
-    badge?: string;
-    tagline: string;
-    accent: string;
-    border: string;
-    cta: string;
-  }> = {
+  const highlightBySlug: Record<
+    SubscriptionPlanType["slug"],
+    {
+      badge?: string;
+      tagline: string;
+      accent: string;
+      border: string;
+      cta: string;
+    }
+  > = {
     essential: {
       badge: "Comece grátis",
       tagline:
@@ -169,7 +172,7 @@ export function SubscriptionPlan({
         <div className="space-y-4 rounded-xl border border-gray-100 bg-white/70 p-5 shadow-sm backdrop-blur">
           {plan?.features.map((feature, index) => (
             <div key={index} className="flex items-start gap-3">
-              <span className="rounded-full bg-primary/10 p-1 text-primary">
+              <span className="bg-primary/10 text-primary rounded-full p-1">
                 <CheckCircle2 className="h-5 w-5" />
               </span>
               <p className="text-sm text-gray-700">{feature}</p>
@@ -207,7 +210,8 @@ export function SubscriptionPlan({
             </p>
           ) : (
             <p className="text-center text-xs text-gray-500">
-              Estamos finalizando recursos exclusivos com nossos especialistas para sua rede.
+              Estamos finalizando recursos exclusivos com nossos especialistas
+              para sua rede.
             </p>
           )}
         </div>
