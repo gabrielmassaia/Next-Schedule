@@ -50,12 +50,6 @@ export async function requirePlan(
     redirect("/clinic-form");
   }
 
-
-  const plan = await getPlanBySlug(session.user.plan);
-  if (!(await planMeetsRequirement(plan, requiredPlan))) {
-    redirect("/signature");
-  }
-
   return {
     session,
     plan,

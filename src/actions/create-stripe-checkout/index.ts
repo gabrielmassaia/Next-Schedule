@@ -30,27 +30,41 @@ export const createStripeCheckout = actionClient
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-05-28.basil",
     });
-    const { id: sessionId } = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      subscription_data: {
-        metadata: {
-          userId: session.user.id,
-          planSlug: plan.slug,
+    const checkoutContext = {
+      userId: session.user.id,
+      planSlug: plan.slug,
+    } as const;
+
+    console.info("[createStripeCheckout] Creating session", checkoutContext);
+
+    const { id: sessionId } = await stripe.checkout.sessions
+      .create({
+        payment_method_types: ["card"],
+        mode: "subscription",
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+        client_reference_id: session.user.id,
+        subscription_data: {
+          metadata: checkoutContext,
         },
-      },
-      line_items: [
-        {
-          price: plan.stripePriceId,
-          quantity: 1,
-          metadata: {
-            userId: session.user.id,
-            planSlug: plan.slug,
+        line_items: [
+          {
+            price: plan.stripePriceId,
+            quantity: 1,
           },
-        },
-      ],
+        ],
+      })
+      .catch((error) => {
+        console.error("[createStripeCheckout] Session creation failed", {
+          ...checkoutContext,
+          error,
+        });
+        throw error;
+      });
+
+    console.info("[createStripeCheckout] Session created", {
+      ...checkoutContext,
+      sessionId,
     });
     return {
       sessionId,
