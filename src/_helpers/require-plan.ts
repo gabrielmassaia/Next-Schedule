@@ -30,12 +30,12 @@ export async function requirePlan(
     redirect("/authentication");
   }
 
-  if (!session.user.plan) {
+  const plan = await getPlanBySlug(session.user.plan);
+  if (!(await planMeetsRequirement(plan, requiredPlan))) {
     redirect("/signature");
   }
 
-  const plan = await getPlanBySlug(session.user.plan);
-  if (!(await planMeetsRequirement(plan, requiredPlan))) {
+  if (!session.user.plan) {
     redirect("/signature");
   }
 
@@ -48,12 +48,6 @@ export async function requirePlan(
 
   if (!activeClinic) {
     redirect("/clinic-form");
-  }
-
-
-  const plan = await getPlanBySlug(session.user.plan);
-  if (!(await planMeetsRequirement(plan, requiredPlan))) {
-    redirect("/signature");
   }
 
   return {
