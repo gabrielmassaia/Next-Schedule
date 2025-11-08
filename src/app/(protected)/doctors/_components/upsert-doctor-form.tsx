@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { doctorsTable } from "@/db/schema";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 import { medicalSpecialties } from "../_constants";
 
@@ -95,6 +96,7 @@ export default function UpsertDoctorForm({
   doctor,
   onSuccess,
 }: UpsertDoctorFormProps) {
+  const { activeClinicId } = useActiveClinic();
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -138,18 +140,29 @@ export default function UpsertDoctorForm({
       return;
     }
 
-    deleteDoctorAction.execute({ id: doctor.id });
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de excluir o médico");
+      return;
+    }
+
+    deleteDoctorAction.execute({ id: doctor.id, clinicId: activeClinicId });
     toast.success("Médico excluído com sucesso");
     onSuccess?.();
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de salvar");
+      return;
+    }
+
     upsertDoctorAction.execute({
       ...values,
       id: doctor?.id,
       availableFromWeekDay: parseInt(values.availableFromWeekDay),
       availableToWeekDay: parseInt(values.availableToWeekDay),
       appointmentPriceInCents: values.appointmentPrice * 100,
+      clinicId: activeClinicId,
     });
   };
 

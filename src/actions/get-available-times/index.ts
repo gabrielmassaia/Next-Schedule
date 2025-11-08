@@ -3,13 +3,17 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { z } from "zod";
 
 import { generateTimeSlots } from "@/_helpers/time";
 import { db } from "@/db";
-import { appointmentsTable, doctorsTable } from "@/db/schema";
+import {
+  appointmentsTable,
+  doctorsTable,
+  usersToClinicsTable,
+} from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -19,6 +23,7 @@ dayjs.extend(timezone);
 export const getAvailableTimes = actionClient
   .schema(
     z.object({
+      clinicId: z.string().uuid(),
       doctorId: z.string(),
       date: z.string().date(), // YYYY-MM-DD,
     }),
@@ -30,11 +35,20 @@ export const getAvailableTimes = actionClient
     if (!session) {
       throw new Error("Não autorizado");
     }
-    if (!session.user.clinic) {
+    const membership = await db.query.usersToClinicsTable.findFirst({
+      where: and(
+        eq(usersToClinicsTable.userId, session.user.id),
+        eq(usersToClinicsTable.clinicId, parsedInput.clinicId),
+      ),
+    });
+    if (!membership) {
       throw new Error("Clínica não encontrada");
     }
     const doctor = await db.query.doctorsTable.findFirst({
-      where: eq(doctorsTable.id, parsedInput.doctorId),
+      where: and(
+        eq(doctorsTable.id, parsedInput.doctorId),
+        eq(doctorsTable.clinicId, parsedInput.clinicId),
+      ),
     });
     if (!doctor) {
       throw new Error("Médico não encontrado");
@@ -47,7 +61,10 @@ export const getAvailableTimes = actionClient
       return [];
     }
     const appointments = await db.query.appointmentsTable.findMany({
-      where: eq(appointmentsTable.doctorId, parsedInput.doctorId),
+      where: and(
+        eq(appointmentsTable.doctorId, parsedInput.doctorId),
+        eq(appointmentsTable.clinicId, parsedInput.clinicId),
+      ),
     });
     const appointmentsOnSelectedDate = appointments
       .filter((appointment) => {

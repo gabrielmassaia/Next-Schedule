@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getPlanBySlug } from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
 import FormClinic from "./_components/form-clinic";
@@ -18,8 +19,12 @@ export default async function ClinicFormPage() {
     redirect("/authentication");
   }
 
-  if (session.user.clinic) {
-    redirect("/dashboard");
+  const clinics = session.user.clinics ?? [];
+  const plan = getPlanBySlug(session.user.plan);
+  const clinicsLimit = plan.limits.clinics;
+
+  if (typeof clinicsLimit === "number" && clinics.length >= clinicsLimit) {
+    redirect("/subscription");
   }
 
   return (

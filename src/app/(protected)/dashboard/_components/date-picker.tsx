@@ -1,6 +1,6 @@
 "use client";
 
-import { addMonths, format, startOfMonth } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { parseAsIsoDate, useQueryState } from "nuqs";

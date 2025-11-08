@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { patientsTable } from "@/db/schema";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 import UpsertPatientForm from "./upsert-patient-form";
 
@@ -38,6 +39,7 @@ export default function PatientTableActions({
   patient,
 }: PatientTableActionsProps) {
   const [upsertDialogIsOpen, setUpsertDialogIsOpen] = useState(false);
+  const { activeClinicId } = useActiveClinic();
 
   const toggleStatusAction = useAction(togglePatientStatus, {
     onSuccess: () => {
@@ -67,15 +69,24 @@ export default function PatientTableActions({
 
   const handleToggleStatus = () => {
     if (!patient) return;
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de alterar o paciente");
+      return;
+    }
     toggleStatusAction.execute({
       id: patient.id,
       status: patient.status === "active" ? "inactive" : "active",
+      clinicId: activeClinicId,
     });
   };
 
   const handleDelete = () => {
     if (!patient) return;
-    deletePatientAction.execute({ id: patient.id });
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de excluir o paciente");
+      return;
+    }
+    deletePatientAction.execute({ id: patient.id, clinicId: activeClinicId });
   };
 
   const isInactive = patient.status === "inactive";

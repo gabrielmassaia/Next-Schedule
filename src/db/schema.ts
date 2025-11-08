@@ -210,3 +210,24 @@ export const appointmentsTableRelations = relations(
     }),
   }),
 );
+
+export const integrationApiKeysTable = pgTable("integration_api_keys", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  hashedKey: text("hashed_key").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+});
+
+export const integrationApiKeysTableRelations = relations(
+  integrationApiKeysTable,
+  ({ one }) => ({
+    user: one(usersTable, {
+      fields: [integrationApiKeysTable.userId],
+      references: [usersTable.id],
+    }),
+  }),
+);
