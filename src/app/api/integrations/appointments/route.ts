@@ -25,7 +25,8 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const headerKey = request.headers.get("authorization")
+    const headerKey = request.headers
+      .get("authorization")
       ?.replace("Bearer", "")
       .trim();
     const apiKey = headerKey || request.headers.get("x-api-key");
