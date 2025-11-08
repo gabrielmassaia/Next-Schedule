@@ -31,12 +31,9 @@ interface DashboardPageProps {
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const session = await requirePlan();
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (!session.user.clinic) {
-    redirect("/clinic-form");
+  const { activeClinic } = await requirePlan("essential");
+  if (!activeClinic) {
+    return null;
   }
 
   const { from, to } = await searchParams;
@@ -57,13 +54,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   } = await getDashboard({
     from,
     to,
-    session: {
-      user: {
-        clinic: {
-          id: session.user.clinic.id,
-        },
-      },
-    },
+    clinicId: activeClinic.id,
   });
 
   return (

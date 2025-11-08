@@ -1,12 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { patientsTable } from "@/db/schema";
+import { patientsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -14,6 +14,7 @@ export const deletePatient = actionClient
   .schema(
     z.object({
       id: z.string(),
+      clinicId: z.string().uuid(),
     }),
   )
   .action(async ({ parsedInput }) => {
@@ -25,6 +26,17 @@ export const deletePatient = actionClient
       throw new Error("Usuário não autenticado");
     }
 
+    const membership = await db.query.usersToClinicsTable.findFirst({
+      where: and(
+        eq(usersToClinicsTable.userId, session.user.id),
+        eq(usersToClinicsTable.clinicId, parsedInput.clinicId),
+      ),
+    });
+
+    if (!membership) {
+      throw new Error("Você não tem permissão para acessar esta clínica");
+    }
+
     const patient = await db.query.patientsTable.findFirst({
       where: eq(patientsTable.id, parsedInput.id),
     });
@@ -33,7 +45,7 @@ export const deletePatient = actionClient
       throw new Error("Paciente não encontrado");
     }
 
-    if (patient.clinicId !== session.user.clinic?.id) {
+    if (patient.clinicId !== parsedInput.clinicId) {
       throw new Error("Você não tem permissão para excluir este paciente");
     }
 

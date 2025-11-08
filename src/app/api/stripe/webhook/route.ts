@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { DEFAULT_PLAN_SLUG, getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 
@@ -55,6 +56,14 @@ export const POST = async (request: Request) => {
         throw new Error("User ID not found in invoice metadata");
       }
 
+      const planSlugFromInvoice =
+        (invoice.parent?.subscription_details?.metadata?.planSlug as
+          | string
+          | undefined) ??
+        (invoice.lines?.data?.[0]?.metadata?.planSlug as string | undefined);
+
+      const plan = getPlanBySlug(planSlugFromInvoice ?? undefined);
+
       await db
         .update(usersTable)
         .set({
@@ -63,7 +72,7 @@ export const POST = async (request: Request) => {
             typeof invoice.customer === "string"
               ? invoice.customer
               : (invoice.customer?.id ?? null),
-          plan: "essential",
+          plan: plan.slug,
         })
         .where(eq(usersTable.id, userId));
       break;
@@ -90,7 +99,7 @@ export const POST = async (request: Request) => {
         .set({
           stripeSubscriptionId: null,
           stripeCustomerId: null,
-          plan: null,
+          plan: DEFAULT_PLAN_SLUG,
         })
         .where(eq(usersTable.id, userId));
       break;

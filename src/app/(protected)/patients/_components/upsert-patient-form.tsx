@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z.object({
   name: z
@@ -74,6 +75,7 @@ export default function UpsertPatientForm({
   patient,
   onSuccess,
 }: UpsertPatientFormProps) {
+  const { activeClinicId } = useActiveClinic();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -116,9 +118,15 @@ export default function UpsertPatientForm({
   });
 
   const onSubmit = (values: FormValues) => {
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de salvar o paciente");
+      return;
+    }
+
     upsertPatientAction.execute({
       ...values,
       id: patient?.id,
+      clinicId: activeClinicId,
     });
   };
 

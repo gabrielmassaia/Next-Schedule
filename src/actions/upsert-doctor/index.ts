@@ -2,11 +2,13 @@
 
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { and, count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
-import { doctorsTable } from "@/db/schema";
+import { doctorsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -37,22 +39,54 @@ export const upsertDoctor = actionClient
     if (!session?.user) {
       throw new Error("Não autorizado");
     }
-    if (!session?.user.clinic?.id) {
+    const { clinicId, id: doctorId, ...doctorData } = parsedInput;
+
+    const belongsToClinic = await db.query.usersToClinicsTable.findFirst({
+      where: and(
+        eq(usersToClinicsTable.clinicId, clinicId),
+        eq(usersToClinicsTable.userId, session.user.id),
+      ),
+    });
+
+    if (!belongsToClinic) {
       throw new Error("Clínica não encontrada");
+    }
+
+    if (doctorId) {
+      const doctor = await db.query.doctorsTable.findFirst({
+        where: eq(doctorsTable.id, doctorId),
+      });
+      if (!doctor || doctor.clinicId !== clinicId) {
+        throw new Error("Médico não encontrado nesta clínica");
+      }
+    }
+
+    const plan = getPlanBySlug(session.user.plan);
+    if (!doctorId && typeof plan.limits.doctorsPerClinic === "number") {
+      const [totalDoctors] = await db
+        .select({ total: count() })
+        .from(doctorsTable)
+        .where(eq(doctorsTable.clinicId, clinicId));
+      if ((totalDoctors.total ?? 0) >= plan.limits.doctorsPerClinic) {
+        throw new Error(
+          "Limite de médicos do seu plano foi atingido. Faça upgrade para cadastrar mais.",
+        );
+      }
     }
     await db
       .insert(doctorsTable)
       .values({
-        ...parsedInput,
-        id: parsedInput.id,
-        clinicId: session?.user.clinic?.id,
+        ...doctorData,
+        id: doctorId,
+        clinicId,
         availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
         availableToTime: availableToTimeUTC.format("HH:mm:ss"),
       })
       .onConflictDoUpdate({
         target: [doctorsTable.id],
         set: {
-          ...parsedInput,
+          ...doctorData,
+          clinicId,
           availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
           availableToTime: availableToTimeUTC.format("HH:mm:ss"),
         },
