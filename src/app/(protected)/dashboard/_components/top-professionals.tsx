@@ -1,4 +1,4 @@
-import { Stethoscope } from "lucide-react";
+import { Stethoscope, UsersRound } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ export default function TopProfessionals({
       <CardContent>
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Stethoscope className="text-muted-foreground" />
+            <UsersRound className="text-muted-foreground" />
             <CardTitle className="text-base">Profissionais</CardTitle>
           </div>
         </div>
