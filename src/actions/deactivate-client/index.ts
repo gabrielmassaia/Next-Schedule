@@ -6,11 +6,11 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { patientsTable, usersToClinicsTable } from "@/db/schema";
+import { clientsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
-export const togglePatientStatus = actionClient
+export const toggleClientStatus = actionClient
   .schema(
     z.object({
       id: z.string(),
@@ -38,25 +38,25 @@ export const togglePatientStatus = actionClient
       throw new Error("Você não tem permissão para acessar esta clínica");
     }
 
-    const patient = await db.query.patientsTable.findFirst({
-      where: eq(patientsTable.id, parsedInput.id),
+    const client = await db.query.clientsTable.findFirst({
+      where: eq(clientsTable.id, parsedInput.id),
     });
 
-    if (!patient) {
-      throw new Error("Paciente não encontrado");
+    if (!client) {
+      throw new Error("Cliente não encontrado");
     }
 
-    if (patient.clinicId !== parsedInput.clinicId) {
-      throw new Error("Você não tem permissão para alterar este paciente");
+    if (client.clinicId !== parsedInput.clinicId) {
+      throw new Error("Você não tem permissão para alterar este cliente");
     }
 
     await db
-      .update(patientsTable)
+      .update(clientsTable)
       .set({
         status: parsedInput.status,
         updatedAt: new Date(),
       })
-      .where(eq(patientsTable.id, parsedInput.id));
+      .where(eq(clientsTable.id, parsedInput.id));
 
-    revalidatePath("/patients");
+    revalidatePath("/clients");
   });

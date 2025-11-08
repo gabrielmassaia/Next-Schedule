@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import { db } from "@/db";
 import {
   appointmentsTable,
-  patientsTable,
+  clientsTable,
   professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
@@ -61,23 +61,23 @@ export const addAppointment = actionClient
       .set("minute", parseInt(appointmentData.time.split(":")[1]))
       .toDate();
 
-    const [professional, patient] = await Promise.all([
+    const [professional, client] = await Promise.all([
       db.query.professionalsTable.findFirst({
         where: and(
           eq(professionalsTable.id, appointmentData.professionalId),
           eq(professionalsTable.clinicId, clinicId),
         ),
       }),
-      db.query.patientsTable.findFirst({
+      db.query.clientsTable.findFirst({
         where: and(
-          eq(patientsTable.id, appointmentData.patientId),
-          eq(patientsTable.clinicId, clinicId),
+          eq(clientsTable.id, appointmentData.clientId),
+          eq(clientsTable.clinicId, clinicId),
         ),
       }),
     ]);
 
-    if (!professional || !patient) {
-      throw new Error("Paciente ou profissional não pertence a esta clínica");
+    if (!professional || !client) {
+      throw new Error("Cliente ou profissional não pertence a esta clínica");
     }
 
     await db.insert(appointmentsTable).values({

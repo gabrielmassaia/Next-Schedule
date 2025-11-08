@@ -27,12 +27,12 @@ const DEFAULT_PLAN_SEEDS: PlanSeed[] = [
     limits: {
       clinics: 1,
       professionalsPerClinic: 1,
-      patientsPerClinic: 150,
+      clientsPerClinic: 150,
     },
     features: [
       "1 clínica",
       "1 profissional",
-      "Até 150 pacientes",
+      "Até 150 clientes",
       "Agendamentos básicos",
     ],
     stripePriceEnvKey: "STRIPE_ESSENTIAL_PLAN_PRICE_ID",
@@ -41,18 +41,18 @@ const DEFAULT_PLAN_SEEDS: PlanSeed[] = [
     slug: "pro",
     name: "Pro",
     description:
-      "Para clínicas em crescimento que precisam de mais profissionais e pacientes.",
+      "Para clínicas em crescimento que precisam de mais profissionais e clientes.",
     priceInCents: 9900,
     priority: 1,
     limits: {
       clinics: 3,
       professionalsPerClinic: 5,
-      patientsPerClinic: 1000,
+      clientsPerClinic: 1000,
     },
     features: [
       "Até 3 clínicas",
       "Até 5 profissionais por clínica",
-      "Pacientes ilimitados",
+      "Clientes ilimitados",
       "Agendamentos ilimitados",
       "Métricas essenciais",
       "Suporte via e-mail",
@@ -69,12 +69,12 @@ const DEFAULT_PLAN_SEEDS: PlanSeed[] = [
     limits: {
       clinics: null,
       professionalsPerClinic: null,
-      patientsPerClinic: null,
+      clientsPerClinic: null,
     },
     features: [
       "Clínicas ilimitadas",
       "Profissionais ilimitados",
-      "Pacientes ilimitados",
+      "Clientes ilimitados",
       "Suporte prioritário",
       "Recursos avançados (em breve)",
     ],
@@ -88,7 +88,7 @@ export type SubscriptionPlanSlug = "essential" | "pro" | "enterprise";
 export interface SubscriptionPlanLimits {
   clinics: number | null;
   professionalsPerClinic: number | null;
-  patientsPerClinic: number | null;
+  clientsPerClinic: number | null;
 }
 
 export interface SubscriptionPlan {

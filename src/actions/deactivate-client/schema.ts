@@ -1,5 +1,5 @@
 import { z } from "zod";
 
-export const deactivatePatientSchema = z.object({
+export const deactivateClientSchema = z.object({
   id: z.string().uuid(),
 });

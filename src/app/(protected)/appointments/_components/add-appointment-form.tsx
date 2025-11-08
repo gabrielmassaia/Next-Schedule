@@ -45,13 +45,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { patientsTable, professionalsTable } from "@/db/schema";
+import { clientsTable, professionalsTable } from "@/db/schema";
 import { cn } from "@/lib/utils";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z.object({
-  patientId: z.string().min(1, {
-    message: "Paciente é obrigatório.",
+  clientId: z.string().min(1, {
+    message: "Cliente é obrigatório.",
   }),
   professionalId: z.string().min(1, {
     message: "Profissional é obrigatório.",
@@ -69,13 +69,13 @@ const formSchema = z.object({
 
 interface AddAppointmentFormProps {
   isOpen: boolean;
-  patients: (typeof patientsTable.$inferSelect)[];
+  clients: (typeof clientsTable.$inferSelect)[];
   professionals: (typeof professionalsTable.$inferSelect)[];
   onSuccess?: () => void;
 }
 
 const AddAppointmentForm = ({
-  patients,
+  clients,
   professionals,
   onSuccess,
   isOpen,
@@ -85,7 +85,7 @@ const AddAppointmentForm = ({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
     defaultValues: {
-      patientId: "",
+      clientId: "",
       professionalId: "",
       appointmentPrice: 0,
       date: undefined,
@@ -94,7 +94,7 @@ const AddAppointmentForm = ({
   });
 
   const selectedProfessionalId = form.watch("professionalId");
-  const selectedPatientId = form.watch("patientId");
+  const selectedClientId = form.watch("clientId");
   const selectedDate = form.watch("date");
 
   const { data: availableTimes } = useQuery({
@@ -133,7 +133,7 @@ const AddAppointmentForm = ({
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        patientId: "",
+        clientId: "",
         professionalId: "",
         appointmentPrice: 0,
         date: undefined,
@@ -178,7 +178,7 @@ const AddAppointmentForm = ({
     );
   };
 
-  const isDateTimeEnabled = selectedPatientId && selectedProfessionalId;
+  const isDateTimeEnabled = selectedClientId && selectedProfessionalId;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -195,23 +195,23 @@ const AddAppointmentForm = ({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="patientId"
+            name="clientId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Paciente</FormLabel>
+                <FormLabel>Cliente</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione um paciente" />
+                      <SelectValue placeholder="Selecione um cliente" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.name}
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

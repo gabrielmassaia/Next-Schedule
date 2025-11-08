@@ -3,9 +3,9 @@
 import {
   CalendarDays,
   CreditCard,
+  KeyRound,
   LayoutDashboard,
   LogOut,
-  Stethoscope,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -50,11 +50,11 @@ const items = [
   {
     title: "Profissionais",
     url: "/professionals",
-    icon: Stethoscope,
+    icon: UserRound,
   },
   {
-    title: "Pacientes",
-    url: "/patients",
+    title: "Clientes",
+    url: "/clients",
     icon: UsersRound,
   },
 ];
@@ -110,6 +110,14 @@ export function AppSidebar() {
                   <Link href="/subscription">
                     <CreditCard />
                     <span>Planos</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/apikey"}>
+                  <Link href="/apikey">
+                    <KeyRound />
+                    <span>API key</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -8,7 +8,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <ActiveClinicProvider>
         <AppSidebar />
-        <main className="w-full">
+        <main className="w-full min-h-screen bg-white shadow-xl shadow-slate-200">
           <SidebarTrigger />
           {children}
         </main>

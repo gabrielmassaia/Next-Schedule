@@ -6,7 +6,7 @@ import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
 import {
   appointmentsTable,
-  patientsTable,
+  clientsTable,
   professionalsTable,
 } from "@/db/schema";
 
@@ -28,7 +28,7 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
   const [
     [totalRevenue],
     [totalAppointments],
-    [totalPatients],
+    [totalClients],
     [totalProfessionals],
     topProfessionals,
     topSpecialties,
@@ -63,8 +63,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
       .select({
         total: count(),
       })
-      .from(patientsTable)
-      .where(eq(patientsTable.clinicId, clinicId)),
+      .from(clientsTable)
+      .where(eq(clientsTable.clinicId, clinicId)),
     db
       .select({
         total: count(),
@@ -118,7 +118,7 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
         lte(appointmentsTable.date, todayEnd),
       ),
       with: {
-        patient: true,
+        client: true,
         professional: true,
       },
     }),
@@ -145,7 +145,7 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
   return {
     totalRevenue,
     totalAppointments,
-    totalPatients,
+    totalClients,
     totalProfessionals,
     topProfessionals,
     topSpecialties,
