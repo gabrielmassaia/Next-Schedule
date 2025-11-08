@@ -30,6 +30,15 @@ export async function requirePlan(
     redirect("/authentication");
   }
 
+  if (!session.user.plan) {
+    redirect("/signature");
+  }
+
+  const plan = await getPlanBySlug(session.user.plan);
+  if (!(await planMeetsRequirement(plan, requiredPlan))) {
+    redirect("/signature");
+  }
+
   const clinics = (session.user.clinics ?? []) as ClinicSummary[];
   const cookieClinicId = readActiveClinicIdFromCookies();
   const { activeClinic, activeClinicId } = selectActiveClinic(
@@ -40,6 +49,7 @@ export async function requirePlan(
   if (!activeClinic) {
     redirect("/clinic-form");
   }
+
 
   const plan = await getPlanBySlug(session.user.plan);
   if (!(await planMeetsRequirement(plan, requiredPlan))) {

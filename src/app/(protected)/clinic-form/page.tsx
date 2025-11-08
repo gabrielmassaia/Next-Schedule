@@ -20,6 +20,10 @@ export default async function ClinicFormPage() {
     redirect("/authentication");
   }
 
+  if (!session.user.plan) {
+    redirect("/signature");
+  }
+
   const clinics = session.user.clinics ?? [];
   const plan = await getPlanBySlug(session.user.plan);
   const clinicsLimit = plan.limits.clinics;

@@ -29,6 +29,10 @@ const SubscriptionPage = async () => {
     redirect("/authentication");
   }
 
+  if (!session.user.plan) {
+    redirect("/signature");
+  }
+
   const [currentPlan, plans] = await Promise.all([
     getPlanBySlug(session.user.plan),
     getSubscriptionPlans(),
