@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -67,9 +68,30 @@ export const verificationsTable = pgTable("verifications", {
   updatedAt: timestamp("updated_at"),
 });
 
+export const clinicNichesTable = pgTable("clinic_niches", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
 export const clinicsTable = pgTable("clinics", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  cnpj: text("cnpj").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  addressLine1: text("address_line1").notNull(),
+  addressLine2: text("address_line2"),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zipCode: text("zip_code").notNull(),
+  nicheId: uuid("niche_id")
+    .notNull()
+    .references(() => clinicNichesTable.id, { onDelete: "restrict" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -103,14 +125,7 @@ export const usersToClinicsTableRelations = relations(
   }),
 );
 
-export const clinicsTableRelations = relations(clinicsTable, ({ many }) => ({
-  doctors: many(doctorsTable),
-  patients: many(patientsTable),
-  appointments: many(appointmentsTable),
-  usersToClinics: many(usersToClinicsTable),
-}));
-
-export const doctorsTable = pgTable("doctors", {
+export const professionalsTable = pgTable("professionals", {
   id: uuid("id").defaultRandom().primaryKey(),
   clinicId: uuid("clinic_id")
     .notNull()
@@ -130,16 +145,34 @@ export const doctorsTable = pgTable("doctors", {
     .$onUpdate(() => new Date()),
 });
 
-export const doctorsTableRelations = relations(
-  doctorsTable,
+export const professionalsTableRelations = relations(
+  professionalsTable,
   ({ many, one }) => ({
     clinic: one(clinicsTable, {
-      fields: [doctorsTable.clinicId],
+      fields: [professionalsTable.clinicId],
       references: [clinicsTable.id],
     }),
     appointments: many(appointmentsTable),
   }),
 );
+
+export const clinicNichesTableRelations = relations(
+  clinicNichesTable,
+  ({ many }) => ({
+    clinics: many(clinicsTable),
+  }),
+);
+
+export const clinicsTableRelations = relations(clinicsTable, ({ many, one }) => ({
+  professionals: many(professionalsTable),
+  patients: many(patientsTable),
+  appointments: many(appointmentsTable),
+  usersToClinics: many(usersToClinicsTable),
+  niche: one(clinicNichesTable, {
+    fields: [clinicsTable.nicheId],
+    references: [clinicNichesTable.id],
+  }),
+}));
 
 export const patientSexEnum = pgEnum("patient_sex", ["male", "female"]);
 export const patientStatusEnum = pgEnum("patient_status", [
@@ -184,9 +217,9 @@ export const appointmentsTable = pgTable("appointments", {
   patientId: uuid("patient_id")
     .notNull()
     .references(() => patientsTable.id, { onDelete: "cascade" }),
-  doctorId: uuid("doctor_id")
+  professionalId: uuid("professional_id")
     .notNull()
-    .references(() => doctorsTable.id, { onDelete: "cascade" }),
+    .references(() => professionalsTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -204,12 +237,36 @@ export const appointmentsTableRelations = relations(
       fields: [appointmentsTable.patientId],
       references: [patientsTable.id],
     }),
-    doctor: one(doctorsTable, {
-      fields: [appointmentsTable.doctorId],
-      references: [doctorsTable.id],
+    professional: one(professionalsTable, {
+      fields: [appointmentsTable.professionalId],
+      references: [professionalsTable.id],
     }),
   }),
 );
+
+export const plansTable = pgTable("plans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  priceInCents: integer("price_in_cents"),
+  priority: integer("priority").notNull(),
+  limits: jsonb("limits")
+    .notNull()
+    .$type<{
+      clinics: number | null;
+      professionalsPerClinic: number | null;
+      patientsPerClinic: number | null;
+    }>(),
+  features: text("features").array().notNull(),
+  stripePriceId: text("stripe_price_id"),
+  stripePriceEnvKey: text("stripe_price_env_key"),
+  comingSoon: boolean("coming_soon").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
 
 export const integrationApiKeysTable = pgTable("integration_api_keys", {
   id: uuid("id").defaultRandom().primaryKey(),

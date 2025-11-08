@@ -8,8 +8,8 @@ import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import z from "zod";
 
-import { deleteDoctor } from "@/actions/delete-doctor";
-import { upsertDoctor } from "@/actions/upsert-doctor";
+import { deleteProfessional } from "@/actions/delete-professional";
+import { upsertProfessional } from "@/actions/upsert-professional";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doctorsTable } from "@/db/schema";
+import { professionalsTable } from "@/db/schema";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 import { medicalSpecialties } from "../_constants";
@@ -87,66 +87,70 @@ const formSchema = z
     },
   );
 
-interface UpsertDoctorFormProps {
-  doctor?: typeof doctorsTable.$inferSelect;
+interface UpsertProfessionalFormProps {
+  professional?: typeof professionalsTable.$inferSelect;
   onSuccess?: () => void;
 }
 
-export default function UpsertDoctorForm({
-  doctor,
+export default function UpsertProfessionalForm({
+  professional,
   onSuccess,
-}: UpsertDoctorFormProps) {
+}: UpsertProfessionalFormProps) {
   const { activeClinicId } = useActiveClinic();
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: doctor?.name ?? "",
-      specialty: doctor?.specialty ?? "",
-      appointmentPrice: doctor?.appointmentPriceInCents
-        ? doctor.appointmentPriceInCents / 100
+      name: professional?.name ?? "",
+      specialty: professional?.specialty ?? "",
+      appointmentPrice: professional?.appointmentPriceInCents
+        ? professional.appointmentPriceInCents / 100
         : 0,
-      availableFromWeekDay: doctor?.availableFromWeekDay?.toString() ?? "1",
-      availableToWeekDay: doctor?.availableToWeekDay?.toString() ?? "5",
-      availableFromTime: doctor?.availableFromTime ?? "",
-      availableToTime: doctor?.availableToTime ?? "",
+      availableFromWeekDay:
+        professional?.availableFromWeekDay?.toString() ?? "1",
+      availableToWeekDay: professional?.availableToWeekDay?.toString() ?? "5",
+      availableFromTime: professional?.availableFromTime ?? "",
+      availableToTime: professional?.availableToTime ?? "",
     },
   });
 
-  const upsertDoctorAction = useAction(upsertDoctor, {
+  const upsertProfessionalAction = useAction(upsertProfessional, {
     onSuccess: () => {
-      toast.success("Doutor salvo com sucesso");
+      toast.success("Profissional salvo com sucesso");
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error("Erro ao salvar doutor");
+      toast.error("Erro ao salvar profissional");
       console.error(error);
     },
   });
 
-  const deleteDoctorAction = useAction(deleteDoctor, {
+  const deleteProfessionalAction = useAction(deleteProfessional, {
     onSuccess: () => {
-      toast.success("Médico excluído com sucesso");
+      toast.success("Profissional excluído com sucesso");
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error("Erro ao excluir médico");
+      toast.error("Erro ao excluir profissional");
       console.error(error);
     },
   });
 
-  const handleDeleteDoctorClick = () => {
-    if (!doctor?.id) {
+  const handleDeleteProfessionalClick = () => {
+    if (!professional?.id) {
       return;
     }
 
     if (!activeClinicId) {
-      toast.error("Selecione uma clínica antes de excluir o médico");
+      toast.error("Selecione uma clínica antes de excluir o profissional");
       return;
     }
 
-    deleteDoctorAction.execute({ id: doctor.id, clinicId: activeClinicId });
-    toast.success("Médico excluído com sucesso");
+    deleteProfessionalAction.execute({
+      id: professional.id,
+      clinicId: activeClinicId,
+    });
+    toast.success("Profissional excluído com sucesso");
     onSuccess?.();
   };
 
@@ -156,9 +160,9 @@ export default function UpsertDoctorForm({
       return;
     }
 
-    upsertDoctorAction.execute({
+    upsertProfessionalAction.execute({
       ...values,
-      id: doctor?.id,
+      id: professional?.id,
       availableFromWeekDay: parseInt(values.availableFromWeekDay),
       availableToWeekDay: parseInt(values.availableToWeekDay),
       appointmentPriceInCents: values.appointmentPrice * 100,
@@ -169,11 +173,13 @@ export default function UpsertDoctorForm({
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>{doctor ? doctor.name : "Adicionar médico"}</DialogTitle>
+        <DialogTitle>
+          {professional ? professional.name : "Adicionar profissional"}
+        </DialogTitle>
         <DialogDescription>
-          {doctor
-            ? "Edite as informações desse médico."
-            : "Adicione um novo médico."}
+          {professional
+            ? "Edite as informações desse profissional."
+            : "Adicione um novo profissional."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -439,36 +445,36 @@ export default function UpsertDoctorForm({
             />
           </div>
           <DialogFooter>
-            {doctor && (
+            {professional && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline">
-                    <TrashIcon className="h-4 w-4" /> Excluir Médico
+                    <TrashIcon className="h-4 w-4" /> Excluir Profissional
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Tem certeza que deseja excluir esse médico?
+                      Tem certeza que deseja excluir esse profissional?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Essa ação não pode ser desfeita. Isso irá excluir o médico
+                      Essa ação não pode ser desfeita. Isso irá excluir o profissional
                       e remover todos os seus dados.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteDoctorClick}>
+                    <AlertDialogAction onClick={handleDeleteProfessionalClick}>
                       Excluir
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button type="submit" disabled={upsertDoctorAction.isPending}>
-              {upsertDoctorAction.isPending ? (
+            <Button type="submit" disabled={upsertProfessionalAction.isPending}>
+              {upsertProfessionalAction.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : doctor ? (
+              ) : professional ? (
                 "Salvar"
               ) : (
                 "Adicionar"

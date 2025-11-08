@@ -13,8 +13,8 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Doctor Schedule",
-  description: "Sistema de agendamento de consultas médicas",
+  title: "Next Schedule",
+  description: "Plataforma de agendamentos para clínicas de diferentes nichos",
 };
 
 export default function RootLayout({

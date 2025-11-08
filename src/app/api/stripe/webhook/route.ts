@@ -62,7 +62,7 @@ export const POST = async (request: Request) => {
           | undefined) ??
         (invoice.lines?.data?.[0]?.metadata?.planSlug as string | undefined);
 
-      const plan = getPlanBySlug(planSlugFromInvoice ?? undefined);
+      const plan = await getPlanBySlug(planSlugFromInvoice ?? undefined);
 
       await db
         .update(usersTable)

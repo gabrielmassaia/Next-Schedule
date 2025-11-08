@@ -15,34 +15,38 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { doctorsTable } from "@/db/schema";
+import { professionalsTable } from "@/db/schema";
 
 import { getAvailability } from "../_helpers/availability";
-import UpsertDoctorForm from "./upsert-doctor-form";
+import UpsertProfessionalForm from "./upsert-professional-form";
 
-interface DoctorCardProps {
-  doctor: typeof doctorsTable.$inferSelect;
+interface ProfessionalCardProps {
+  professional: typeof professionalsTable.$inferSelect;
 }
 
-export default function DoctorCard({ doctor }: DoctorCardProps) {
-  const [isUpsertDoctorDialogOpen, setIsUpsertDoctorDialogOpen] =
+export default function ProfessionalCard({
+  professional,
+}: ProfessionalCardProps) {
+  const [isUpsertProfessionalDialogOpen, setIsUpsertProfessionalDialogOpen] =
     useState(false);
-  const doctorInitial = doctor.name
+  const professionalInitial = professional.name
     .split(" ")
     .map((name) => name[0])
     .join("");
-  const availability = getAvailability(doctor);
+  const availability = getAvailability(professional);
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
-            <AvatarFallback>{doctorInitial}</AvatarFallback>
+            <AvatarFallback>{professionalInitial}</AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="text-sm font-medium">{doctor.name}</h3>
-            <p className="text-muted-foreground text-sm">{doctor.specialty}</p>
+            <h3 className="text-sm font-medium">{professional.name}</h3>
+            <p className="text-muted-foreground text-sm">
+              {professional.specialty}
+            </p>
           </div>
         </div>
       </CardHeader>
@@ -59,25 +63,25 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
         </Badge>
         <Badge variant="outline">
           <DollarSignIcon className="mr-1" />
-          {formatCurrencyInCents(doctor.appointmentPriceInCents)}
+          {formatCurrencyInCents(professional.appointmentPriceInCents)}
         </Badge>
       </CardContent>
       <Separator />
       <CardFooter>
         <Dialog
-          open={isUpsertDoctorDialogOpen}
-          onOpenChange={setIsUpsertDoctorDialogOpen}
+          open={isUpsertProfessionalDialogOpen}
+          onOpenChange={setIsUpsertProfessionalDialogOpen}
         >
           <DialogTrigger asChild>
             <Button className="w-full">Editar Cadastro</Button>
           </DialogTrigger>
-          <UpsertDoctorForm
-            doctor={{
-              ...doctor,
+          <UpsertProfessionalForm
+            professional={{
+              ...professional,
               availableFromTime: availability.from.format("HH:mm:ss"),
               availableToTime: availability.to.format("HH:mm:ss"),
             }}
-            onSuccess={() => setIsUpsertDoctorDialogOpen(false)}
+            onSuccess={() => setIsUpsertProfessionalDialogOpen(false)}
           />
         </Dialog>
       </CardFooter>
