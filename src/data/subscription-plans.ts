@@ -1,4 +1,4 @@
-export type SubscriptionPlanSlug = "free" | "essential" | "scale";
+export type SubscriptionPlanSlug = "essential" | "pro" | "enterprise";
 
 export interface SubscriptionPlanLimits {
   clinics: number | null;
@@ -20,9 +20,10 @@ export interface SubscriptionPlan {
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    slug: "free",
-    name: "Starter",
-    description: "Ideal para experimentar o Doctor Schedule com um único consultório.",
+    slug: "essential",
+    name: "essential",
+    description:
+      "Ideal para experimentar o Next Schedule com uma única clinica.",
     priceInCents: 0,
     priority: 0,
     limits: {
@@ -38,9 +39,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
   },
   {
-    slug: "essential",
-    name: "Essential",
-    description: "Para profissionais autônomos ou pequenas clínicas que precisam de mais flexibilidade.",
+    slug: "pro",
+    name: "pro",
+    description:
+      "Para profissionais autônomos ou pequenas clínicas que precisam de mais flexibilidade.",
     priceInCents: 9900,
     stripePriceId: process.env.STRIPE_ESSENTIAL_PLAN_PRICE_ID,
     priority: 1,
@@ -59,9 +61,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
   },
   {
-    slug: "scale",
-    name: "Scale",
-    description: "Para redes de clínicas que precisam de recursos avançados e limites maiores.",
+    slug: "enterprise",
+    name: "enterprise",
+    description:
+      "Para redes de clínicas que precisam de recursos avançados e limites maiores.",
     priceInCents: 24900,
     priority: 2,
     limits: {
@@ -80,9 +83,11 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
 ];
 
-export const DEFAULT_PLAN_SLUG: SubscriptionPlanSlug = "free";
+export const DEFAULT_PLAN_SLUG: SubscriptionPlanSlug = "essential";
 
-export function getPlanBySlug(slug: string | null | undefined): SubscriptionPlan {
+export function getPlanBySlug(
+  slug: string | null | undefined,
+): SubscriptionPlan {
   const normalizedSlug = (slug ?? DEFAULT_PLAN_SLUG) as SubscriptionPlanSlug;
   const plan = SUBSCRIPTION_PLANS.find((item) => item.slug === normalizedSlug);
   if (plan) {

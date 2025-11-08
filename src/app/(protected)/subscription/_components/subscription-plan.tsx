@@ -109,7 +109,7 @@ export function SubscriptionPlan({
             disabled={
               createStripeCheckoutAction.isExecuting ||
               plan?.comingSoon ||
-              (isActive && plan.slug === "free") ||
+              (isActive && plan.slug === "essential") ||
               (!plan?.stripePriceId && !isActive)
             }
           >

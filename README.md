@@ -1,4 +1,4 @@
-# DoctorSchedule
+# NextSchedule
 
 Sistema de agendamento médico desenvolvido com Next.js 15, TypeScript e PostgreSQL.
 
@@ -16,7 +16,7 @@ Antes de começar, você precisa ter instalado em sua máquina:
 
 ```bash
 git clone [URL_DO_REPOSITÓRIO]
-cd doctorschedule
+cd Next-Schedule
 ```
 
 2. Instale as dependências:
@@ -36,7 +36,7 @@ pnpm install
 
 ```env
 # Database
-DATABASE_URL="postgresql://seu_usuario:sua_senha@localhost:5432/doctorschedule"
+DATABASE_URL="postgresql://seu_usuario:sua_senha@localhost:5432/nextschedule"
 
 # Auth
 AUTH_SECRET="seu_secret_aqui"
@@ -105,13 +105,11 @@ src/
 - **actions/**: Contém os Server Actions do Next.js 13+, responsáveis por operações no servidor como manipulação de dados e autenticação.
 
 - **app/**: Implementa o App Router do Next.js, onde cada pasta representa uma rota da aplicação.
-
   - `api/`: Endpoints da API REST
   - `auth/`: Páginas e rotas de autenticação
   - `(dashboard)/`: Grupo de rotas protegidas da aplicação
 
 - **components/**: Componentes React reutilizáveis organizados por domínio
-
   - `ui/`: Componentes básicos da interface (botões, inputs, etc)
   - `shared/`: Componentes compartilhados entre diferentes partes da aplicação
 
@@ -119,12 +117,10 @@ src/
   - `migrations/`: Histórico de alterações do banco
   - `schema/`: Definição das tabelas e relacionamentos
 - **hooks/**: Custom hooks React para reutilização de lógica
-
   - `auth/`: Hooks relacionados à autenticação
   - `form/`: Hooks para gerenciamento de formulários
 
 - **lib/**: Configurações e utilitários
-
   - `auth/`: Configuração do sistema de autenticação
   - `utils/`: Funções utilitárias gerais
   - `config/`: Configurações da aplicação
