@@ -8,8 +8,8 @@ import { headers } from "next/headers";
 import { db } from "@/db";
 import {
   appointmentsTable,
-  doctorsTable,
-  patientsTable,
+  clientsTable,
+  professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -42,7 +42,7 @@ export const addAppointment = actionClient
     }
 
     const availableTimes = await getAvailableTimes({
-      doctorId: appointmentData.doctorId,
+      professionalId: appointmentData.professionalId,
       clinicId,
       date: dayjs(appointmentData.date).format("YYYY-MM-DD"),
     });
@@ -61,23 +61,23 @@ export const addAppointment = actionClient
       .set("minute", parseInt(appointmentData.time.split(":")[1]))
       .toDate();
 
-    const [doctor, patient] = await Promise.all([
-      db.query.doctorsTable.findFirst({
+    const [professional, client] = await Promise.all([
+      db.query.professionalsTable.findFirst({
         where: and(
-          eq(doctorsTable.id, appointmentData.doctorId),
-          eq(doctorsTable.clinicId, clinicId),
+          eq(professionalsTable.id, appointmentData.professionalId),
+          eq(professionalsTable.clinicId, clinicId),
         ),
       }),
-      db.query.patientsTable.findFirst({
+      db.query.clientsTable.findFirst({
         where: and(
-          eq(patientsTable.id, appointmentData.patientId),
-          eq(patientsTable.clinicId, clinicId),
+          eq(clientsTable.id, appointmentData.clientId),
+          eq(clientsTable.clinicId, clinicId),
         ),
       }),
     ]);
 
-    if (!doctor || !patient) {
-      throw new Error("Paciente ou médico não pertence a esta clínica");
+    if (!professional || !client) {
+      throw new Error("Cliente ou profissional não pertence a esta clínica");
     }
 
     await db.insert(appointmentsTable).values({

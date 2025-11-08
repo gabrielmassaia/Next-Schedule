@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { getSubscriptionPlans } from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
 import { SubscriptionPlan } from "../(protected)/subscription/_components/subscription-plan";
@@ -12,39 +13,94 @@ export default async function SubscriptionPage() {
   if (!session) {
     redirect("/authentication");
   }
+  if (session.user.plan) {
+    redirect("/dashboard");
+  }
+  const plans = await getSubscriptionPlans();
+  const userPlanSlug = session.user.plan ?? null;
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-      <div className="mb-8 w-full max-w-3xl text-center">
-        <h1 className="mb-4 text-3xl font-bold text-gray-900">
-          Desbloqueie todo o potencial da sua clínica
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 via-white to-gray-100 p-6">
+      <div className="mb-10 w-full max-w-3xl text-center">
+        <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900">
+          Transforme o agendamento da sua clínica com inteligência artificial
         </h1>
-        <p className="mb-6 text-xl text-gray-600">
-          Para utilizar nossa plataforma e transformar a gestão do seu
-          consultório, é necessário escolher um plano que se adapte às suas
-          necessidades.
+        <p className="mb-6 text-lg text-gray-600 md:text-xl">
+          O Next Schedule combina automação, relatórios em tempo real e um
+          agente de IA que responde clientes em segundos. Escolha o plano ideal
+          e conquiste uma operação eficiente desde o primeiro atendimento.
         </p>
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="font-medium text-amber-800">
-            🚀{" "}
-            <span className="font-semibold">
-              Profissionais que utilizam nossa plataforma economizam em média 15
-              horas por semana
-            </span>{" "}
-            em tarefas administrativas. Não perca mais tempo com agendas manuais
-            e processos ineficientes!
-          </p>
+        <div className="grid gap-4 text-left md:grid-cols-3">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm">
+            <p className="font-semibold">Atendimento em tempo recorde</p>
+            <p>O agente de IA agenda consultas em até 30 segundos, 24/7.</p>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm">
+            <p className="font-semibold">Operação sem atritos</p>
+            <p>
+              Integre profissionais, salas e clínicas em um painel intuitivo.
+            </p>
+          </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
+            <p className="font-semibold">Mais clientes presentes</p>
+            <p>
+              Confirmações automáticas reduzem faltas com lembretes humanizados.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="w-full max-w-md">
-        <SubscriptionPlan userEmail={session.user.email} />
+      <div className="w-full max-w-md lg:max-w-6xl">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {plans.map((plan) => (
+            <SubscriptionPlan
+              key={plan.slug}
+              plan={plan}
+              isActive={plan.slug === userPlanSlug}
+              className="h-full"
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-8 max-w-lg text-center">
-        <p className="text-sm text-gray-500">
-          Junte-se a mais de 2.000 profissionais de saúde que já transformaram
-          sua rotina com nossa solução. Garantia de satisfação de 30 dias ou seu
-          dinheiro de volta.
+      <div className="mt-12 w-full max-w-4xl rounded-2xl border border-gray-200 bg-white/70 p-8 text-center shadow-lg backdrop-blur">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Por que clínicas líderes escolhem o Next Schedule?
+        </h2>
+        <p className="mt-4 text-sm text-gray-600 md:text-base">
+          Nossos clientes registram uma economia média de 15 horas semanais com
+          o agente de IA, que confirma consultas, envia lembretes personalizados
+          e mantém sua agenda sempre cheia. Você tem visibilidade total dos
+          dados para tomar decisões rápidas.
+        </p>
+        <div className="mt-6 grid gap-4 text-left sm:grid-cols-3">
+          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900">
+              Integração total
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              Conecte prontuários, pagamentos e comunicação em um só lugar.
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900">
+              Escala ilimitada
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              Gerencie múltiplas unidades mantendo padrões e governança.
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900">
+              Onboarding assistido
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              Equipe especializada acompanha a configuração do seu fluxo ideal.
+            </p>
+          </div>
+        </div>
+        <p className="mt-8 text-xs tracking-widest text-gray-400 uppercase">
+          Garantia de satisfação de 30 dias ou seu dinheiro de volta
         </p>
       </div>
     </div>

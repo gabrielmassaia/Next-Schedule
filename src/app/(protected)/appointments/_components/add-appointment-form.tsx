@@ -45,16 +45,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doctorsTable, patientsTable } from "@/db/schema";
+import { clientsTable, professionalsTable } from "@/db/schema";
 import { cn } from "@/lib/utils";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z.object({
-  patientId: z.string().min(1, {
-    message: "Paciente é obrigatório.",
+  clientId: z.string().min(1, {
+    message: "Cliente é obrigatório.",
   }),
-  doctorId: z.string().min(1, {
-    message: "Médico é obrigatório.",
+  professionalId: z.string().min(1, {
+    message: "Profissional é obrigatório.",
   }),
   appointmentPrice: z.number().min(1, {
     message: "Valor da consulta é obrigatório.",
@@ -69,14 +69,14 @@ const formSchema = z.object({
 
 interface AddAppointmentFormProps {
   isOpen: boolean;
-  patients: (typeof patientsTable.$inferSelect)[];
-  doctors: (typeof doctorsTable.$inferSelect)[];
+  clients: (typeof clientsTable.$inferSelect)[];
+  professionals: (typeof professionalsTable.$inferSelect)[];
   onSuccess?: () => void;
 }
 
 const AddAppointmentForm = ({
-  patients,
-  doctors,
+  clients,
+  professionals,
   onSuccess,
   isOpen,
 }: AddAppointmentFormProps) => {
@@ -85,54 +85,56 @@ const AddAppointmentForm = ({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
     defaultValues: {
-      patientId: "",
-      doctorId: "",
+      clientId: "",
+      professionalId: "",
       appointmentPrice: 0,
       date: undefined,
       time: "",
     },
   });
 
-  const selectedDoctorId = form.watch("doctorId");
-  const selectedPatientId = form.watch("patientId");
+  const selectedProfessionalId = form.watch("professionalId");
+  const selectedClientId = form.watch("clientId");
   const selectedDate = form.watch("date");
 
   const { data: availableTimes } = useQuery({
     queryKey: [
       "available-times",
       selectedDate,
-      selectedDoctorId,
+      selectedProfessionalId,
       activeClinicId,
     ],
     queryFn: () =>
       getAvailableTimes({
         date: dayjs(selectedDate).format("YYYY-MM-DD"),
-        doctorId: selectedDoctorId,
+        professionalId: selectedProfessionalId,
         clinicId: activeClinicId!,
       }),
-    enabled: !!selectedDate && !!selectedDoctorId && !!activeClinicId,
+    enabled: !!selectedDate && !!selectedProfessionalId && !!activeClinicId,
   });
 
-  // Atualizar o preço quando o médico for selecionado
+  // Atualizar o preço quando o profissional for selecionado
   useEffect(() => {
-    if (selectedDoctorId) {
-      const selectedDoctor = doctors.find(
-        (doctor) => doctor.id === selectedDoctorId,
+    if (selectedProfessionalId) {
+      const selectedProfessional = professionals.find(
+        (professional) => professional.id === selectedProfessionalId,
       );
-      if (selectedDoctor) {
+      if (selectedProfessional) {
         form.setValue(
           "appointmentPrice",
-          selectedDoctor.appointmentPriceInCents / 100,
+          selectedProfessional.appointmentPriceInCents / 100,
         );
       }
+    } else {
+      form.setValue("appointmentPrice", 0);
     }
-  }, [selectedDoctorId, doctors, form]);
+  }, [selectedProfessionalId, professionals, form]);
 
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        patientId: "",
-        doctorId: "",
+        clientId: "",
+        professionalId: "",
         appointmentPrice: 0,
         date: undefined,
         time: "",
@@ -164,19 +166,19 @@ const AddAppointmentForm = ({
   };
 
   const isDateAvailable = (date: Date) => {
-    if (!selectedDoctorId) return false;
-    const selectedDoctor = doctors.find(
-      (doctor) => doctor.id === selectedDoctorId,
+    if (!selectedProfessionalId) return false;
+    const selectedProfessional = professionals.find(
+      (professional) => professional.id === selectedProfessionalId,
     );
-    if (!selectedDoctor) return false;
+    if (!selectedProfessional) return false;
     const dayOfWeek = date.getDay();
     return (
-      dayOfWeek >= selectedDoctor?.availableFromWeekDay &&
-      dayOfWeek <= selectedDoctor?.availableToWeekDay
+      dayOfWeek >= selectedProfessional?.availableFromWeekDay &&
+      dayOfWeek <= selectedProfessional?.availableToWeekDay
     );
   };
 
-  const isDateTimeEnabled = selectedPatientId && selectedDoctorId;
+  const isDateTimeEnabled = selectedClientId && selectedProfessionalId;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -193,23 +195,23 @@ const AddAppointmentForm = ({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="patientId"
+            name="clientId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Paciente</FormLabel>
+                <FormLabel>Cliente</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione um paciente" />
+                      <SelectValue placeholder="Selecione um cliente" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.name}
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -221,23 +223,23 @@ const AddAppointmentForm = ({
 
           <FormField
             control={form.control}
-            name="doctorId"
+            name="professionalId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Médico</FormLabel>
+                <FormLabel>Profissional</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione um médico" />
+                      <SelectValue placeholder="Selecione um profissional" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {doctors.map((doctor) => (
-                      <SelectItem key={doctor.id} value={doctor.id}>
-                        {doctor.name} - {doctor.specialty}
+                    {professionals.map((professional) => (
+                      <SelectItem key={professional.id} value={professional.id}>
+                        {professional.name} - {professional.specialty}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -264,7 +266,7 @@ const AddAppointmentForm = ({
                   thousandSeparator="."
                   prefix="R$ "
                   allowNegative={false}
-                  disabled={!selectedDoctorId}
+                  disabled={!selectedProfessionalId}
                   customInput={Input}
                 />
                 <FormMessage />

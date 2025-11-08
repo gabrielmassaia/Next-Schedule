@@ -12,7 +12,11 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import {
+  appointmentsTable,
+  clientsTable,
+  professionalsTable,
+} from "@/db/schema";
 
 import AddAppointmentButton from "./_components/add-appointment-button";
 import { appointmentsTableColumns } from "./_components/table-columns";
@@ -23,18 +27,18 @@ const AppointmentsPage = async () => {
     return null;
   }
 
-  const [patients, doctors, appointments] = await Promise.all([
-    db.query.patientsTable.findMany({
-      where: eq(patientsTable.clinicId, activeClinic.id),
+  const [clients, professionals, appointments] = await Promise.all([
+    db.query.clientsTable.findMany({
+      where: eq(clientsTable.clinicId, activeClinic.id),
     }),
-    db.query.doctorsTable.findMany({
-      where: eq(doctorsTable.clinicId, activeClinic.id),
+    db.query.professionalsTable.findMany({
+      where: eq(professionalsTable.clinicId, activeClinic.id),
     }),
     db.query.appointmentsTable.findMany({
       where: eq(appointmentsTable.clinicId, activeClinic.id),
       with: {
-        patient: true,
-        doctor: true,
+        client: true,
+        professional: true,
       },
     }),
   ]);
@@ -49,7 +53,10 @@ const AppointmentsPage = async () => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddAppointmentButton patients={patients} doctors={doctors} />
+          <AddAppointmentButton
+            clients={clients}
+            professionals={professionals}
+          />
         </PageActions>
       </PageHeader>
       <PageContent>

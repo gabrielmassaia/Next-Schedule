@@ -5,10 +5,24 @@ export const ACTIVE_CLINIC_COOKIE = "activeClinicId";
 export type ClinicSummary = {
   id: string;
   name: string;
+  cnpj: string;
+  phone: string;
+  email: string | null;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string;
+  zipCode: string;
+  niche: {
+    id: string;
+    name: string;
+    description: string | null;
+  } | null;
 };
 
-export function readActiveClinicIdFromCookies() {
-  return cookies().get(ACTIVE_CLINIC_COOKIE)?.value ?? null;
+export async function readActiveClinicIdFromCookies() {
+  const cookieStore = await cookies();
+  return cookieStore.get(ACTIVE_CLINIC_COOKIE)?.value ?? null;
 }
 
 export function selectActiveClinic(

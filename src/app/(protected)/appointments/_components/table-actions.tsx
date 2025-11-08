@@ -29,14 +29,14 @@ import { appointmentsTable } from "@/db/schema";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
-  patient: {
+  client: {
     id: string;
     name: string;
     email: string;
     phoneNumber: string;
     sex: "male" | "female";
   };
-  doctor: {
+  professional: {
     id: string;
     name: string;
     specialty: string;
@@ -77,10 +77,10 @@ const AppointmentsTableActions = ({
       <DropdownMenuTrigger>
         <Button variant="ghost" size="icon">
           <MoreVerticalIcon className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuLabel>{appointment.patient.name}</DropdownMenuLabel>
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+      <DropdownMenuLabel>{appointment.client.name}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <AlertDialog>
           <AlertDialogTrigger asChild>

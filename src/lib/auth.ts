@@ -29,15 +29,39 @@ export const auth = betterAuth({
         db.query.usersToClinicsTable.findMany({
           where: eq(usersToClinicsTable.userId, user.id),
           with: {
-            clinic: true,
+            clinic: {
+              with: {
+                niche: true,
+              },
+            },
           },
         }),
       ]);
 
-      const normalizedClinics: ClinicSummary[] = clinics.map((clinic) => ({
-        id: clinic.clinicId,
-        name: clinic.clinic?.name ?? "",
-      }));
+      const normalizedClinics: ClinicSummary[] = clinics.map((clinic) => {
+        const clinicData = clinic.clinic;
+        const niche = clinicData?.niche;
+
+        return {
+          id: clinic.clinicId,
+          name: clinicData?.name ?? "",
+          cnpj: clinicData?.cnpj ?? "",
+          phone: clinicData?.phone ?? "",
+          email: clinicData?.email ?? null,
+          addressLine1: clinicData?.addressLine1 ?? "",
+          addressLine2: clinicData?.addressLine2 ?? null,
+          city: clinicData?.city ?? "",
+          state: clinicData?.state ?? "",
+          zipCode: clinicData?.zipCode ?? "",
+          niche: niche
+            ? {
+                id: niche.id,
+                name: niche.name,
+                description: niche.description ?? null,
+              }
+            : null,
+        } satisfies ClinicSummary;
+      });
 
       return {
         user: {

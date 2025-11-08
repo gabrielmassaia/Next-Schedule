@@ -1,4 +1,3 @@
-import { desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -10,12 +9,12 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { getPlanBySlug,SUBSCRIPTION_PLANS } from "@/data/subscription-plans";
-import { db } from "@/db";
-import { integrationApiKeysTable } from "@/db/schema";
+import {
+  getPlanBySlug,
+  getSubscriptionPlans,
+} from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
-import { IntegrationApiKeys } from "./_components/integration-api-keys";
 import { SubscriptionPlan } from "./_components/subscription-plan";
 
 const SubscriptionPage = async () => {
@@ -26,13 +25,15 @@ const SubscriptionPage = async () => {
     redirect("/authentication");
   }
 
-  const currentPlan = getPlanBySlug(session.user.plan);
+  if (!session.user.plan) {
+    redirect("/signature");
+  }
+
+  const [currentPlan, plans] = await Promise.all([
+    getPlanBySlug(session.user.plan),
+    getSubscriptionPlans(),
+  ]);
   const clinicsCount = session.user.clinics?.length ?? 0;
-  const apiKeys = await db
-    .select()
-    .from(integrationApiKeysTable)
-    .where(eq(integrationApiKeysTable.userId, session.user.id))
-    .orderBy(desc(integrationApiKeysTable.createdAt));
 
   return (
     <PageContainer>
@@ -45,15 +46,18 @@ const SubscriptionPage = async () => {
           </PageDescription>
         </PageHeaderContent>
       </PageHeader>
-      <PageContent className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {SUBSCRIPTION_PLANS.map((plan) => (
-          <SubscriptionPlan
-            key={plan.slug}
-            plan={plan}
-            isActive={plan.slug === currentPlan.slug}
-            className="w-full"
-          />
-        ))}
+      <PageContent>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {plans.map((plan) => (
+            <SubscriptionPlan
+              key={plan.slug}
+              plan={plan}
+              isActive={plan.slug === currentPlan.slug}
+              className="h-full"
+              inactiveCtaLabel={plan.slug !== currentPlan.slug ? "Upgrade plano" : undefined}
+            />
+          ))}
+        </div>
       </PageContent>
       <PageContent className="mt-6 space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -62,14 +66,9 @@ const SubscriptionPage = async () => {
             ? ` de ${currentPlan.limits.clinics}`
             : " (ilimitado)"}
         </p>
-        <IntegrationApiKeys
-          apiKeys={apiKeys.map((key) => ({
-            id: key.id,
-            name: key.name,
-            createdAt: key.createdAt.toISOString(),
-            lastUsedAt: key.lastUsedAt ? key.lastUsedAt.toISOString() : null,
-          }))}
-        />
+        <p className="text-xs text-muted-foreground">
+          Plano atual: <span className="font-semibold text-foreground">{currentPlan.name}</span>
+        </p>
       </PageContent>
     </PageContainer>
   );

@@ -8,16 +8,16 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   appointmentsTable,
-  doctorsTable,
+  clientsTable,
   integrationApiKeysTable,
-  patientsTable,
+  professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
 
 const schema = z.object({
   clinicId: z.string().uuid(),
-  patientId: z.string().uuid(),
-  doctorId: z.string().uuid(),
+  clientId: z.string().uuid(),
+  professionalId: z.string().uuid(),
   date: z.string().date(),
   time: z.string(),
   appointmentPriceInCents: z.number().int().positive(),
@@ -25,7 +25,8 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const headerKey = request.headers.get("authorization")
+    const headerKey = request.headers
+      .get("authorization")
       ?.replace("Bearer", "")
       .trim();
     const apiKey = headerKey || request.headers.get("x-api-key");
@@ -64,24 +65,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [doctor, patient] = await Promise.all([
-      db.query.doctorsTable.findFirst({
+    const [professional, client] = await Promise.all([
+      db.query.professionalsTable.findFirst({
         where: and(
-          eq(doctorsTable.id, parsed.doctorId),
-          eq(doctorsTable.clinicId, parsed.clinicId),
+          eq(professionalsTable.id, parsed.professionalId),
+          eq(professionalsTable.clinicId, parsed.clinicId),
         ),
       }),
-      db.query.patientsTable.findFirst({
+      db.query.clientsTable.findFirst({
         where: and(
-          eq(patientsTable.id, parsed.patientId),
-          eq(patientsTable.clinicId, parsed.clinicId),
+          eq(clientsTable.id, parsed.clientId),
+          eq(clientsTable.clinicId, parsed.clinicId),
         ),
       }),
     ]);
 
-    if (!doctor || !patient) {
+    if (!professional || !client) {
       return NextResponse.json(
-        { message: "Paciente ou médico não encontrado na clínica" },
+        { message: "Cliente ou profissional não encontrado na clínica" },
         { status: 404 },
       );
     }
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     const conflict = await db.query.appointmentsTable.findFirst({
       where: and(
         eq(appointmentsTable.clinicId, parsed.clinicId),
-        eq(appointmentsTable.doctorId, parsed.doctorId),
+        eq(appointmentsTable.professionalId, parsed.professionalId),
         eq(appointmentsTable.date, appointmentDateTime),
       ),
     });
@@ -110,8 +111,8 @@ export async function POST(request: NextRequest) {
       .insert(appointmentsTable)
       .values({
         clinicId: parsed.clinicId,
-        doctorId: parsed.doctorId,
-        patientId: parsed.patientId,
+        professionalId: parsed.professionalId,
+        clientId: parsed.clientId,
         date: appointmentDateTime,
         appointmentPriceInCents: parsed.appointmentPriceInCents,
       })

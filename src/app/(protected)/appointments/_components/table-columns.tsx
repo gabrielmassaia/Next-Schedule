@@ -9,14 +9,14 @@ import { appointmentsTable } from "@/db/schema";
 import AppointmentsTableActions from "./table-actions";
 
 type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
-  patient: {
+  client: {
     id: string;
     name: string;
     email: string;
     phoneNumber: string;
     sex: "male" | "female";
   };
-  doctor: {
+  professional: {
     id: string;
     name: string;
     specialty: string;
@@ -25,17 +25,17 @@ type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
 
 export const appointmentsTableColumns: ColumnDef<AppointmentWithRelations>[] = [
   {
-    id: "patient",
-    accessorKey: "patient.name",
-    header: "Paciente",
+    id: "client",
+    accessorKey: "client.name",
+    header: "Cliente",
   },
   {
-    id: "doctor",
-    accessorKey: "doctor.name",
-    header: "Médico",
+    id: "professional",
+    accessorKey: "professional.name",
+    header: "Profissional",
     cell: (params) => {
       const appointment = params.row.original;
-      return `${appointment.doctor.name}`;
+      return `${appointment.professional.name}`;
     },
   },
   {
@@ -51,7 +51,7 @@ export const appointmentsTableColumns: ColumnDef<AppointmentWithRelations>[] = [
   },
   {
     id: "specialty",
-    accessorKey: "doctor.specialty",
+    accessorKey: "professional.specialty",
     header: "Especialidade",
   },
   {

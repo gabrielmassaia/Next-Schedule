@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getClinicNiches } from "@/data/clinic-niches";
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
@@ -19,13 +20,19 @@ export default async function ClinicFormPage() {
     redirect("/authentication");
   }
 
+  if (!session.user.plan) {
+    redirect("/signature");
+  }
+
   const clinics = session.user.clinics ?? [];
-  const plan = getPlanBySlug(session.user.plan);
+  const plan = await getPlanBySlug(session.user.plan);
   const clinicsLimit = plan.limits.clinics;
 
   if (typeof clinicsLimit === "number" && clinics.length >= clinicsLimit) {
     redirect("/subscription");
   }
+
+  const niches = await getClinicNiches();
 
   return (
     <div>
@@ -37,7 +44,7 @@ export default async function ClinicFormPage() {
               Adicione uma clínica para continuar.
             </DialogDescription>
           </DialogHeader>
-          <FormClinic />
+          <FormClinic niches={niches} />
         </DialogContent>
       </Dialog>
     </div>

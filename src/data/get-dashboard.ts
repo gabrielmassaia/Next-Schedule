@@ -4,7 +4,11 @@ import utc from "dayjs/plugin/utc";
 import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
 
 import { db } from "@/db";
-import { appointmentsTable, doctorsTable, patientsTable } from "@/db/schema";
+import {
+  appointmentsTable,
+  clientsTable,
+  professionalsTable,
+} from "@/db/schema";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -24,9 +28,9 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
   const [
     [totalRevenue],
     [totalAppointments],
-    [totalPatients],
-    [totalDoctors],
-    topDoctors,
+    [totalClients],
+    [totalProfessionals],
+    topProfessionals,
     topSpecialties,
     todayAppointments,
     dailyAppointmentsData,
@@ -59,42 +63,45 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
       .select({
         total: count(),
       })
-      .from(patientsTable)
-      .where(eq(patientsTable.clinicId, clinicId)),
+      .from(clientsTable)
+      .where(eq(clientsTable.clinicId, clinicId)),
     db
       .select({
         total: count(),
       })
-      .from(doctorsTable)
-      .where(eq(doctorsTable.clinicId, clinicId)),
+      .from(professionalsTable)
+      .where(eq(professionalsTable.clinicId, clinicId)),
     db
       .select({
-        id: doctorsTable.id,
-        name: doctorsTable.name,
-        avatarImageUrl: doctorsTable.avatarImageUrl,
-        specialty: doctorsTable.specialty,
+        id: professionalsTable.id,
+        name: professionalsTable.name,
+        avatarImageUrl: professionalsTable.avatarImageUrl,
+        specialty: professionalsTable.specialty,
         appointments: count(appointmentsTable.id),
       })
-      .from(doctorsTable)
+      .from(professionalsTable)
       .leftJoin(
         appointmentsTable,
         and(
-          eq(appointmentsTable.doctorId, doctorsTable.id),
+          eq(appointmentsTable.professionalId, professionalsTable.id),
           gte(appointmentsTable.date, new Date(from)),
           lte(appointmentsTable.date, new Date(to)),
         ),
       )
-      .where(eq(doctorsTable.clinicId, clinicId))
-      .groupBy(doctorsTable.id)
+      .where(eq(professionalsTable.clinicId, clinicId))
+      .groupBy(professionalsTable.id)
       .orderBy(desc(count(appointmentsTable.id)))
       .limit(10),
     db
       .select({
-        specialty: doctorsTable.specialty,
+        specialty: professionalsTable.specialty,
         appointments: count(appointmentsTable.id),
       })
       .from(appointmentsTable)
-      .innerJoin(doctorsTable, eq(appointmentsTable.doctorId, doctorsTable.id))
+      .innerJoin(
+        professionalsTable,
+        eq(appointmentsTable.professionalId, professionalsTable.id),
+      )
       .where(
         and(
           eq(appointmentsTable.clinicId, clinicId),
@@ -102,7 +109,7 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
           lte(appointmentsTable.date, new Date(to)),
         ),
       )
-      .groupBy(doctorsTable.specialty)
+      .groupBy(professionalsTable.specialty)
       .orderBy(desc(count(appointmentsTable.id))),
     db.query.appointmentsTable.findMany({
       where: and(
@@ -111,8 +118,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
         lte(appointmentsTable.date, todayEnd),
       ),
       with: {
-        patient: true,
-        doctor: true,
+        client: true,
+        professional: true,
       },
     }),
     db
@@ -138,9 +145,9 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
   return {
     totalRevenue,
     totalAppointments,
-    totalPatients,
-    totalDoctors,
-    topDoctors,
+    totalClients,
+    totalProfessionals,
+    topProfessionals,
     topSpecialties,
     todayAppointments,
     dailyAppointmentsData,

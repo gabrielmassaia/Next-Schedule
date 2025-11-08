@@ -3,9 +3,9 @@
 import {
   CalendarDays,
   CreditCard,
+  KeyRound,
   LayoutDashboard,
   LogOut,
-  Stethoscope,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -48,13 +48,13 @@ const items = [
     icon: CalendarDays,
   },
   {
-    title: "Doutores",
-    url: "/doctors",
-    icon: Stethoscope,
+    title: "Profissionais",
+    url: "/professionals",
+    icon: UserRound,
   },
   {
-    title: "Pacientes",
-    url: "/patients",
+    title: "Clientes",
+    url: "/clients",
     icon: UsersRound,
   },
 ];
@@ -78,7 +78,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4">
-        <Image src="/logo.svg" alt="Doctor Schedule" width={136} height={28} />
+        <Image src="/logo.png" alt="Next Schedule" width={136} height={28} />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -110,6 +110,14 @@ export function AppSidebar() {
                   <Link href="/subscription">
                     <CreditCard />
                     <span>Planos</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/apikey"}>
+                  <Link href="/apikey">
+                    <KeyRound />
+                    <span>API Key</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -159,8 +167,7 @@ export function AppSidebar() {
                     Nenhuma clínica cadastrada
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => router.push("/clinic-form")}
-                >
+                <DropdownMenuItem onClick={() => router.push("/clinic-form")}>
                   Adicionar clínica
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
