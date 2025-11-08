@@ -13,6 +13,9 @@ export default async function SubscriptionPage() {
   if (!session) {
     redirect("/authentication");
   }
+  if (session.user.plan) {
+    redirect("/dashboard");
+  }
   const plans = await getSubscriptionPlans();
   const userPlanSlug = session.user.plan ?? null;
 
@@ -24,7 +27,7 @@ export default async function SubscriptionPage() {
         </h1>
         <p className="mb-6 text-lg text-gray-600 md:text-xl">
           O Next Schedule combina automação, relatórios em tempo real e um
-          agente de IA que responde pacientes em segundos. Escolha o plano ideal
+          agente de IA que responde clientes em segundos. Escolha o plano ideal
           e conquiste uma operação eficiente desde o primeiro atendimento.
         </p>
         <div className="grid gap-4 text-left md:grid-cols-3">
@@ -39,7 +42,7 @@ export default async function SubscriptionPage() {
             </p>
           </div>
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
-            <p className="font-semibold">Mais pacientes presentes</p>
+            <p className="font-semibold">Mais clientes presentes</p>
             <p>
               Confirmações automáticas reduzem faltas com lembretes humanizados.
             </p>

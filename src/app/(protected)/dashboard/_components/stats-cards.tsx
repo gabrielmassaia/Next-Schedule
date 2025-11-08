@@ -11,14 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface StatsCardsProps {
   totalRevenue: number | null;
   totalAppointments: number;
-  totalPatients: number;
+  totalClients: number;
   totalProfessionals: number;
 }
 
 const StatsCards = ({
   totalRevenue,
   totalAppointments,
-  totalPatients,
+  totalClients,
   totalProfessionals,
 }: StatsCardsProps) => {
   const stats = [
@@ -33,8 +33,8 @@ const StatsCards = ({
       icon: CalendarIcon,
     },
     {
-      title: "Pacientes",
-      value: totalPatients.toString(),
+      title: "Clientes",
+      value: totalClients.toString(),
       icon: UserIcon,
     },
     {

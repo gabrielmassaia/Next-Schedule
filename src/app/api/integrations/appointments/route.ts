@@ -8,15 +8,15 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   appointmentsTable,
+  clientsTable,
   integrationApiKeysTable,
-  patientsTable,
   professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
 
 const schema = z.object({
   clinicId: z.string().uuid(),
-  patientId: z.string().uuid(),
+  clientId: z.string().uuid(),
   professionalId: z.string().uuid(),
   date: z.string().date(),
   time: z.string(),
@@ -64,24 +64,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [professional, patient] = await Promise.all([
+    const [professional, client] = await Promise.all([
       db.query.professionalsTable.findFirst({
         where: and(
           eq(professionalsTable.id, parsed.professionalId),
           eq(professionalsTable.clinicId, parsed.clinicId),
         ),
       }),
-      db.query.patientsTable.findFirst({
+      db.query.clientsTable.findFirst({
         where: and(
-          eq(patientsTable.id, parsed.patientId),
-          eq(patientsTable.clinicId, parsed.clinicId),
+          eq(clientsTable.id, parsed.clientId),
+          eq(clientsTable.clinicId, parsed.clinicId),
         ),
       }),
     ]);
 
-    if (!professional || !patient) {
+    if (!professional || !client) {
       return NextResponse.json(
-        { message: "Paciente ou profissional não encontrado na clínica" },
+        { message: "Cliente ou profissional não encontrado na clínica" },
         { status: 404 },
       );
     }
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       .values({
         clinicId: parsed.clinicId,
         professionalId: parsed.professionalId,
-        patientId: parsed.patientId,
+        clientId: parsed.clientId,
         date: appointmentDateTime,
         appointmentPriceInCents: parsed.appointmentPriceInCents,
       })

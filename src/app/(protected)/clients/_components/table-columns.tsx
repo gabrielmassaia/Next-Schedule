@@ -3,14 +3,14 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
-import { patientsTable } from "@/db/schema";
+import { clientsTable } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
-import PatientTableActions from "./table-actions";
+import ClientTableActions from "./table-actions";
 
-type Patient = typeof patientsTable.$inferSelect;
+type Client = typeof clientsTable.$inferSelect;
 
-export const PatientsTableColumns: ColumnDef<Patient>[] = [
+export const ClientsTableColumns: ColumnDef<Client>[] = [
   {
     id: "name",
     accessorKey: "name",
@@ -92,8 +92,8 @@ export const PatientsTableColumns: ColumnDef<Patient>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const patient = row.original;
-      return <PatientTableActions patient={patient} />;
+      const client = row.original;
+      return <ClientTableActions client={client} />;
     },
   },
 ];

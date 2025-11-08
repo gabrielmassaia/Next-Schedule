@@ -9,7 +9,7 @@ import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
 import z from "zod";
 
-import { upsertPatient } from "@/actions/upsert-patient";
+import { upsertClient } from "@/actions/upsert-client";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -34,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { patientsTable } from "@/db/schema";
+import { clientsTable } from "@/db/schema";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z.object({
@@ -64,26 +64,26 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface UpsertPatientFormProps {
+interface UpsertClientFormProps {
   isOpen: boolean;
-  patient?: typeof patientsTable.$inferSelect;
+  client?: typeof clientsTable.$inferSelect;
   onSuccess?: () => void;
 }
 
-export default function UpsertPatientForm({
+export default function UpsertClientForm({
   isOpen,
-  patient,
+  client,
   onSuccess,
-}: UpsertPatientFormProps) {
+}: UpsertClientFormProps) {
   const { activeClinicId } = useActiveClinic();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: patient?.name ?? "",
-      email: patient?.email ?? "",
-      phoneNumber: patient?.phoneNumber ?? "",
-      sex: patient?.sex ?? "male",
-      status: patient?.status ?? "active",
+      name: client?.name ?? "",
+      email: client?.email ?? "",
+      phoneNumber: client?.phoneNumber ?? "",
+      sex: client?.sex ?? "male",
+      status: client?.status ?? "active",
     },
   });
 
@@ -94,38 +94,38 @@ export default function UpsertPatientForm({
   }, [isOpen, form]);
 
   useEffect(() => {
-    if (patient && isOpen) {
+    if (client && isOpen) {
       form.reset({
-        name: patient.name,
-        email: patient.email,
-        phoneNumber: patient.phoneNumber,
-        sex: patient.sex,
-        status: patient.status,
+        name: client.name,
+        email: client.email,
+        phoneNumber: client.phoneNumber,
+        sex: client.sex,
+        status: client.status,
       });
     }
-  }, [patient, form, isOpen]);
+  }, [client, form, isOpen]);
 
-  const upsertPatientAction = useAction(upsertPatient, {
+  const upsertClientAction = useAction(upsertClient, {
     onSuccess: () => {
-      toast.success("Paciente salvo com sucesso");
+      toast.success("Cliente salvo com sucesso");
       form.reset();
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error("Erro ao salvar paciente");
+      toast.error("Erro ao salvar cliente");
       console.error(error);
     },
   });
 
   const onSubmit = (values: FormValues) => {
     if (!activeClinicId) {
-      toast.error("Selecione uma clínica antes de salvar o paciente");
+      toast.error("Selecione uma clínica antes de salvar o cliente");
       return;
     }
 
-    upsertPatientAction.execute({
+    upsertClientAction.execute({
       ...values,
-      id: patient?.id,
+      id: client?.id,
       clinicId: activeClinicId,
     });
   };
@@ -134,12 +134,12 @@ export default function UpsertPatientForm({
     <DialogContent>
       <DialogHeader>
         <DialogTitle>
-          {patient ? patient.name : "Adicionar paciente"}
+          {client ? client.name : "Adicionar cliente"}
         </DialogTitle>
         <DialogDescription>
-          {patient
-            ? "Edite as informações desse paciente."
-            : "Adicione um novo paciente."}
+          {client
+            ? "Edite as informações desse cliente."
+            : "Adicione um novo cliente."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -153,7 +153,7 @@ export default function UpsertPatientForm({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Digite o nome completo do paciente"
+                    placeholder="Digite o nome completo do cliente"
                     autoComplete="name"
                   />
                 </FormControl>
@@ -171,7 +171,7 @@ export default function UpsertPatientForm({
                   <Input
                     type="email"
                     {...field}
-                    placeholder="Digite o email do paciente"
+                    placeholder="Digite o email do cliente"
                     autoComplete="email"
                   />
                 </FormControl>
@@ -194,7 +194,7 @@ export default function UpsertPatientForm({
                     onValueChange={(values) => {
                       field.onChange(values.value);
                     }}
-                    placeholder="Digite o telefone do paciente"
+                    placeholder="Digite o telefone do cliente"
                   />
                 </FormControl>
                 <FormMessage />
@@ -213,7 +213,7 @@ export default function UpsertPatientForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o sexo do paciente" />
+                      <SelectValue placeholder="Selecione o sexo do cliente" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -226,10 +226,10 @@ export default function UpsertPatientForm({
             )}
           />
           <DialogFooter>
-            <Button type="submit" disabled={upsertPatientAction.isPending}>
-              {upsertPatientAction.isPending ? (
+            <Button type="submit" disabled={upsertClientAction.isPending}>
+              {upsertClientAction.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : patient ? (
+              ) : client ? (
                 "Salvar"
               ) : (
                 "Adicionar"

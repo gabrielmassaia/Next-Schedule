@@ -14,7 +14,7 @@ import {
 import { db } from "@/db";
 import {
   appointmentsTable,
-  patientsTable,
+  clientsTable,
   professionalsTable,
 } from "@/db/schema";
 
@@ -27,9 +27,9 @@ const AppointmentsPage = async () => {
     return null;
   }
 
-  const [patients, professionals, appointments] = await Promise.all([
-    db.query.patientsTable.findMany({
-      where: eq(patientsTable.clinicId, activeClinic.id),
+  const [clients, professionals, appointments] = await Promise.all([
+    db.query.clientsTable.findMany({
+      where: eq(clientsTable.clinicId, activeClinic.id),
     }),
     db.query.professionalsTable.findMany({
       where: eq(professionalsTable.clinicId, activeClinic.id),
@@ -37,7 +37,7 @@ const AppointmentsPage = async () => {
     db.query.appointmentsTable.findMany({
       where: eq(appointmentsTable.clinicId, activeClinic.id),
       with: {
-        patient: true,
+        client: true,
         professional: true,
       },
     }),
@@ -54,7 +54,7 @@ const AppointmentsPage = async () => {
         </PageHeaderContent>
         <PageActions>
           <AddAppointmentButton
-            patients={patients}
+            clients={clients}
             professionals={professionals}
           />
         </PageActions>
