@@ -10,10 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { patientsTable } from "@/db/schema";
+import { clientsTable } from "@/db/schema";
 
 interface TableFiltersProps {
-  table: Table<typeof patientsTable.$inferSelect>;
+  table: Table<typeof clientsTable.$inferSelect>;
 }
 
 const statusOptions = {
@@ -32,7 +32,7 @@ export function TableFilters({ table }: TableFiltersProps) {
         <div className="relative w-64">
           <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
-            placeholder="Buscar pacientes..."
+            placeholder="Buscar clientes..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)

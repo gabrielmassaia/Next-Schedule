@@ -20,8 +20,9 @@ export type ClinicSummary = {
   } | null;
 };
 
-export function readActiveClinicIdFromCookies() {
-  return cookies().get(ACTIVE_CLINIC_COOKIE)?.value ?? null;
+export async function readActiveClinicIdFromCookies() {
+  const cookieStore = await cookies();
+  return cookieStore.get(ACTIVE_CLINIC_COOKIE)?.value ?? null;
 }
 
 export function selectActiveClinic(

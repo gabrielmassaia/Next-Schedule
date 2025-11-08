@@ -3,8 +3,8 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { togglePatientStatus } from "@/actions/deactivate-patient";
-import { deletePatient } from "@/actions/delete-patient";
+import { toggleClientStatus } from "@/actions/deactivate-client";
+import { deleteClient } from "@/actions/delete-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,70 +26,70 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { patientsTable } from "@/db/schema";
+import { clientsTable } from "@/db/schema";
 import { useActiveClinic } from "@/providers/active-clinic";
 
-import UpsertPatientForm from "./upsert-patient-form";
+import UpsertClientForm from "./upsert-client-form";
 
-interface PatientTableActionsProps {
-  patient: typeof patientsTable.$inferSelect;
+interface ClientTableActionsProps {
+  client: typeof clientsTable.$inferSelect;
 }
 
-export default function PatientTableActions({
-  patient,
-}: PatientTableActionsProps) {
+export default function ClientTableActions({
+  client,
+}: ClientTableActionsProps) {
   const [upsertDialogIsOpen, setUpsertDialogIsOpen] = useState(false);
   const { activeClinicId } = useActiveClinic();
 
-  const toggleStatusAction = useAction(togglePatientStatus, {
+  const toggleStatusAction = useAction(toggleClientStatus, {
     onSuccess: () => {
       toast.success(
-        `Paciente ${patient.status === "active" ? "inativado" : "ativado"} com sucesso`,
+        `Cliente ${client.status === "active" ? "inativado" : "ativado"} com sucesso`,
       );
     },
     onError: (error) => {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Erro ao alterar status do paciente",
+          : "Erro ao alterar status do cliente",
       );
     },
   });
 
-  const deletePatientAction = useAction(deletePatient, {
+  const deleteClientAction = useAction(deleteClient, {
     onSuccess: () => {
-      toast.success("Paciente excluído permanentemente com sucesso");
+      toast.success("Cliente excluído permanentemente com sucesso");
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error ? error.message : "Erro ao excluir o paciente",
+        error instanceof Error ? error.message : "Erro ao excluir o cliente",
       );
     },
   });
 
   const handleToggleStatus = () => {
-    if (!patient) return;
+    if (!client) return;
     if (!activeClinicId) {
-      toast.error("Selecione uma clínica antes de alterar o paciente");
+      toast.error("Selecione uma clínica antes de alterar o cliente");
       return;
     }
     toggleStatusAction.execute({
-      id: patient.id,
-      status: patient.status === "active" ? "inactive" : "active",
+      id: client.id,
+      status: client.status === "active" ? "inactive" : "active",
       clinicId: activeClinicId,
     });
   };
 
   const handleDelete = () => {
-    if (!patient) return;
+    if (!client) return;
     if (!activeClinicId) {
-      toast.error("Selecione uma clínica antes de excluir o paciente");
+      toast.error("Selecione uma clínica antes de excluir o cliente");
       return;
     }
-    deletePatientAction.execute({ id: patient.id, clinicId: activeClinicId });
+    deleteClientAction.execute({ id: client.id, clinicId: activeClinicId });
   };
 
-  const isInactive = patient.status === "inactive";
+  const isInactive = client.status === "inactive";
 
   return (
     <>
@@ -101,7 +101,7 @@ export default function PatientTableActions({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuLabel>{patient.name}</DropdownMenuLabel>
+            <DropdownMenuLabel>{client.name}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setUpsertDialogIsOpen(true)}>
               <EditIcon className="mr-2 h-4 w-4" /> Editar
@@ -120,10 +120,10 @@ export default function PatientTableActions({
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Tem certeza que deseja inativar esse paciente?
+                      Tem certeza que deseja inativar esse cliente?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      O paciente será marcado como inativo e não aparecerá nas
+                      O cliente será marcado como inativo e não aparecerá nas
                       listagens por padrão. Você poderá reativá-lo
                       posteriormente se necessário.
                     </AlertDialogDescription>
@@ -153,10 +153,10 @@ export default function PatientTableActions({
                 <AlertDialogHeader>
                   <AlertDialogTitle>
                     Tem certeza que deseja excluir permanentemente esse
-                    paciente?
+                    cliente?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. O paciente será excluído
+                    Esta ação não pode ser desfeita. O cliente será excluído
                     permanentemente do sistema, incluindo todo seu histórico.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -164,7 +164,7 @@ export default function PatientTableActions({
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
-                    disabled={deletePatientAction.status === "executing"}
+                    disabled={deleteClientAction.status === "executing"}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     Excluir Permanentemente
@@ -175,9 +175,9 @@ export default function PatientTableActions({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <UpsertPatientForm
+        <UpsertClientForm
           isOpen={upsertDialogIsOpen}
-          patient={patient}
+          client={client}
           onSuccess={() => setUpsertDialogIsOpen(false)}
         />
       </Dialog>

@@ -17,12 +17,16 @@ interface SubscriptionPlanProps {
   plan: SubscriptionPlanType;
   isActive: boolean;
   className?: string;
+  inactiveCtaLabel?: string;
+  activeCtaLabel?: string;
 }
 
 export function SubscriptionPlan({
   plan,
   isActive,
   className,
+  inactiveCtaLabel,
+  activeCtaLabel,
 }: SubscriptionPlanProps) {
   const highlightBySlug: Record<
     SubscriptionPlanType["slug"],
@@ -116,6 +120,12 @@ export function SubscriptionPlan({
 
   const showPortalButton = isActive && plan.slug !== "essential";
 
+  const defaultActiveLabel = showPortalButton
+    ? "Gerenciar assinatura"
+    : "Plano atual";
+  const activePlanLabel = activeCtaLabel ?? defaultActiveLabel;
+  const inactivePlanLabel = inactiveCtaLabel ?? planHighlight.cta;
+
   return (
     <Card
       className={cn(
@@ -191,10 +201,10 @@ export function SubscriptionPlan({
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : plan?.comingSoon ? (
               "Em breve"
-            ) : showPortalButton ? (
-              "Gerenciar assinatura"
+            ) : isActive ? (
+              activePlanLabel
             ) : (
-              planHighlight.cta
+              inactivePlanLabel
             )}
             {!plan?.comingSoon && !isCheckoutDisabled ? (
               <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />

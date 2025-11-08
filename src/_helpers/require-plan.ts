@@ -40,7 +40,7 @@ export async function requirePlan(
   }
 
   const clinics = (session.user.clinics ?? []) as ClinicSummary[];
-  const cookieClinicId = readActiveClinicIdFromCookies();
+  const cookieClinicId = await readActiveClinicIdFromCookies();
   const { activeClinic, activeClinicId } = selectActiveClinic(
     clinics,
     cookieClinicId,

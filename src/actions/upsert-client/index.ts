@@ -6,14 +6,14 @@ import { headers } from "next/headers";
 
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
-import { patientsTable, usersToClinicsTable } from "@/db/schema";
+import { clientsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
-import { upsertPatientSchema } from "./schema";
+import { upsertClientSchema } from "./schema";
 
-export const upsertPatient = actionClient
-  .schema(upsertPatientSchema)
+export const upsertClient = actionClient
+  .schema(upsertClientSchema)
   .action(async ({ parsedInput }) => {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -22,7 +22,7 @@ export const upsertPatient = actionClient
     if (!session?.user) {
       throw new Error("Não autorizado");
     }
-    const { clinicId, id: patientId, ...patientData } = parsedInput;
+    const { clinicId, id: clientId, ...clientData } = parsedInput;
 
     const membership = await db.query.usersToClinicsTable.findFirst({
       where: and(
@@ -35,43 +35,43 @@ export const upsertPatient = actionClient
       throw new Error("Clínica não encontrada");
     }
 
-    if (patientId) {
-      const patient = await db.query.patientsTable.findFirst({
-        where: eq(patientsTable.id, patientId),
+    if (clientId) {
+      const client = await db.query.clientsTable.findFirst({
+        where: eq(clientsTable.id, clientId),
       });
 
-      if (!patient || patient.clinicId !== clinicId) {
-        throw new Error("Paciente não pertence a esta clínica");
+      if (!client || client.clinicId !== clinicId) {
+        throw new Error("Cliente não pertence a esta clínica");
       }
     }
 
     const plan = await getPlanBySlug(session.user.plan);
-    if (!patientId && typeof plan.limits.patientsPerClinic === "number") {
-      const [totalPatients] = await db
+    if (!clientId && typeof plan.limits.clientsPerClinic === "number") {
+      const [totalClients] = await db
         .select({ total: count() })
-        .from(patientsTable)
-        .where(eq(patientsTable.clinicId, clinicId));
+        .from(clientsTable)
+        .where(eq(clientsTable.clinicId, clinicId));
 
-      if ((totalPatients.total ?? 0) >= plan.limits.patientsPerClinic) {
+      if ((totalClients.total ?? 0) >= plan.limits.clientsPerClinic) {
         throw new Error(
-          "Limite de pacientes do plano atingido. Faça upgrade para cadastrar mais.",
+          "Limite de clientes do plano atingido. Faça upgrade para cadastrar mais.",
         );
       }
     }
 
     await db
-      .insert(patientsTable)
+      .insert(clientsTable)
       .values({
-        ...patientData,
-        id: patientId,
+        ...clientData,
+        id: clientId,
         clinicId,
       })
       .onConflictDoUpdate({
-        target: [patientsTable.id],
+        target: [clientsTable.id],
         set: {
-          ...patientData,
+          ...clientData,
         },
       });
 
-    revalidatePath("/patients");
+    revalidatePath("/clients");
   });

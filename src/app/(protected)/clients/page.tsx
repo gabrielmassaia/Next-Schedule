@@ -10,47 +10,47 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { patientsTable } from "@/db/schema";
+import { clientsTable } from "@/db/schema";
 
-import AddPatientButton from "./_components/add-patient-button";
-import { PatientsTable } from "./_components/patients-table";
+import AddClientButton from "./_components/add-client-button";
+import { ClientsTable } from "./_components/clients-table";
 
-export default async function PatientsPage() {
+export default async function ClientsPage() {
   const { activeClinic, plan } = await requirePlan("essential");
   if (!activeClinic) {
     return null;
   }
 
-  const patients = await db.query.patientsTable.findMany({
-    where: eq(patientsTable.clinicId, activeClinic.id),
-    orderBy: (patients, { desc }) => [desc(patients.createdAt)],
+  const clients = await db.query.clientsTable.findMany({
+    where: eq(clientsTable.clinicId, activeClinic.id),
+    orderBy: (clients, { desc }) => [desc(clients.createdAt)],
   });
 
-  const maxPatients = plan.limits.patientsPerClinic;
+  const maxClients = plan.limits.clientsPerClinic;
   const hasReachedLimit =
-    typeof maxPatients === "number" && patients.length >= maxPatients;
+    typeof maxClients === "number" && clients.length >= maxClients;
 
   return (
     <PageContainer>
       <PageHeader>
         <PageHeaderContent>
-          <PageTitle>Pacientes</PageTitle>
+          <PageTitle>Clientes</PageTitle>
           <PageDescription>
-            Gerencie os pacientes da sua clínica
+            Gerencie os clientes da sua clínica
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddPatientButton
+          <AddClientButton
             disabled={hasReachedLimit}
             helperText={
               hasReachedLimit
-                ? "Limite de pacientes do plano atingido. Faça upgrade para cadastrar mais."
+                ? "Limite de clientes do plano atingido. Faça upgrade para cadastrar mais."
                 : undefined
             }
           />
         </PageActions>
       </PageHeader>
-      <PatientsTable patients={patients} />
+      <ClientsTable clients={clients} />
     </PageContainer>
   );
 }

@@ -5,17 +5,17 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { patientsTable, professionalsTable } from "@/db/schema";
+import { clientsTable, professionalsTable } from "@/db/schema";
 
 import AddAppointmentForm from "./add-appointment-form";
 
 interface AddAppointmentButtonProps {
-  patients: (typeof patientsTable.$inferSelect)[];
+  clients: (typeof clientsTable.$inferSelect)[];
   professionals: (typeof professionalsTable.$inferSelect)[];
 }
 
 const AddAppointmentButton = ({
-  patients,
+  clients,
   professionals,
 }: AddAppointmentButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +30,7 @@ const AddAppointmentButton = ({
       </DialogTrigger>
       <AddAppointmentForm
         isOpen={isOpen}
-        patients={patients}
+        clients={clients}
         professionals={professionals}
         onSuccess={() => setIsOpen(false)}
       />
