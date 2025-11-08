@@ -1,8 +1,17 @@
-export type SubscriptionPlanSlug = "free" | "essential" | "scale";
+import { count } from "drizzle-orm";
+import { cache } from "react";
+
+import { db } from "@/db";
+import {
+  subscriptionPlanFeaturesTable,
+  subscriptionPlansTable,
+} from "@/db/schema";
+
+export type SubscriptionPlanSlug = "essential" | "pro" | "enterprise";
 
 export interface SubscriptionPlanLimits {
   clinics: number | null;
-  doctorsPerClinic: number | null;
+  professionalsPerClinic: number | null;
   patientsPerClinic: number | null;
 }
 
@@ -18,88 +27,179 @@ export interface SubscriptionPlan {
   comingSoon?: boolean;
 }
 
-export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    slug: "free",
-    name: "Starter",
-    description: "Ideal para experimentar o Doctor Schedule com um único consultório.",
-    priceInCents: 0,
-    priority: 0,
-    limits: {
-      clinics: 1,
-      doctorsPerClinic: 1,
-      patientsPerClinic: 150,
-    },
-    features: [
-      "1 clínica",
-      "1 médico",
-      "Pacientes limitados a 150",
-      "Agendamentos básicos",
-    ],
-  },
+interface SubscriptionPlanSeed {
+  slug: SubscriptionPlanSlug;
+  name: string;
+  description: string;
+  priceInCents: number | null;
+  stripePriceEnvKey?: string;
+  priority: number;
+  limits: SubscriptionPlanLimits;
+  features: string[];
+  comingSoon?: boolean;
+}
+
+const SUBSCRIPTION_PLAN_SEEDS: SubscriptionPlanSeed[] = [
   {
     slug: "essential",
     name: "Essential",
-    description: "Para profissionais autônomos ou pequenas clínicas que precisam de mais flexibilidade.",
+    description: "Ideal para profissionais autônomos que precisam começar rapidamente.",
     priceInCents: 9900,
-    stripePriceId: process.env.STRIPE_ESSENTIAL_PLAN_PRICE_ID,
-    priority: 1,
+    stripePriceEnvKey: "STRIPE_ESSENTIAL_PLAN_PRICE_ID",
+    priority: 0,
     limits: {
-      clinics: 3,
-      doctorsPerClinic: 5,
-      patientsPerClinic: 1000,
-    },
-    features: [
-      "Até 3 clínicas",
-      "Até 5 médicos por clínica",
-      "Pacientes ilimitados",
-      "Agendamentos ilimitados",
-      "Métricas básicas",
-      "Suporte via e-mail",
-    ],
-  },
-  {
-    slug: "scale",
-    name: "Scale",
-    description: "Para redes de clínicas que precisam de recursos avançados e limites maiores.",
-    priceInCents: 24900,
-    priority: 2,
-    limits: {
-      clinics: null,
-      doctorsPerClinic: null,
+      clinics: 1,
+      professionalsPerClinic: 3,
       patientsPerClinic: null,
     },
     features: [
-      "Clínicas ilimitadas",
-      "Médicos ilimitados",
-      "Pacientes ilimitados",
-      "Suporte prioritário",
-      "Recursos avançados (em breve)",
+      "Cadastro de até 3 profissionais",
+      "Agendamentos ilimitados",
+      "Métricas básicas",
+      "Cadastro de pacientes",
+      "Confirmação manual",
+      "Suporte via e-mail",
+      "Limite de 1 clínica",
     ],
-    comingSoon: true,
+  },
+  {
+    slug: "pro",
+    name: "Pro",
+    description: "Pensado para clínicas em crescimento que demandam mais controle.",
+    priceInCents: 19900,
+    stripePriceEnvKey: "STRIPE_PRO_PLAN_PRICE_ID",
+    priority: 1,
+    limits: {
+      clinics: 3,
+      professionalsPerClinic: 15,
+      patientsPerClinic: null,
+    },
+    features: [
+      "Cadastro de até 15 profissionais",
+      "Agendamentos ilimitados",
+      "Métricas avançadas",
+      "Cadastro de pacientes",
+      "Confirmação manual",
+      "Suporte via e-mail",
+      "Limite de 3 clínicas",
+    ],
+  },
+  {
+    slug: "enterprise",
+    name: "Enterprise",
+    description: "Para redes de clínicas que precisam de flexibilidade total.",
+    priceInCents: 39900,
+    stripePriceEnvKey: "STRIPE_ENTERPRISE_PLAN_PRICE_ID",
+    priority: 2,
+    limits: {
+      clinics: null,
+      professionalsPerClinic: null,
+      patientsPerClinic: null,
+    },
+    features: [
+      "Cadastro de profissionais ilimitados",
+      "Agendamentos ilimitados",
+      "Métricas avançadas",
+      "Cadastro de pacientes",
+      "Confirmação manual ou assistida por agente",
+      "Suporte por canal privado e dedicado",
+      "Clínicas ilimitadas",
+    ],
   },
 ];
 
-export const DEFAULT_PLAN_SLUG: SubscriptionPlanSlug = "free";
+const seedSubscriptionPlans = async () => {
+  const [{ value: totalPlans }] = await db
+    .select({ value: count() })
+    .from(subscriptionPlansTable);
 
-export function getPlanBySlug(slug: string | null | undefined): SubscriptionPlan {
-  const normalizedSlug = (slug ?? DEFAULT_PLAN_SLUG) as SubscriptionPlanSlug;
-  const plan = SUBSCRIPTION_PLANS.find((item) => item.slug === normalizedSlug);
-  if (plan) {
-    return plan;
+  if ((totalPlans ?? 0) > 0) {
+    return;
   }
-  return SUBSCRIPTION_PLANS[0];
-}
 
-export function planMeetsRequirement(
+  for (const plan of SUBSCRIPTION_PLAN_SEEDS) {
+    await db.insert(subscriptionPlansTable).values({
+      slug: plan.slug,
+      name: plan.name,
+      description: plan.description,
+      priceInCents: plan.priceInCents,
+      stripePriceId: plan.stripePriceEnvKey
+        ? process.env[plan.stripePriceEnvKey] ?? null
+        : null,
+      priority: plan.priority,
+      clinicsLimit: plan.limits.clinics,
+      professionalsPerClinicLimit: plan.limits.professionalsPerClinic,
+      patientsPerClinicLimit: plan.limits.patientsPerClinic,
+      comingSoon: plan.comingSoon ?? false,
+    });
+
+    if (plan.features.length) {
+      await db.insert(subscriptionPlanFeaturesTable).values(
+        plan.features.map((feature, index) => ({
+          planSlug: plan.slug,
+          description: feature,
+          sortOrder: index,
+        })),
+      );
+    }
+  }
+};
+
+const mapPlan = (
+  plan: typeof subscriptionPlansTable.$inferSelect & {
+    features: (typeof subscriptionPlanFeaturesTable.$inferSelect)[];
+  },
+): SubscriptionPlan => ({
+  slug: plan.slug as SubscriptionPlanSlug,
+  name: plan.name,
+  description: plan.description,
+  priceInCents: plan.priceInCents,
+  stripePriceId: plan.stripePriceId ?? undefined,
+  priority: plan.priority,
+  limits: {
+    clinics: plan.clinicsLimit,
+    professionalsPerClinic: plan.professionalsPerClinicLimit,
+    patientsPerClinic: plan.patientsPerClinicLimit,
+  },
+  features: plan.features
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((feature) => feature.description),
+  comingSoon: plan.comingSoon ?? false,
+});
+
+export const DEFAULT_PLAN_SLUG: SubscriptionPlanSlug = "essential";
+
+export const getSubscriptionPlans = cache(async (): Promise<SubscriptionPlan[]> => {
+  await seedSubscriptionPlans();
+
+  const plans = await db.query.subscriptionPlansTable.findMany({
+    with: {
+      features: {
+        orderBy: (feature, { asc }) => [asc(feature.sortOrder)],
+      },
+    },
+    orderBy: (plan, { asc }) => [asc(plan.priority)],
+  });
+
+  return plans.map(mapPlan);
+});
+
+export const getPlanBySlug = cache(
+  async (slug: string | null | undefined): Promise<SubscriptionPlan> => {
+    const normalizedSlug = (slug ?? DEFAULT_PLAN_SLUG) as SubscriptionPlanSlug;
+    const plans = await getSubscriptionPlans();
+    const plan = plans.find((item) => item.slug === normalizedSlug);
+    if (plan) {
+      return plan;
+    }
+    return plans[0];
+  },
+);
+
+export async function planMeetsRequirement(
   currentPlan: SubscriptionPlan,
   requiredPlanSlug: SubscriptionPlanSlug,
 ) {
-  const requiredPlan = SUBSCRIPTION_PLANS.find(
-    (plan) => plan.slug === requiredPlanSlug,
-  );
-  if (!requiredPlan) {
-    return true;
-  }
+  const requiredPlan = await getPlanBySlug(requiredPlanSlug);
   return currentPlan.priority >= requiredPlan.priority;
 }

@@ -20,7 +20,7 @@ export default async function ClinicFormPage() {
   }
 
   const clinics = session.user.clinics ?? [];
-  const plan = getPlanBySlug(session.user.plan);
+  const plan = await getPlanBySlug(session.user.plan);
   const clinicsLimit = plan.limits.clinics;
 
   if (typeof clinicsLimit === "number" && clinics.length >= clinicsLimit) {

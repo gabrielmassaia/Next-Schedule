@@ -11,7 +11,7 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { doctorsTable } from "@/db/schema";
+import { clinicSpecialtiesTable, professionalsTable } from "@/db/schema";
 
 import AddDoctorButton from "./_components/add-doctor-button";
 import DoctorCard from "./_components/doctor-card";
@@ -22,29 +22,42 @@ export default async function DoctorsPage() {
     return null;
   }
 
-  const doctors = await db.query.doctorsTable.findMany({
-    where: eq(doctorsTable.clinicId, activeClinic.id),
+  const doctors = await db.query.professionalsTable.findMany({
+    where: eq(professionalsTable.clinicId, activeClinic.id),
   });
 
-  const maxDoctors = plan.limits.doctorsPerClinic;
+  const specialties = await db.query.clinicSpecialtiesTable.findMany({
+    where: eq(clinicSpecialtiesTable.clinicId, activeClinic.id),
+    orderBy: (specialty, { asc }) => [asc(specialty.name)],
+  });
+
+  const maxProfessionals = plan.limits.professionalsPerClinic;
   const hasReachedLimit =
-    typeof maxDoctors === "number" && doctors.length >= maxDoctors;
+    typeof maxProfessionals === "number" &&
+    doctors.length >= maxProfessionals;
+  const isMissingSpecialties = specialties.length === 0;
 
   return (
     <PageContainer>
       <PageHeader>
         <PageHeaderContent>
-          <PageTitle>Doutores</PageTitle>
+          <PageTitle>Profissionais</PageTitle>
           <PageDescription>
             Gerenciamento dos profissionais cadastrados no sistema
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
           <AddDoctorButton
-            disabled={hasReachedLimit}
+            disabled={hasReachedLimit || isMissingSpecialties}
+            specialties={specialties.map((specialty) => ({
+              id: specialty.id,
+              name: specialty.name,
+            }))}
             helperText={
               hasReachedLimit
-                ? "Limite de médicos do plano atingido. Faça upgrade para cadastrar mais."
+                ? "Limite de profissionais do plano atingido. Faça upgrade para cadastrar mais."
+                : isMissingSpecialties
+                  ? "Cadastre ao menos uma especialidade para adicionar profissionais."
                 : undefined
             }
           />
@@ -53,7 +66,14 @@ export default async function DoctorsPage() {
       <PageContent>
         <div className="grid grid-cols-3 gap-6">
           {doctors.map((doctor) => (
-            <DoctorCard key={doctor.id} doctor={doctor} />
+            <DoctorCard
+              key={doctor.id}
+              doctor={doctor}
+              specialties={specialties.map((specialty) => ({
+                id: specialty.id,
+                name: specialty.name,
+              }))}
+            />
           ))}
         </div>
       </PageContent>

@@ -2,25 +2,27 @@ import dayjs from "dayjs";
 import locale from "dayjs/locale/pt-br";
 import utc from "dayjs/plugin/utc";
 
-import { doctorsTable } from "@/db/schema";
+import { professionalsTable } from "@/db/schema";
 
 dayjs.extend(utc);
 dayjs.locale(locale);
 
-export const getAvailability = (doctor: typeof doctorsTable.$inferSelect) => {
+export const getAvailability = (
+  professional: typeof professionalsTable.$inferSelect,
+) => {
   const from = dayjs()
     .utc()
-    .day(doctor.availableFromWeekDay)
-    .set("hour", Number(doctor.availableFromTime.split(":")[0]))
-    .set("minute", Number(doctor.availableFromTime.split(":")[1]))
-    .set("second", Number(doctor.availableFromTime.split(":")[2]) || 0)
+    .day(professional.availableFromWeekDay)
+    .set("hour", Number(professional.availableFromTime.split(":")[0]))
+    .set("minute", Number(professional.availableFromTime.split(":")[1]))
+    .set("second", Number(professional.availableFromTime.split(":")[2]) || 0)
     .local();
   const to = dayjs()
     .utc()
-    .day(doctor.availableToWeekDay)
-    .set("hour", Number(doctor.availableToTime.split(":")[0]))
-    .set("minute", Number(doctor.availableToTime.split(":")[1]))
-    .set("second", Number(doctor.availableToTime.split(":")[2]) || 0)
+    .day(professional.availableToWeekDay)
+    .set("hour", Number(professional.availableToTime.split(":")[0]))
+    .set("minute", Number(professional.availableToTime.split(":")[1]))
+    .set("second", Number(professional.availableToTime.split(":")[2]) || 0)
     .local();
 
   return { from, to };

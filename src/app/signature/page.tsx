@@ -1,9 +1,13 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import {
+  getPlanBySlug,
+  getSubscriptionPlans,
+} from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
-import { SubscriptionPlan } from "../(protected)/subscription/_components/subscription-plan";
+import { SubscriptionPlan as SubscriptionPlanCard } from "../(protected)/subscription/_components/subscription-plan";
 
 export default async function SubscriptionPage() {
   const session = await auth.api.getSession({
@@ -12,9 +16,13 @@ export default async function SubscriptionPage() {
   if (!session) {
     redirect("/authentication");
   }
+  const [plans, currentPlan] = await Promise.all([
+    getSubscriptionPlans(),
+    getPlanBySlug(session.user.plan),
+  ]);
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-      <div className="mb-8 w-full max-w-3xl text-center">
+      <div className="mb-8 w-full max-w-4xl text-center">
         <h1 className="mb-4 text-3xl font-bold text-gray-900">
           Desbloqueie todo o potencial da sua clínica
         </h1>
@@ -36,8 +44,15 @@ export default async function SubscriptionPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-md">
-        <SubscriptionPlan userEmail={session.user.email} />
+      <div className="grid w-full max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
+        {plans.map((plan) => (
+          <SubscriptionPlanCard
+            key={plan.slug}
+            plan={plan}
+            isActive={plan.slug === currentPlan.slug}
+            className="w-full"
+          />
+        ))}
       </div>
 
       <div className="mt-8 max-w-lg text-center">

@@ -11,11 +11,13 @@ import UpsertDoctorForm from "./upsert-doctor-form";
 interface AddDoctorButtonProps {
   disabled?: boolean;
   helperText?: string;
+  specialties: { id: string; name: string }[];
 }
 
 export default function AddDoctorButton({
   disabled = false,
   helperText,
+  specialties,
 }: AddDoctorButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -35,10 +37,13 @@ export default function AddDoctorButton({
             variant={disabled ? "secondary" : "default"}
           >
             <Plus />
-            Adicionar Doutor
+            Adicionar Profissional
           </Button>
         </DialogTrigger>
-        <UpsertDoctorForm onSuccess={() => setIsOpen(false)} />
+        <UpsertDoctorForm
+          specialties={specialties}
+          onSuccess={() => setIsOpen(false)}
+        />
       </Dialog>
       {helperText && disabled && (
         <p className="mt-2 text-sm text-muted-foreground">{helperText}</p>

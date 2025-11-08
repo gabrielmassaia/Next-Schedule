@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Stethoscope,
+  Tags,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -48,9 +49,14 @@ const items = [
     icon: CalendarDays,
   },
   {
-    title: "Doutores",
+    title: "Profissionais",
     url: "/doctors",
     icon: Stethoscope,
+  },
+  {
+    title: "Especialidades",
+    url: "/specialties",
+    icon: Tags,
   },
   {
     title: "Pacientes",

@@ -15,16 +15,17 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { doctorsTable } from "@/db/schema";
+import { professionalsTable } from "@/db/schema";
 
 import { getAvailability } from "../_helpers/availability";
 import UpsertDoctorForm from "./upsert-doctor-form";
 
 interface DoctorCardProps {
-  doctor: typeof doctorsTable.$inferSelect;
+  doctor: typeof professionalsTable.$inferSelect;
+  specialties: { id: string; name: string }[];
 }
 
-export default function DoctorCard({ doctor }: DoctorCardProps) {
+export default function DoctorCard({ doctor, specialties }: DoctorCardProps) {
   const [isUpsertDoctorDialogOpen, setIsUpsertDoctorDialogOpen] =
     useState(false);
   const doctorInitial = doctor.name
@@ -77,6 +78,7 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
               availableFromTime: availability.from.format("HH:mm:ss"),
               availableToTime: availability.to.format("HH:mm:ss"),
             }}
+            specialties={specialties}
             onSuccess={() => setIsUpsertDoctorDialogOpen(false)}
           />
         </Dialog>

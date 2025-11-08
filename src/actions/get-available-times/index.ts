@@ -11,7 +11,7 @@ import { generateTimeSlots } from "@/_helpers/time";
 import { db } from "@/db";
 import {
   appointmentsTable,
-  doctorsTable,
+  professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -24,7 +24,7 @@ export const getAvailableTimes = actionClient
   .schema(
     z.object({
       clinicId: z.string().uuid(),
-      doctorId: z.string(),
+      professionalId: z.string(),
       date: z.string().date(), // YYYY-MM-DD,
     }),
   )
@@ -44,25 +44,25 @@ export const getAvailableTimes = actionClient
     if (!membership) {
       throw new Error("Clínica não encontrada");
     }
-    const doctor = await db.query.doctorsTable.findFirst({
+    const professional = await db.query.professionalsTable.findFirst({
       where: and(
-        eq(doctorsTable.id, parsedInput.doctorId),
-        eq(doctorsTable.clinicId, parsedInput.clinicId),
+        eq(professionalsTable.id, parsedInput.professionalId),
+        eq(professionalsTable.clinicId, parsedInput.clinicId),
       ),
     });
-    if (!doctor) {
-      throw new Error("Médico não encontrado");
+    if (!professional) {
+      throw new Error("Profissional não encontrado");
     }
     const selectedDayOfWeek = dayjs(parsedInput.date).day();
-    const doctorIsAvailable =
-      selectedDayOfWeek >= doctor.availableFromWeekDay &&
-      selectedDayOfWeek <= doctor.availableToWeekDay;
-    if (!doctorIsAvailable) {
+    const professionalIsAvailable =
+      selectedDayOfWeek >= professional.availableFromWeekDay &&
+      selectedDayOfWeek <= professional.availableToWeekDay;
+    if (!professionalIsAvailable) {
       return [];
     }
     const appointments = await db.query.appointmentsTable.findMany({
       where: and(
-        eq(appointmentsTable.doctorId, parsedInput.doctorId),
+        eq(appointmentsTable.professionalId, parsedInput.professionalId),
         eq(appointmentsTable.clinicId, parsedInput.clinicId),
       ),
     });
@@ -73,19 +73,19 @@ export const getAvailableTimes = actionClient
       .map((appointment) => dayjs(appointment.date).format("HH:mm:ss"));
     const timeSlots = generateTimeSlots();
 
-    const doctorAvailableFrom = dayjs()
+    const professionalAvailableFrom = dayjs()
       .utc()
-      .set("hour", Number(doctor.availableFromTime.split(":")[0]))
-      .set("minute", Number(doctor.availableFromTime.split(":")[1]))
+      .set("hour", Number(professional.availableFromTime.split(":")[0]))
+      .set("minute", Number(professional.availableFromTime.split(":")[1]))
       .set("second", 0)
       .local();
-    const doctorAvailableTo = dayjs()
+    const professionalAvailableTo = dayjs()
       .utc()
-      .set("hour", Number(doctor.availableToTime.split(":")[0]))
-      .set("minute", Number(doctor.availableToTime.split(":")[1]))
+      .set("hour", Number(professional.availableToTime.split(":")[0]))
+      .set("minute", Number(professional.availableToTime.split(":")[1]))
       .set("second", 0)
       .local();
-    const doctorTimeSlots = timeSlots.filter((time) => {
+    const professionalTimeSlots = timeSlots.filter((time) => {
       const date = dayjs()
         .utc()
         .set("hour", Number(time.split(":")[0]))
@@ -93,11 +93,12 @@ export const getAvailableTimes = actionClient
         .set("second", 0);
 
       return (
-        date.format("HH:mm:ss") >= doctorAvailableFrom.format("HH:mm:ss") &&
-        date.format("HH:mm:ss") <= doctorAvailableTo.format("HH:mm:ss")
+        date.format("HH:mm:ss") >=
+          professionalAvailableFrom.format("HH:mm:ss") &&
+        date.format("HH:mm:ss") <= professionalAvailableTo.format("HH:mm:ss")
       );
     });
-    return doctorTimeSlots.map((time) => {
+    return professionalTimeSlots.map((time) => {
       return {
         value: time,
         available: !appointmentsOnSelectedDate.includes(time),

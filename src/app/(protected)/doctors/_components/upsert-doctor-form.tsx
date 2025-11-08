@@ -47,10 +47,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doctorsTable } from "@/db/schema";
+import { professionalsTable } from "@/db/schema";
 import { useActiveClinic } from "@/providers/active-clinic";
-
-import { medicalSpecialties } from "../_constants";
 
 const formSchema = z
   .object({
@@ -88,12 +86,14 @@ const formSchema = z
   );
 
 interface UpsertDoctorFormProps {
-  doctor?: typeof doctorsTable.$inferSelect;
+  doctor?: typeof professionalsTable.$inferSelect;
+  specialties: { id: string; name: string }[];
   onSuccess?: () => void;
 }
 
 export default function UpsertDoctorForm({
   doctor,
+  specialties,
   onSuccess,
 }: UpsertDoctorFormProps) {
   const { activeClinicId } = useActiveClinic();
@@ -115,22 +115,22 @@ export default function UpsertDoctorForm({
 
   const upsertDoctorAction = useAction(upsertDoctor, {
     onSuccess: () => {
-      toast.success("Doutor salvo com sucesso");
+      toast.success("Profissional salvo com sucesso");
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error("Erro ao salvar doutor");
+      toast.error("Erro ao salvar profissional");
       console.error(error);
     },
   });
 
   const deleteDoctorAction = useAction(deleteDoctor, {
     onSuccess: () => {
-      toast.success("Médico excluído com sucesso");
+      toast.success("Profissional excluído com sucesso");
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error("Erro ao excluir médico");
+      toast.error("Erro ao excluir profissional");
       console.error(error);
     },
   });
@@ -141,12 +141,12 @@ export default function UpsertDoctorForm({
     }
 
     if (!activeClinicId) {
-      toast.error("Selecione uma clínica antes de excluir o médico");
+      toast.error("Selecione uma clínica antes de excluir o profissional");
       return;
     }
 
     deleteDoctorAction.execute({ id: doctor.id, clinicId: activeClinicId });
-    toast.success("Médico excluído com sucesso");
+    toast.success("Profissional excluído com sucesso");
     onSuccess?.();
   };
 
@@ -169,11 +169,13 @@ export default function UpsertDoctorForm({
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>{doctor ? doctor.name : "Adicionar médico"}</DialogTitle>
+        <DialogTitle>{
+          doctor ? doctor.name : "Adicionar profissional"
+        }</DialogTitle>
         <DialogDescription>
           {doctor
-            ? "Edite as informações desse médico."
-            : "Adicione um novo médico."}
+            ? "Edite as informações desse profissional."
+            : "Adicione um novo profissional."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -194,29 +196,62 @@ export default function UpsertDoctorForm({
           <FormField
             control={form.control}
             name="specialty"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Especialidade</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione uma especialidade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {medicalSpecialties.map((specialty) => (
-                      <SelectItem key={specialty.value} value={specialty.value}>
-                        {specialty.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const options = (() => {
+                if (
+                  doctor?.specialty &&
+                  !specialties.some((item) => item.name === doctor.specialty)
+                ) {
+                  return [
+                    ...specialties,
+                    { id: "__current", name: doctor.specialty },
+                  ];
+                }
+                return specialties;
+              })();
+
+              const hasOptions = options.length > 0;
+
+              return (
+                <FormItem>
+                  <FormLabel>Especialidade</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={!hasOptions}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={
+                          hasOptions
+                            ? "Selecione uma especialidade"
+                            : "Cadastre especialidades antes de continuar"
+                        } />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {hasOptions ? (
+                        options.map((specialty) => (
+                          <SelectItem key={specialty.id} value={specialty.name}>
+                            {specialty.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem disabled value="">
+                          Nenhuma especialidade cadastrada
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {!hasOptions && !doctor && (
+                    <p className="text-xs text-muted-foreground">
+                      Cadastre uma especialidade antes de adicionar um novo profissional.
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
           <FormField
             control={form.control}
@@ -443,16 +478,16 @@ export default function UpsertDoctorForm({
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline">
-                    <TrashIcon className="h-4 w-4" /> Excluir Médico
+                    <TrashIcon className="h-4 w-4" /> Excluir Profissional
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Tem certeza que deseja excluir esse médico?
+                      Tem certeza que deseja excluir esse profissional?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Essa ação não pode ser desfeita. Isso irá excluir o médico
+                      Essa ação não pode ser desfeita. Isso irá excluir o profissional
                       e remover todos os seus dados.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -465,7 +500,13 @@ export default function UpsertDoctorForm({
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button type="submit" disabled={upsertDoctorAction.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                upsertDoctorAction.isPending ||
+                (!doctor && specialties.length === 0)
+              }
+            >
               {upsertDoctorAction.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : doctor ? (

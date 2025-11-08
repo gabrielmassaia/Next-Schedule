@@ -17,7 +17,7 @@ export const createStripeCheckout = actionClient
   if (!session?.user) {
     throw new Error("Unauthorized");
   }
-  const plan = getPlanBySlug(parsedInput.planSlug);
+  const plan = await getPlanBySlug(parsedInput.planSlug);
   if (!plan.stripePriceId) {
     throw new Error("Plano indisponível para checkout");
   }

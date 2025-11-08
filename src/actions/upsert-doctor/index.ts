@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
-import { doctorsTable, usersToClinicsTable } from "@/db/schema";
+import { professionalsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -39,7 +39,7 @@ export const upsertDoctor = actionClient
     if (!session?.user) {
       throw new Error("Não autorizado");
     }
-    const { clinicId, id: doctorId, ...doctorData } = parsedInput;
+    const { clinicId, id: professionalId, ...professionalData } = parsedInput;
 
     const belongsToClinic = await db.query.usersToClinicsTable.findFirst({
       where: and(
@@ -52,40 +52,40 @@ export const upsertDoctor = actionClient
       throw new Error("Clínica não encontrada");
     }
 
-    if (doctorId) {
-      const doctor = await db.query.doctorsTable.findFirst({
-        where: eq(doctorsTable.id, doctorId),
+    if (professionalId) {
+      const professional = await db.query.professionalsTable.findFirst({
+        where: eq(professionalsTable.id, professionalId),
       });
-      if (!doctor || doctor.clinicId !== clinicId) {
-        throw new Error("Médico não encontrado nesta clínica");
+      if (!professional || professional.clinicId !== clinicId) {
+        throw new Error("Profissional não encontrado nesta clínica");
       }
     }
 
-    const plan = getPlanBySlug(session.user.plan);
-    if (!doctorId && typeof plan.limits.doctorsPerClinic === "number") {
-      const [totalDoctors] = await db
+    const plan = await getPlanBySlug(session.user.plan);
+    if (!professionalId && typeof plan.limits.professionalsPerClinic === "number") {
+      const [totalProfessionals] = await db
         .select({ total: count() })
-        .from(doctorsTable)
-        .where(eq(doctorsTable.clinicId, clinicId));
-      if ((totalDoctors.total ?? 0) >= plan.limits.doctorsPerClinic) {
+        .from(professionalsTable)
+        .where(eq(professionalsTable.clinicId, clinicId));
+      if ((totalProfessionals.total ?? 0) >= plan.limits.professionalsPerClinic) {
         throw new Error(
-          "Limite de médicos do seu plano foi atingido. Faça upgrade para cadastrar mais.",
+          "Limite de profissionais do seu plano foi atingido. Faça upgrade para cadastrar mais.",
         );
       }
     }
     await db
-      .insert(doctorsTable)
+      .insert(professionalsTable)
       .values({
-        ...doctorData,
-        id: doctorId,
+        ...professionalData,
+        id: professionalId,
         clinicId,
         availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
         availableToTime: availableToTimeUTC.format("HH:mm:ss"),
       })
       .onConflictDoUpdate({
-        target: [doctorsTable.id],
+        target: [professionalsTable.id],
         set: {
-          ...doctorData,
+          ...professionalData,
           clinicId,
           availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
           availableToTime: availableToTimeUTC.format("HH:mm:ss"),

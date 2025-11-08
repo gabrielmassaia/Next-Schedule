@@ -19,7 +19,7 @@ export const createClinic = async (name: string) => {
     throw new Error("Não autorizado");
   }
 
-  const plan = getPlanBySlug(session.user.plan);
+  const plan = await getPlanBySlug(session.user.plan);
   const clinics = await db.query.usersToClinicsTable.findMany({
     where: eq(usersToClinicsTable.userId, session.user.id),
   });
