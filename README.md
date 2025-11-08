@@ -1,6 +1,6 @@
 # NextSchedule
 
-Sistema de agendamento médico desenvolvido com Next.js 15, TypeScript e PostgreSQL.
+Sistema de agendamento para clínicas multiprofissionais desenvolvido com Next.js 15, TypeScript e PostgreSQL.
 
 ## Pré-requisitos
 

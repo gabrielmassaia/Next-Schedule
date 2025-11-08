@@ -6,11 +6,28 @@ import { redirect } from "next/navigation";
 
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
-import { clinicsTable, usersToClinicsTable } from "@/db/schema";
+import {
+  clinicNichesTable,
+  clinicsTable,
+  usersToClinicsTable,
+} from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { ACTIVE_CLINIC_COOKIE } from "@/lib/clinic-session";
 
-export const createClinic = async (name: string) => {
+interface CreateClinicInput {
+  name: string;
+  cnpj: string;
+  phone: string;
+  email?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  nicheId: string;
+}
+
+export const createClinic = async (input: CreateClinicInput) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -19,7 +36,7 @@ export const createClinic = async (name: string) => {
     throw new Error("Não autorizado");
   }
 
-  const plan = getPlanBySlug(session.user.plan);
+  const plan = await getPlanBySlug(session.user.plan);
   const clinics = await db.query.usersToClinicsTable.findMany({
     where: eq(usersToClinicsTable.userId, session.user.id),
   });
@@ -33,10 +50,27 @@ export const createClinic = async (name: string) => {
     );
   }
 
+  const niche = await db.query.clinicNichesTable.findFirst({
+    where: eq(clinicNichesTable.id, input.nicheId),
+  });
+
+  if (!niche) {
+    throw new Error("Nicho não encontrado");
+  }
+
   const [clinic] = await db
     .insert(clinicsTable)
     .values({
-      name,
+      name: input.name,
+      cnpj: input.cnpj,
+      phone: input.phone,
+      email: input.email,
+      addressLine1: input.addressLine1,
+      addressLine2: input.addressLine2,
+      city: input.city,
+      state: input.state,
+      zipCode: input.zipCode,
+      nicheId: input.nicheId,
     })
     .returning();
 

@@ -11,40 +11,41 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { doctorsTable } from "@/db/schema";
+import { professionalsTable } from "@/db/schema";
 
-import AddDoctorButton from "./_components/add-doctor-button";
-import DoctorCard from "./_components/doctor-card";
+import AddProfessionalButton from "./_components/add-professional-button";
+import ProfessionalCard from "./_components/professional-card";
 
-export default async function DoctorsPage() {
+export default async function ProfessionalsPage() {
   const { activeClinic, plan } = await requirePlan("essential");
   if (!activeClinic) {
     return null;
   }
 
-  const doctors = await db.query.doctorsTable.findMany({
-    where: eq(doctorsTable.clinicId, activeClinic.id),
+  const professionals = await db.query.professionalsTable.findMany({
+    where: eq(professionalsTable.clinicId, activeClinic.id),
   });
 
-  const maxDoctors = plan.limits.doctorsPerClinic;
+  const maxProfessionals = plan.limits.professionalsPerClinic;
   const hasReachedLimit =
-    typeof maxDoctors === "number" && doctors.length >= maxDoctors;
+    typeof maxProfessionals === "number" &&
+    professionals.length >= maxProfessionals;
 
   return (
     <PageContainer>
       <PageHeader>
         <PageHeaderContent>
-          <PageTitle>Doutores</PageTitle>
+          <PageTitle>Profissionais</PageTitle>
           <PageDescription>
             Gerenciamento dos profissionais cadastrados no sistema
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddDoctorButton
+          <AddProfessionalButton
             disabled={hasReachedLimit}
             helperText={
               hasReachedLimit
-                ? "Limite de médicos do plano atingido. Faça upgrade para cadastrar mais."
+                ? "Limite de profissionais do plano atingido. Faça upgrade para cadastrar mais."
                 : undefined
             }
           />
@@ -52,8 +53,8 @@ export default async function DoctorsPage() {
       </PageHeader>
       <PageContent>
         <div className="grid grid-cols-3 gap-6">
-          {doctors.map((doctor) => (
-            <DoctorCard key={doctor.id} doctor={doctor} />
+          {professionals.map((professional) => (
+            <ProfessionalCard key={professional.id} professional={professional} />
           ))}
         </div>
       </PageContent>

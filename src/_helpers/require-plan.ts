@@ -16,7 +16,7 @@ import {
 
 interface RequirePlanResult {
   session: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
-  plan: ReturnType<typeof getPlanBySlug>;
+  plan: Awaited<ReturnType<typeof getPlanBySlug>>;
   clinics: ClinicSummary[];
   activeClinic: ClinicSummary | null;
   activeClinicId: string | null;
@@ -41,8 +41,8 @@ export async function requirePlan(
     redirect("/clinic-form");
   }
 
-  const plan = getPlanBySlug(session.user.plan);
-  if (!planMeetsRequirement(plan, requiredPlan)) {
+  const plan = await getPlanBySlug(session.user.plan);
+  if (!(await planMeetsRequirement(plan, requiredPlan))) {
     redirect("/signature");
   }
 

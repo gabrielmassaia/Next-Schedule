@@ -12,14 +12,14 @@ interface StatsCardsProps {
   totalRevenue: number | null;
   totalAppointments: number;
   totalPatients: number;
-  totalDoctors: number;
+  totalProfessionals: number;
 }
 
 const StatsCards = ({
   totalRevenue,
   totalAppointments,
   totalPatients,
-  totalDoctors,
+  totalProfessionals,
 }: StatsCardsProps) => {
   const stats = [
     {
@@ -38,8 +38,8 @@ const StatsCards = ({
       icon: UserIcon,
     },
     {
-      title: "Médicos",
-      value: totalDoctors.toString(),
+      title: "Profissionais",
+      value: totalProfessionals.toString(),
       icon: UsersIcon,
     },
   ];

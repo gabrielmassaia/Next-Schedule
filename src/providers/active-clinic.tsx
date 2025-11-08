@@ -3,11 +3,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import type { ClinicSummary } from "@/lib/clinic-session";
 
 interface ActiveClinicContextValue {
-  clinics: { id: string; name: string }[];
+  clinics: ClinicSummary[];
   activeClinicId: string | null;
-  activeClinic: { id: string; name: string } | null;
+  activeClinic: ClinicSummary | null;
   isLoading: boolean;
   setActiveClinic: (clinicId: string) => Promise<void>;
 }
@@ -62,10 +63,7 @@ export function ActiveClinicProvider({
         const data = (await response.json()) as {
           activeClinicId: string | null;
         };
-        const clinics = (session.data?.user?.clinics ?? []) as {
-          id: string;
-          name: string;
-        }[];
+        const clinics = (session.data?.user?.clinics ?? []) as ClinicSummary[];
         const activeClinic = clinics.find(
           (clinic) => clinic.id === data.activeClinicId,
         );
@@ -98,10 +96,7 @@ export function ActiveClinicProvider({
         });
       } catch (error) {
         console.error(error);
-        const clinics = (session.data?.user?.clinics ?? []) as {
-          id: string;
-          name: string;
-        }[];
+        const clinics = (session.data?.user?.clinics ?? []) as ClinicSummary[];
         setValue({
           clinics,
           activeClinicId: clinics[0]?.id ?? null,

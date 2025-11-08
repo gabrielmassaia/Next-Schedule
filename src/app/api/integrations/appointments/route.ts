@@ -8,16 +8,16 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   appointmentsTable,
-  doctorsTable,
   integrationApiKeysTable,
   patientsTable,
+  professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
 
 const schema = z.object({
   clinicId: z.string().uuid(),
   patientId: z.string().uuid(),
-  doctorId: z.string().uuid(),
+  professionalId: z.string().uuid(),
   date: z.string().date(),
   time: z.string(),
   appointmentPriceInCents: z.number().int().positive(),
@@ -64,11 +64,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [doctor, patient] = await Promise.all([
-      db.query.doctorsTable.findFirst({
+    const [professional, patient] = await Promise.all([
+      db.query.professionalsTable.findFirst({
         where: and(
-          eq(doctorsTable.id, parsed.doctorId),
-          eq(doctorsTable.clinicId, parsed.clinicId),
+          eq(professionalsTable.id, parsed.professionalId),
+          eq(professionalsTable.clinicId, parsed.clinicId),
         ),
       }),
       db.query.patientsTable.findFirst({
@@ -79,9 +79,9 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    if (!doctor || !patient) {
+    if (!professional || !patient) {
       return NextResponse.json(
-        { message: "Paciente ou médico não encontrado na clínica" },
+        { message: "Paciente ou profissional não encontrado na clínica" },
         { status: 404 },
       );
     }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     const conflict = await db.query.appointmentsTable.findFirst({
       where: and(
         eq(appointmentsTable.clinicId, parsed.clinicId),
-        eq(appointmentsTable.doctorId, parsed.doctorId),
+        eq(appointmentsTable.professionalId, parsed.professionalId),
         eq(appointmentsTable.date, appointmentDateTime),
       ),
     });
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       .insert(appointmentsTable)
       .values({
         clinicId: parsed.clinicId,
-        doctorId: parsed.doctorId,
+        professionalId: parsed.professionalId,
         patientId: parsed.patientId,
         date: appointmentDateTime,
         appointmentPriceInCents: parsed.appointmentPriceInCents,
