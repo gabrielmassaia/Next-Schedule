@@ -1,4 +1,4 @@
-import { Stethoscope, UsersRound } from "lucide-react";
+import { UsersRound } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
