@@ -16,7 +16,7 @@ type AppointmentWithRelations = typeof appointmentsTable.$inferSelect & {
     phoneNumber: string;
     sex: "male" | "female";
   };
-  doctor: {
+  professional: {
     id: string;
     name: string;
     specialty: string;
@@ -30,12 +30,12 @@ export const appointmentsTableColumns: ColumnDef<AppointmentWithRelations>[] = [
     header: "Paciente",
   },
   {
-    id: "doctor",
-    accessorKey: "doctor.name",
-    header: "Médico",
+    id: "professional",
+    accessorKey: "professional.name",
+    header: "Profissional",
     cell: (params) => {
       const appointment = params.row.original;
-      return `${appointment.doctor.name}`;
+      return `${appointment.professional.name}`;
     },
   },
   {
@@ -51,7 +51,7 @@ export const appointmentsTableColumns: ColumnDef<AppointmentWithRelations>[] = [
   },
   {
     id: "specialty",
-    accessorKey: "doctor.specialty",
+    accessorKey: "professional.specialty",
     header: "Especialidade",
   },
   {

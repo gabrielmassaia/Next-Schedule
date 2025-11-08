@@ -10,7 +10,10 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { getPlanBySlug,SUBSCRIPTION_PLANS } from "@/data/subscription-plans";
+import {
+  getPlanBySlug,
+  getSubscriptionPlans,
+} from "@/data/subscription-plans";
 import { db } from "@/db";
 import { integrationApiKeysTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -26,7 +29,14 @@ const SubscriptionPage = async () => {
     redirect("/authentication");
   }
 
-  const currentPlan = getPlanBySlug(session.user.plan);
+  if (!session.user.plan) {
+    redirect("/signature");
+  }
+
+  const [currentPlan, plans] = await Promise.all([
+    getPlanBySlug(session.user.plan),
+    getSubscriptionPlans(),
+  ]);
   const clinicsCount = session.user.clinics?.length ?? 0;
   const apiKeys = await db
     .select()
@@ -46,7 +56,7 @@ const SubscriptionPage = async () => {
         </PageHeaderContent>
       </PageHeader>
       <PageContent className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {SUBSCRIPTION_PLANS.map((plan) => (
+        {plans.map((plan) => (
           <SubscriptionPlan
             key={plan.slug}
             plan={plan}

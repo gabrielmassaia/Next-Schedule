@@ -6,11 +6,11 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { doctorsTable, usersToClinicsTable } from "@/db/schema";
+import { professionalsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
-export const deleteDoctor = actionClient
+export const deleteProfessional = actionClient
   .schema(
     z.object({
       id: z.string(),
@@ -37,19 +37,21 @@ export const deleteDoctor = actionClient
       throw new Error("Você não tem permissão para acessar esta clínica");
     }
 
-    const doctor = await db.query.doctorsTable.findFirst({
-      where: eq(doctorsTable.id, parsedInput.id),
+    const professional = await db.query.professionalsTable.findFirst({
+      where: eq(professionalsTable.id, parsedInput.id),
     });
 
-    if (!doctor) {
-      throw new Error("Médico não encontrado");
+    if (!professional) {
+      throw new Error("Profissional não encontrado");
     }
 
-    if (doctor.clinicId !== parsedInput.clinicId) {
-      throw new Error("Você não tem permissão para excluir este médico");
+    if (professional.clinicId !== parsedInput.clinicId) {
+      throw new Error("Você não tem permissão para excluir este profissional");
     }
 
-    await db.delete(doctorsTable).where(eq(doctorsTable.id, parsedInput.id));
+    await db
+      .delete(professionalsTable)
+      .where(eq(professionalsTable.id, parsedInput.id));
 
-    revalidatePath("/doctors");
+    revalidatePath("/professionals");
   });

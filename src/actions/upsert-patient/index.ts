@@ -45,7 +45,7 @@ export const upsertPatient = actionClient
       }
     }
 
-    const plan = getPlanBySlug(session.user.plan);
+    const plan = await getPlanBySlug(session.user.plan);
     if (!patientId && typeof plan.limits.patientsPerClinic === "number") {
       const [totalPatients] = await db
         .select({ total: count() })

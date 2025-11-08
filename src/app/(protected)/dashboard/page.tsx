@@ -20,7 +20,7 @@ import { appointmentsTableColumns } from "../appointments/_components/table-colu
 import AppointmentsChart from "./_components/appointments-chart";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
-import TopDoctors from "./_components/top-doctors";
+import TopProfessionals from "./_components/top-professionals";
 import TopSpecialties from "./_components/top-specialties";
 
 interface DashboardPageProps {
@@ -46,8 +46,8 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     totalRevenue,
     totalAppointments,
     totalPatients,
-    totalDoctors,
-    topDoctors,
+    totalProfessionals,
+    topProfessionals,
     topSpecialties,
     todayAppointments,
     dailyAppointmentsData,
@@ -75,7 +75,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalRevenue={totalRevenue.total ? Number(totalRevenue.total) : null}
           totalAppointments={totalAppointments.total}
           totalPatients={totalPatients.total}
-          totalDoctors={totalDoctors.total}
+          totalProfessionals={totalProfessionals.total}
         />
         <div className="grid grid-cols-[2.25fr_1fr] gap-4">
           <AppointmentsChart
@@ -83,7 +83,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
             from={from}
             to={to}
           />
-          <TopDoctors doctors={topDoctors} />
+          <TopProfessionals professionals={topProfessionals} />
         </div>
         <div className="grid grid-cols-[2.25fr_1fr] gap-4">
           <Card>

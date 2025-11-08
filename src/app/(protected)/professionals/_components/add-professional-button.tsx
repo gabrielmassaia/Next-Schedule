@@ -6,17 +6,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 
-import UpsertDoctorForm from "./upsert-doctor-form";
+import UpsertProfessionalForm from "./upsert-professional-form";
 
-interface AddDoctorButtonProps {
+interface AddProfessionalButtonProps {
   disabled?: boolean;
   helperText?: string;
 }
 
-export default function AddDoctorButton({
+export default function AddProfessionalButton({
   disabled = false,
   helperText,
-}: AddDoctorButtonProps) {
+}: AddProfessionalButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpenChange = (open: boolean) => {
@@ -35,10 +35,10 @@ export default function AddDoctorButton({
             variant={disabled ? "secondary" : "default"}
           >
             <Plus />
-            Adicionar Doutor
+            Adicionar Profissional
           </Button>
         </DialogTrigger>
-        <UpsertDoctorForm onSuccess={() => setIsOpen(false)} />
+        <UpsertProfessionalForm onSuccess={() => setIsOpen(false)} />
       </Dialog>
       {helperText && disabled && (
         <p className="mt-2 text-sm text-muted-foreground">{helperText}</p>
