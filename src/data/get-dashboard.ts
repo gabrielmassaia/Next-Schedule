@@ -20,14 +20,13 @@ interface Params {
 }
 
 export const getDashboard = async ({ from, to, clinicId }: Params) => {
-  const startDate = dayjs(from).startOf("day").toDate();
-  const endDate = dayjs(to).endOf("day").toDate();
-
-  const chartStartDate = dayjs().subtract(10, "days").startOf("day").toDate();
-  const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
   const tz = "America/Sao_Paulo";
+  const startDate = dayjs.tz(from, tz).startOf("day").toDate();
+  const endDate = dayjs.tz(to, tz).endOf("day").toDate();
+
   const todayStart = dayjs().tz(tz).startOf("day").toDate();
   const todayEnd = dayjs().tz(tz).endOf("day").toDate();
+
   const [
     [totalRevenue],
     [totalAppointments],
@@ -67,7 +66,13 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
         total: count(),
       })
       .from(clientsTable)
-      .where(eq(clientsTable.clinicId, clinicId)),
+      .where(
+        and(
+          eq(clientsTable.clinicId, clinicId),
+          gte(clientsTable.createdAt, startDate),
+          lte(clientsTable.createdAt, endDate),
+        ),
+      ),
     db
       .select({
         total: count(),
@@ -138,8 +143,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, clinicId),
-          gte(appointmentsTable.date, chartStartDate),
-          lte(appointmentsTable.date, chartEndDate),
+          gte(appointmentsTable.date, startDate),
+          lte(appointmentsTable.date, endDate),
         ),
       )
       .groupBy(sql`DATE(${appointmentsTable.date})`)
