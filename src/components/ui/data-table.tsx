@@ -9,21 +9,10 @@ import {
   Table as TanstackTable,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -41,6 +30,8 @@ interface DataTableProps<TData, TValue> {
   manualPagination?: boolean;
   rowCount?: number;
   onPageChange?: (page: number) => void;
+  pageIndex?: number;
+  pageSize?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -50,6 +41,9 @@ export function DataTable<TData, TValue>({
   pageCount,
   manualPagination = false,
   rowCount,
+  onPageChange,
+  pageIndex,
+  pageSize = 30,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -57,6 +51,26 @@ export function DataTable<TData, TValue>({
     pageCount: manualPagination ? pageCount : undefined,
     rowCount: manualPagination ? rowCount : undefined,
     manualPagination,
+    state:
+      manualPagination && pageIndex !== undefined
+        ? {
+            pagination: {
+              pageIndex,
+              pageSize,
+            },
+          }
+        : undefined,
+    onPaginationChange: (updater) => {
+      if (typeof updater === "function") {
+        const newState = updater({
+          pageIndex: pageIndex ?? 0,
+          pageSize,
+        });
+        onPageChange?.(newState.pageIndex + 1);
+      } else {
+        onPageChange?.(updater.pageIndex + 1);
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -115,74 +129,78 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} linha(s) selecionada(s).
+      <div className="items-center justify-between sm:flex">
+        <div className="mb-4 flex-1 text-center sm:mb-0 sm:text-start">
+          <h6 className="text-sm font-medium">
+            <strong>{table.getFilteredRowModel().rows.length}</strong>{" "}
+            registro(s) - <strong>{table.getPageCount()}</strong> página(s)
+          </h6>
         </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
+
+        <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Linhas por página</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value));
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue
-                  placeholder={table.getState().pagination.pageSize}
-                />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Página {table.getState().pagination.pageIndex + 1} de{" "}
-            {table.getPageCount()}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Ir para primeira página</span>
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
             <Button
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={() => table.previousPage()}
+              onClick={() => {
+                if (onPageChange) {
+                  onPageChange(table.getState().pagination.pageIndex);
+                } else {
+                  table.previousPage();
+                }
+              }}
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Página anterior</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
+            {Array.from({ length: table.getPageCount() }, (_, i) => i + 1)
+              .filter((page) => {
+                const currentPage = table.getState().pagination.pageIndex + 1;
+                return (
+                  page === 1 ||
+                  page === table.getPageCount() ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                );
+              })
+              .map((page, index, array) => {
+                const currentPage = table.getState().pagination.pageIndex + 1;
+                const isGap = index > 0 && page - array[index - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {isGap && (
+                      <span className="text-muted-foreground">...</span>
+                    )}
+                    <Button
+                      variant={currentPage === page ? "default" : "outline"}
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        if (onPageChange) {
+                          onPageChange(page);
+                        } else {
+                          table.setPageIndex(page - 1);
+                        }
+                      }}
+                    >
+                      {page}
+                    </Button>
+                  </React.Fragment>
+                );
+              })}
             <Button
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={() => table.nextPage()}
+              onClick={() => {
+                if (onPageChange) {
+                  onPageChange(table.getState().pagination.pageIndex + 2);
+                } else {
+                  table.nextPage();
+                }
+              }}
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Próxima página</span>
               <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Ir para última página</span>
-              <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
