@@ -115,6 +115,8 @@ export default function FormClinic({ niches }: FormClinicProps) {
 
       // Forçar refresh do session para manter consistência
       await authClient.getSession();
+
+      router.push("/dashboard");
       router.refresh();
     } catch (error) {
       if (isRedirectError(error)) {

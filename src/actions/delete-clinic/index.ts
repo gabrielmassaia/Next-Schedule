@@ -3,7 +3,6 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { clinicsTable, usersToClinicsTable } from "@/db/schema";
@@ -58,10 +57,7 @@ export const deleteClinic = async (clinicId: string) => {
 
   revalidatePath("/", "layout");
 
-  // Redirecionar baseado em clínicas restantes
-  if (remainingClinics.length > 0) {
-    redirect("/dashboard");
-  } else {
-    redirect("/clinic-form");
-  }
+  revalidatePath("/", "layout");
+
+  return { success: true, remainingClinicsCount: remainingClinics.length };
 };

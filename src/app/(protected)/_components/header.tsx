@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Building2,
-  Home,
-  LogOut,
-  Plus,
-  Settings,
-  UserRound,
-} from "lucide-react";
+import { LogOut, Settings, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,12 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
-import { useActiveClinic } from "@/providers/active-clinic";
+
+import { ClinicSwitcher } from "./clinic-switcher";
 
 export function Header() {
   const router = useRouter();
   const session = authClient.useSession();
-  const { clinics, activeClinic, setActiveClinic } = useActiveClinic();
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -45,53 +38,8 @@ export function Header() {
       </div>
       <div className="flex items-center gap-2">
         {/* Dropdown de Clínicas */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md p-2 transition-colors outline-none hover:bg-slate-100">
-              <Building2 className="h-5 w-5" />
-              <span className="hidden text-sm font-medium sm:block">
-                {activeClinic?.name ?? "Selecione uma clínica"}
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-56"
-            key={clinics.length}
-          >
-            <DropdownMenuLabel>Clínicas</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {clinics.length ? (
-              clinics.map((clinic) => (
-                <DropdownMenuItem
-                  key={clinic.id}
-                  onClick={async () => {
-                    try {
-                      await setActiveClinic(clinic.id);
-                      // Redirecionar para dashboard para forçar reload completo
-                      router.push("/dashboard");
-                      router.refresh();
-                    } catch (error) {
-                      console.error(error);
-                    }
-                  }}
-                >
-                  <Home className="mr-2 h-4 w-4" />
-                  {clinic.name}
-                </DropdownMenuItem>
-              ))
-            ) : (
-              <DropdownMenuItem disabled>
-                Nenhuma clínica cadastrada
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/clinic-form")}>
-              <Plus className="mr-2 h-4 w-4" />
-              <span>Criar nova clínica</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Dropdown de Clínicas */}
+        <ClinicSwitcher />
 
         {/* Dropdown de Usuário */}
         <DropdownMenu>

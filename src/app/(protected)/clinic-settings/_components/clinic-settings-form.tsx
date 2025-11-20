@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Trash2 } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -95,6 +96,7 @@ export function ClinicSettingsForm({
   niches,
 }: ClinicSettingsFormProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
   const { refreshClinics } = useActiveClinic();
 
   const form = useForm<z.infer<typeof clinicFormSchema>>({
@@ -140,9 +142,16 @@ export function ClinicSettingsForm({
   async function handleDelete() {
     setIsDeleting(true);
     try {
-      await deleteClinic(clinic.id);
+      const result = await deleteClinic(clinic.id);
       await refreshClinics();
       await authClient.getSession();
+
+      if (result.remainingClinicsCount > 0) {
+        router.push("/dashboard");
+      } else {
+        router.push("/clinic-form");
+      }
+      router.refresh();
     } catch (error) {
       if (isRedirectError(error)) {
         return;
