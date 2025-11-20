@@ -15,7 +15,7 @@ interface GetClientsParams {
 
 export async function getClients({
   page = 1,
-  limit = 1,
+  limit = 30,
   query,
   status,
 }: GetClientsParams) {

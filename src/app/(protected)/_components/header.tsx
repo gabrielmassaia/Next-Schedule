@@ -1,6 +1,13 @@
 "use client";
 
-import { Home, LogOut, Plus, UserRound } from "lucide-react";
+import {
+  Building2,
+  Home,
+  LogOut,
+  Plus,
+  Settings,
+  UserRound,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -8,6 +15,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -35,25 +44,19 @@ export function Header() {
         <SidebarTrigger />
       </div>
       <div className="flex items-center gap-2">
+        {/* Dropdown de Clínicas */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-md p-2 transition-colors outline-none hover:bg-slate-100">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium">
-                  {activeClinic?.name ?? "Selecione uma clínica"}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {session.data?.user.email}
-                </p>
-              </div>
-              <Avatar>
-                <AvatarFallback>
-                  <UserRound className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
+              <Building2 className="h-5 w-5" />
+              <span className="hidden text-sm font-medium sm:block">
+                {activeClinic?.name ?? "Selecione uma clínica"}
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Clínicas</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             {clinics.length ? (
               clinics.map((clinic) => (
                 <DropdownMenuItem
@@ -78,10 +81,39 @@ export function Header() {
                 Nenhuma clínica cadastrada
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/clinic-form")}>
               <Plus className="mr-2 h-4 w-4" />
               <span>Criar nova clínica</span>
             </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Dropdown de Usuário */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-md p-2 transition-colors outline-none hover:bg-slate-100">
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-medium">{session.data?.user.name}</p>
+                <p className="text-muted-foreground text-xs">
+                  {session.data?.user.email}
+                </p>
+              </div>
+              <Avatar>
+                <AvatarFallback>
+                  <UserRound className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/clinic-settings")}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Gerenciar Clínica</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair</span>
