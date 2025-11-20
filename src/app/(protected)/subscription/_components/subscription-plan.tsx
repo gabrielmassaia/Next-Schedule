@@ -39,7 +39,7 @@ export function SubscriptionPlan({
     }
   > = {
     essential: {
-      badge: "Comece grátis",
+      badge: "Para validação",
       tagline:
         "Configure sua clínica em minutos e centralize todos os atendimentos sem custo inicial.",
       accent: "from-sky-500/10 to-sky-500/5",

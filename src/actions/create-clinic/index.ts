@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -94,5 +95,9 @@ export const createClinic = async (input: CreateClinicInput) => {
     sameSite: "lax",
     httpOnly: false,
   });
+
+  // Revalidar todas as páginas protegidas para atualizar a session
+  revalidatePath("/", "layout");
+
   redirect("/dashboard");
 };

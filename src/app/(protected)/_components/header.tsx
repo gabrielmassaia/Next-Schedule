@@ -61,6 +61,9 @@ export function Header() {
                   onClick={async () => {
                     try {
                       await setActiveClinic(clinic.id);
+                      // Redirecionar para dashboard para forçar reload completo
+                      router.push("/dashboard");
+                      router.refresh();
                     } catch (error) {
                       console.error(error);
                     }

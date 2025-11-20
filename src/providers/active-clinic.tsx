@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { authClient } from "@/lib/auth-client";
 import type { ClinicSummary } from "@/lib/clinic-session";
@@ -17,40 +24,50 @@ const ActiveClinicContext = createContext<ActiveClinicContextValue | undefined>(
   undefined,
 );
 
-const initialValue: ActiveClinicContextValue = {
-  clinics: [],
-  activeClinicId: null,
-  activeClinic: null,
-  isLoading: true,
-  setActiveClinic: async () => {},
-};
-
 export function ActiveClinicProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = authClient.useSession();
-  const [value, setValue] = useState<ActiveClinicContextValue>(initialValue);
+  const [clinics, setClinics] = useState<ClinicSummary[]>([]);
+  const [activeClinicId, setActiveClinicId] = useState<string | null>(null);
+  const [activeClinic, setActiveClinic] = useState<ClinicSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const setActiveClinicHandler = useCallback(
+    async (clinicId: string) => {
+      const res = await fetch("/api/clinics/active", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clinicId }),
+      });
+      if (!res.ok) {
+        throw new Error("Não foi possível alterar a clínica ativa");
+      }
+      // Atualizar estado local
+      const selectedClinic = clinics.find((clinic) => clinic.id === clinicId);
+      setActiveClinicId(selectedClinic?.id ?? null);
+      setActiveClinic(selectedClinic ?? null);
+    },
+    [clinics],
+  );
 
   useEffect(() => {
     const fetchActiveClinic = async () => {
       if (!session.data?.user) {
-        setValue((prev) => ({
-          ...prev,
-          clinics: [],
-          activeClinic: null,
-          activeClinicId: null,
-          isLoading: false,
-        }));
+        setClinics([]);
+        setActiveClinic(null);
+        setActiveClinicId(null);
+        setIsLoading(false);
         return;
       }
 
-      setValue((prev) => ({
-        ...prev,
-        clinics: session.data?.user?.clinics ?? [],
-        isLoading: true,
-      }));
+      const userClinics = (session.data?.user?.clinics ??
+        []) as ClinicSummary[];
+      setClinics(userClinics);
+      setIsLoading(true);
 
       try {
         const response = await fetch("/api/clinics/active", {
@@ -63,74 +80,35 @@ export function ActiveClinicProvider({
         const data = (await response.json()) as {
           activeClinicId: string | null;
         };
-        const clinics = (session.data?.user?.clinics ?? []) as ClinicSummary[];
-        const activeClinic = clinics.find(
+        const activeClinicFromCookie = userClinics.find(
           (clinic) => clinic.id === data.activeClinicId,
         );
-        setValue({
-          clinics,
-          activeClinicId: activeClinic?.id ?? clinics[0]?.id ?? null,
-          activeClinic: activeClinic ?? clinics[0] ?? null,
-          isLoading: false,
-          setActiveClinic: async (clinicId: string) => {
-            const res = await fetch("/api/clinics/active", {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ clinicId }),
-            });
-            if (!res.ok) {
-              throw new Error("Não foi possível alterar a clínica ativa");
-            }
-            const selectedClinic = clinics.find(
-              (clinic) => clinic.id === clinicId,
-            );
-            setValue((prev) => ({
-              ...prev,
-              activeClinicId: selectedClinic?.id ?? null,
-              activeClinic: selectedClinic ?? null,
-            }));
-          },
-        });
+        setActiveClinicId(
+          activeClinicFromCookie?.id ?? userClinics[0]?.id ?? null,
+        );
+        setActiveClinic(activeClinicFromCookie ?? userClinics[0] ?? null);
+        setIsLoading(false);
       } catch (error) {
         console.error(error);
-        const clinics = (session.data?.user?.clinics ?? []) as ClinicSummary[];
-        setValue({
-          clinics,
-          activeClinicId: clinics[0]?.id ?? null,
-          activeClinic: clinics[0] ?? null,
-          isLoading: false,
-          setActiveClinic: async (clinicId: string) => {
-            const res = await fetch("/api/clinics/active", {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ clinicId }),
-            });
-            if (!res.ok) {
-              throw new Error("Não foi possível alterar a clínica ativa");
-            }
-            const selectedClinic = clinics.find(
-              (clinic) => clinic.id === clinicId,
-            );
-            setValue((prev) => ({
-              ...prev,
-              activeClinicId: selectedClinic?.id ?? null,
-              activeClinic: selectedClinic ?? null,
-            }));
-          },
-        });
+        setActiveClinicId(userClinics[0]?.id ?? null);
+        setActiveClinic(userClinics[0] ?? null);
+        setIsLoading(false);
       }
     };
 
     fetchActiveClinic();
   }, [session.data?.user]);
 
-  const contextValue = useMemo(() => value, [value]);
+  const contextValue = useMemo(
+    () => ({
+      clinics,
+      activeClinicId,
+      activeClinic,
+      isLoading,
+      setActiveClinic: setActiveClinicHandler,
+    }),
+    [clinics, activeClinicId, activeClinic, isLoading, setActiveClinicHandler],
+  );
 
   return (
     <ActiveClinicContext.Provider value={contextValue}>
