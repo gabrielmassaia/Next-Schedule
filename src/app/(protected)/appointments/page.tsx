@@ -1,7 +1,4 @@
-import { eq } from "drizzle-orm";
-
 import { requirePlan } from "@/_helpers/require-plan";
-import { DataTable } from "@/components/ui/data-table";
 import {
   PageActions,
   PageContainer,
@@ -11,37 +8,46 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { db } from "@/db";
-import {
-  appointmentsTable,
-  clientsTable,
-  professionalsTable,
-} from "@/db/schema";
 
+import { getAppointments } from "./_actions/get-appointments";
+import { getFormData } from "./_actions/get-form-data";
 import AddAppointmentButton from "./_components/add-appointment-button";
-import { appointmentsTableColumns } from "./_components/table-columns";
+import { AppointmentsTable } from "./_components/appointments-table";
 
-const AppointmentsPage = async () => {
+interface AppointmentsPageProps {
+  searchParams: Promise<{
+    page?: string;
+    clientName?: string;
+    professionalName?: string;
+    date?: string;
+    specialty?: string;
+  }>;
+}
+
+const AppointmentsPage = async (props: AppointmentsPageProps) => {
+  const searchParams = await props.searchParams;
   const { activeClinic } = await requirePlan("essential");
   if (!activeClinic) {
     return null;
   }
 
-  const [clients, professionals, appointments] = await Promise.all([
-    db.query.clientsTable.findMany({
-      where: eq(clientsTable.clinicId, activeClinic.id),
-    }),
-    db.query.professionalsTable.findMany({
-      where: eq(professionalsTable.clinicId, activeClinic.id),
-    }),
-    db.query.appointmentsTable.findMany({
-      where: eq(appointmentsTable.clinicId, activeClinic.id),
-      with: {
-        client: true,
-        professional: true,
-      },
-    }),
-  ]);
+  const page = Number(searchParams.page) || 1;
+  const clientName = searchParams.clientName;
+  const professionalName = searchParams.professionalName;
+  const date = searchParams.date;
+  const specialty = searchParams.specialty;
+
+  const [{ clients, professionals }, { appointments, pageCount }] =
+    await Promise.all([
+      getFormData(),
+      getAppointments({
+        page,
+        clientName,
+        professionalName,
+        date,
+        specialty,
+      }),
+    ]);
 
   return (
     <PageContainer>
@@ -60,7 +66,11 @@ const AppointmentsPage = async () => {
         </PageActions>
       </PageHeader>
       <PageContent>
-        <DataTable data={appointments} columns={appointmentsTableColumns} />
+        <AppointmentsTable
+          appointments={appointments}
+          pageCount={pageCount}
+          currentPage={page}
+        />
       </PageContent>
     </PageContainer>
   );
