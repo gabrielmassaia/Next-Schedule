@@ -170,6 +170,7 @@ export const clinicsTableRelations = relations(
     clients: many(clientsTable),
     appointments: many(appointmentsTable),
     usersToClinics: many(usersToClinicsTable),
+    integrationApiKeys: many(integrationApiKeysTable),
     niche: one(clinicNichesTable, {
       fields: [clinicsTable.nicheId],
       references: [clinicNichesTable.id],
