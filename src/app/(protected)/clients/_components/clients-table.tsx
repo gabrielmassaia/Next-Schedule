@@ -3,10 +3,10 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
-import { LoadingContent } from "@/_components/Loading/LoadingContent";
 import { Activity } from "@/components/ui/activity";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
+import { LoadingContent } from "@/components/ui/Loading/LoadingContent";
 import { clientsTable } from "@/db/schema";
 
 import { ClientsTableColumns } from "./table-columns";
