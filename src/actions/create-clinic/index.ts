@@ -3,7 +3,6 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
@@ -99,5 +98,5 @@ export const createClinic = async (input: CreateClinicInput) => {
   // Revalidar todas as páginas protegidas para atualizar a session
   revalidatePath("/", "layout");
 
-  redirect("/dashboard");
+  return { success: true, clinicId: clinic.id };
 };
