@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
@@ -70,5 +71,9 @@ export async function POST(request: NextRequest) {
     httpOnly: false,
     sameSite: "lax",
   });
+
+  // Revalidar todas as páginas protegidas para atualizar com nova clínica
+  revalidatePath("/", "layout");
+
   return response;
 }

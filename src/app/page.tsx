@@ -16,5 +16,5 @@ export default async function Home() {
     redirect("/authentication");
   }
 
-  return <></>;
+  return <div>Hello!</div>;
 }

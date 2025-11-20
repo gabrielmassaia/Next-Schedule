@@ -54,7 +54,9 @@ export default function TopSpecialties({
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Hospital className="text-muted-foreground" />
-            <CardTitle className="text-base">Especialidades</CardTitle>
+            <CardTitle className="text-base">
+              Especialidades dos agendamentos
+            </CardTitle>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Building2,
   CalendarDays,
   ChevronRight,
   CreditCard,
@@ -101,6 +102,17 @@ export function AppSidebar() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === "/clinic-settings"}
+                        >
+                          <Link href="/clinic-settings">
+                            <Building2 />
+                            <span>Gerenciar Clínica</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton
                           asChild

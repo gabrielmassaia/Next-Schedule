@@ -20,7 +20,7 @@ export default async function SubscriptionPage() {
   const userPlanSlug = session.user.plan ?? null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 via-white to-gray-100 p-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-linear-to-b from-gray-50 via-white to-gray-100 p-6">
       <div className="mb-10 w-full max-w-3xl text-center">
         <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900">
           Transforme o agendamento da sua clínica com inteligência artificial

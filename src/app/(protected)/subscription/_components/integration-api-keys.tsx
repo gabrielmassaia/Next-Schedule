@@ -137,8 +137,19 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
                   value={newKeyValue}
                   onFocus={(e) => e.target.select()}
                 />
-                <DialogFooter>
-                  <Button onClick={() => setNewKeyValue(null)}>Fechar</Button>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(newKeyValue);
+                      toast.success(
+                        "Chave copiada para a área de transferência",
+                      );
+                      setNewKeyValue(null);
+                    }}
+                  >
+                    Copiar e fechar
+                  </Button>
                 </DialogFooter>
               </div>
             ) : (
