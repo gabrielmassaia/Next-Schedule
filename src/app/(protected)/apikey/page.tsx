@@ -1,7 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
+import { requirePlan } from "@/_helpers/require-plan";
 import {
   PageContainer,
   PageContent,
@@ -12,45 +11,17 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { integrationApiKeysTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
 
 import { IntegrationApiKeys } from "../subscription/_components/integration-api-keys";
 
 export default async function ApiKeyPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/authentication");
-  }
-
-  if (!session.user.plan) {
-    redirect("/signature");
-  }
-
-  // Get active clinic from cookies
-  const { cookies } = await import("next/headers");
-  const cookieStore = await cookies();
-  const activeClinicId = cookieStore.get("active-clinic-id")?.value;
-
-  if (!activeClinicId) {
-    return (
-      <PageContainer>
-        <PageHeader>
-          <PageHeaderContent>
-            <PageTitle>Chaves de API</PageTitle>
-            <PageDescription>
-              Selecione uma clínica para gerenciar as chaves de API.
-            </PageDescription>
-          </PageHeaderContent>
-        </PageHeader>
-      </PageContainer>
-    );
+  const { activeClinic } = await requirePlan("essential");
+  if (!activeClinic) {
+    return null;
   }
 
   const apiKeys = await db.query.integrationApiKeysTable.findMany({
-    where: eq(integrationApiKeysTable.clinicId, activeClinicId),
+    where: eq(integrationApiKeysTable.clinicId, activeClinic.id),
     orderBy: desc(integrationApiKeysTable.createdAt),
     with: {
       clinic: true,

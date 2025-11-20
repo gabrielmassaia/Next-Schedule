@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { integrationApiKeysTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { readActiveClinicIdFromCookies } from "@/lib/clinic-session";
 import { actionClient } from "@/lib/next-safe-action";
 
 export const revokeApiKey = actionClient
@@ -26,9 +27,7 @@ export const revokeApiKey = actionClient
     }
 
     // Get active clinic from cookies
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    const activeClinicId = cookieStore.get("active-clinic-id")?.value;
+    const activeClinicId = await readActiveClinicIdFromCookies();
 
     if (!activeClinicId) {
       throw new Error("Nenhuma clínica ativa selecionada");
