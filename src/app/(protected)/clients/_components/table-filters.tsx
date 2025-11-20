@@ -1,5 +1,8 @@
-import { Table } from "@tanstack/react-table";
+"use client";
+
 import { Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { clientsTable } from "@/db/schema";
-
-interface TableFiltersProps {
-  table: Table<typeof clientsTable.$inferSelect>;
-}
 
 const statusOptions = {
   all: "Todos",
@@ -22,9 +20,40 @@ const statusOptions = {
   inactive: "Inativos",
 } as const;
 
-export function TableFilters({ table }: TableFiltersProps) {
-  const currentStatus =
-    (table.getColumn("status")?.getFilterValue() as string[])?.[0] ?? "all";
+export function TableFilters() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { replace } = useRouter();
+
+  const handleSearch = useDebouncedCallback((term: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1");
+    if (term) {
+      params.set("query", term);
+    } else {
+      params.delete("query");
+    }
+    replace(`${pathname}?${params.toString()}`);
+  }, 300);
+
+  const handleStatusChange = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1");
+    if (value === "all") {
+      params.delete("status");
+    } else {
+      params.set("status", value);
+    }
+    replace(`${pathname}?${params.toString()}`);
+  };
+
+  const clearFilters = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("query");
+    params.delete("status");
+    params.set("page", "1");
+    replace(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <div className="flex items-center justify-between">
@@ -33,26 +62,23 @@ export function TableFilters({ table }: TableFiltersProps) {
           <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Buscar clientes..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
+            onChange={(e) => handleSearch(e.target.value)}
+            defaultValue={searchParams.get("query")?.toString()}
             className="pl-8"
           />
         </div>
         <Select
-          value={currentStatus}
-          onValueChange={(value) => {
-            if (value === "all") {
-              table.getColumn("status")?.setFilterValue(undefined);
-            } else {
-              table.getColumn("status")?.setFilterValue([value]);
-            }
-          }}
+          value={searchParams.get("status")?.toString() || "all"}
+          onValueChange={handleStatusChange}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue>
-              {statusOptions[currentStatus as keyof typeof statusOptions]}
+              {
+                statusOptions[
+                  (searchParams.get("status") as keyof typeof statusOptions) ||
+                    "all"
+                ]
+              }
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -63,13 +89,7 @@ export function TableFilters({ table }: TableFiltersProps) {
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant="outline"
-          onClick={() => {
-            table.getColumn("name")?.setFilterValue("");
-            table.getColumn("status")?.setFilterValue(undefined);
-          }}
-        >
+        <Button variant="outline" onClick={clearFilters}>
           Limpar filtros
         </Button>
       </div>

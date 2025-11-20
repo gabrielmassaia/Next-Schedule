@@ -47,6 +47,7 @@
     "sonner": "^2.0.5",
     "stripe": "^18.2.0",
     "tailwind-merge": "^3.3.1",
+    "use-debounce": "^10.0.6",
     "zod": "^3.25.66"
   },
   "devDependencies": {
