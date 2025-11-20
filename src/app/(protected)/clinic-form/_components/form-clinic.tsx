@@ -9,8 +9,6 @@ import { toast } from "sonner";
 import z from "zod";
 
 import { createClinic } from "@/actions/create-clinic";
-import { authClient } from "@/lib/auth-client";
-import { useActiveClinic } from "@/providers/active-clinic";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import {
@@ -30,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { clinicNichesTable } from "@/db/schema";
+import { authClient } from "@/lib/auth-client";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 const clinicFormSchema = z.object({
   name: z
