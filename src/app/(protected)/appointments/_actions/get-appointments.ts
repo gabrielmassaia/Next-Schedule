@@ -21,7 +21,7 @@ interface GetAppointmentsParams {
 
 export async function getAppointments({
   page = 1,
-  limit = 2,
+  limit = 30,
   clientName,
   professionalName,
   date,

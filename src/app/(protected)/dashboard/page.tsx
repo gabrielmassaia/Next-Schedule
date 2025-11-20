@@ -39,8 +39,8 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   const { from, to } = await searchParams;
   if (!from || !to) {
     const startOfMonth = dayjs().startOf("month").format("YYYY-MM-DD");
-    const today = dayjs().format("YYYY-MM-DD");
-    redirect(`/dashboard?from=${startOfMonth}&to=${today}`);
+    const endOfMonth = dayjs().endOf("month").format("YYYY-MM-DD");
+    redirect(`/dashboard?from=${startOfMonth}&to=${endOfMonth}`);
   }
   const {
     totalRevenue,

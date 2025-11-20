@@ -1,6 +1,6 @@
 "use client";
 
-import { format, startOfMonth } from "date-fns";
+import { endOfMonth, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { parseAsIsoDate, useQueryState } from "nuqs";
@@ -25,23 +25,37 @@ export function DatePicker({
   );
   const [to, setTo] = useQueryState(
     "to",
-    parseAsIsoDate.withDefault(new Date()),
+    parseAsIsoDate.withDefault(endOfMonth(new Date())),
   );
+
+  // Helper to adjust date for display (UTC string to Local Date)
+  // When nuqs parses "2025-11-01", it creates a UTC date.
+  // We need to adjust it to be displayed correctly in the local timezone if needed,
+  // but actually, the issue is likely that the Calendar component expects a local date.
+  // If 'from' is 2025-11-01T00:00:00.000Z, and we are in -03:00, it is 2025-10-31 21:00.
+  // We want 2025-11-01 to be selected.
+  // So we should add the timezone offset or parse it as local.
+
   const handleDateSelect = (dateRange: DateRange | undefined) => {
     if (dateRange?.from) {
-      setFrom(dateRange.from, {
-        shallow: false,
-      });
+      setFrom(dateRange.from);
     }
     if (dateRange?.to) {
-      setTo(dateRange.to, {
-        shallow: false,
-      });
+      setTo(dateRange.to);
     }
   };
+
+  // We don't adjust for the Calendar 'selected' prop because react-day-picker handles dates.
+  // But wait, if 'from' is UTC midnight, react-day-picker (running in browser) sees it as previous day.
+  // So we DO need to adjust it for the Calendar.
+
   const date = {
-    from,
-    to,
+    from: from
+      ? new Date(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate())
+      : undefined,
+    to: to
+      ? new Date(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate())
+      : undefined,
   };
   return (
     <div className={cn("grid gap-2", className)}>

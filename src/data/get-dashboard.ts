@@ -20,6 +20,9 @@ interface Params {
 }
 
 export const getDashboard = async ({ from, to, clinicId }: Params) => {
+  const startDate = dayjs(from).startOf("day").toDate();
+  const endDate = dayjs(to).endOf("day").toDate();
+
   const chartStartDate = dayjs().subtract(10, "days").startOf("day").toDate();
   const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
   const tz = "America/Sao_Paulo";
@@ -43,8 +46,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, clinicId),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, startDate),
+          lte(appointmentsTable.date, endDate),
         ),
       ),
     db
@@ -55,8 +58,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, clinicId),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, startDate),
+          lte(appointmentsTable.date, endDate),
         ),
       ),
     db
@@ -84,8 +87,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
         appointmentsTable,
         and(
           eq(appointmentsTable.professionalId, professionalsTable.id),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, startDate),
+          lte(appointmentsTable.date, endDate),
         ),
       )
       .where(eq(professionalsTable.clinicId, clinicId))
@@ -105,8 +108,8 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
       .where(
         and(
           eq(appointmentsTable.clinicId, clinicId),
-          gte(appointmentsTable.date, new Date(from)),
-          lte(appointmentsTable.date, new Date(to)),
+          gte(appointmentsTable.date, startDate),
+          lte(appointmentsTable.date, endDate),
         ),
       )
       .groupBy(professionalsTable.specialty)
