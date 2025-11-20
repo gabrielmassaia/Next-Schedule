@@ -16,7 +16,7 @@ export const POST = async (request: Request) => {
   }
   const text = await request.text();
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-05-28.basil",
+    apiVersion: "2025-08-27.basil",
   });
   const event = stripe.webhooks.constructEvent(
     text,
@@ -82,7 +82,7 @@ export const POST = async (request: Request) => {
         throw new Error("Subscription ID not found");
       }
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: "2025-05-28.basil",
+        apiVersion: "2025-08-27.basil",
       });
       const subscription = await stripe.subscriptions.retrieve(
         event.data.object.id,

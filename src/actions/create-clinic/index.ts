@@ -79,7 +79,7 @@ export const createClinic = async (input: CreateClinicInput) => {
     clinicId: clinic.id,
   });
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set(ACTIVE_CLINIC_COOKIE, clinic.id, {
     path: "/",
     sameSite: "lax",

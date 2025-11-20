@@ -11,11 +11,9 @@ import {
   clientsTable,
   integrationApiKeysTable,
   professionalsTable,
-  usersToClinicsTable,
 } from "@/db/schema";
 
 const schema = z.object({
-  clinicId: z.string().uuid(),
   clientId: z.string().uuid(),
   professionalId: z.string().uuid(),
   date: z.string().date(),
@@ -51,31 +49,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = schema.parse(body);
 
-    const membership = await db.query.usersToClinicsTable.findFirst({
-      where: and(
-        eq(usersToClinicsTable.userId, apiKeyRecord.userId),
-        eq(usersToClinicsTable.clinicId, parsed.clinicId),
-      ),
-    });
-
-    if (!membership) {
-      return NextResponse.json(
-        { message: "Usuário não possui acesso a esta clínica" },
-        { status: 403 },
-      );
-    }
+    // API key is already validated and linked to a clinic
+    // No need to check user membership since keys are clinic-scoped
 
     const [professional, client] = await Promise.all([
       db.query.professionalsTable.findFirst({
         where: and(
           eq(professionalsTable.id, parsed.professionalId),
-          eq(professionalsTable.clinicId, parsed.clinicId),
+          eq(professionalsTable.clinicId, apiKeyRecord.clinicId),
         ),
       }),
       db.query.clientsTable.findFirst({
         where: and(
           eq(clientsTable.id, parsed.clientId),
-          eq(clientsTable.clinicId, parsed.clinicId),
+          eq(clientsTable.clinicId, apiKeyRecord.clinicId),
         ),
       }),
     ]);
@@ -94,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     const conflict = await db.query.appointmentsTable.findFirst({
       where: and(
-        eq(appointmentsTable.clinicId, parsed.clinicId),
+        eq(appointmentsTable.clinicId, apiKeyRecord.clinicId),
         eq(appointmentsTable.professionalId, parsed.professionalId),
         eq(appointmentsTable.date, appointmentDateTime),
       ),
@@ -110,7 +97,7 @@ export async function POST(request: NextRequest) {
     const [appointment] = await db
       .insert(appointmentsTable)
       .values({
-        clinicId: parsed.clinicId,
+        clinicId: apiKeyRecord.clinicId,
         professionalId: parsed.professionalId,
         clientId: parsed.clientId,
         date: appointmentDateTime,

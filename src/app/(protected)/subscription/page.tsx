@@ -9,10 +9,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import {
-  getPlanBySlug,
-  getSubscriptionPlans,
-} from "@/data/subscription-plans";
+import { getPlanBySlug, getSubscriptionPlans } from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
 import { SubscriptionPlan } from "./_components/subscription-plan";
@@ -54,21 +51,28 @@ const SubscriptionPage = async () => {
               plan={plan}
               isActive={plan.slug === currentPlan.slug}
               className="h-full"
-              inactiveCtaLabel={plan.slug !== currentPlan.slug ? "Upgrade plano" : undefined}
+              inactiveCtaLabel={
+                plan.slug !== currentPlan.slug ? "Upgrade plano" : undefined
+              }
             />
           ))}
         </div>
       </PageContent>
-      <PageContent className="mt-6 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Clínicas utilizadas: {clinicsCount}
-          {typeof currentPlan.limits.clinics === "number"
-            ? ` de ${currentPlan.limits.clinics}`
-            : " (ilimitado)"}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Plano atual: <span className="font-semibold text-foreground">{currentPlan.name}</span>
-        </p>
+      <PageContent>
+        <div className="mt-6 space-y-4">
+          <p className="text-muted-foreground text-sm">
+            Clínicas utilizadas: {clinicsCount}
+            {typeof currentPlan.limits.clinics === "number"
+              ? ` de ${currentPlan.limits.clinics}`
+              : " (ilimitado)"}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            Plano atual:{" "}
+            <span className="text-foreground font-semibold">
+              {currentPlan.name}
+            </span>
+          </p>
+        </div>
       </PageContent>
     </PageContainer>
   );

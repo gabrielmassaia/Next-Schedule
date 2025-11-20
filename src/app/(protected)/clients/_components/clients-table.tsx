@@ -5,6 +5,7 @@ import { useTransition } from "react";
 
 import { LoadingContent } from "@/_components/Loading/LoadingContent";
 import { Activity } from "@/components/ui/activity";
+import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { clientsTable } from "@/db/schema";
 
@@ -39,15 +40,19 @@ export function ClientsTable({
     <div className="space-y-4">
       {isPending && <LoadingContent className="h-96 justify-center" />}
       <Activity mode={isPending ? "hidden" : "visible"}>
-        <DataTable
-          columns={ClientsTableColumns}
-          data={clients}
-          filters={TableFilters}
-          pageCount={pageCount}
-          manualPagination
-          pageIndex={currentPage - 1}
-          onPageChange={handlePageChange}
-        />
+        <Card>
+          <CardContent className="pt-6">
+            <DataTable
+              columns={ClientsTableColumns}
+              data={clients}
+              filters={TableFilters}
+              pageCount={pageCount}
+              manualPagination
+              pageIndex={currentPage - 1}
+              onPageChange={handlePageChange}
+            />
+          </CardContent>
+        </Card>
       </Activity>
     </div>
   );

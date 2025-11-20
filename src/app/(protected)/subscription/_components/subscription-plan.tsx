@@ -137,7 +137,7 @@ export function SubscriptionPlan({
     >
       <div
         className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-br",
+          "pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-br",
           planHighlight.accent,
         )}
         aria-hidden

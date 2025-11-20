@@ -47,6 +47,7 @@ interface IntegrationApiKeysProps {
   apiKeys: {
     id: string;
     name: string;
+    clinicName: string;
     createdAt: string;
     lastUsedAt: string | null;
   }[];
@@ -58,7 +59,9 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<z.infer<typeof createKeySchema>>({
     resolver: zodResolver(createKeySchema),
-    defaultValues: { name: "" },
+    defaultValues: {
+      name: "",
+    },
   });
 
   const createKeyAction = useAction(createApiKey, {
@@ -73,7 +76,9 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error ? error.message : "Não foi possível criar a chave",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível criar a chave",
       );
     },
   });
@@ -85,7 +90,9 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error ? error.message : "Não foi possível revogar a chave",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível revogar a chave",
       );
     },
   });
@@ -111,7 +118,9 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
           }}
         >
           <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>Criar nova chave</Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              Criar nova chave
+            </Button>
           </DialogTrigger>
           <DialogContent>
             {newKeyValue ? (
@@ -119,10 +128,15 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
                 <DialogHeader>
                   <DialogTitle>Copie sua nova chave</DialogTitle>
                   <DialogDescription>
-                    Esta chave só será exibida uma vez. Armazene em um local seguro.
+                    Esta chave só será exibida uma vez. Armazene em um local
+                    seguro.
                   </DialogDescription>
                 </DialogHeader>
-                <Input readOnly value={newKeyValue} onFocus={(e) => e.target.select()} />
+                <Input
+                  readOnly
+                  value={newKeyValue}
+                  onFocus={(e) => e.target.select()}
+                />
                 <DialogFooter>
                   <Button onClick={() => setNewKeyValue(null)}>Fechar</Button>
                 </DialogFooter>
@@ -136,7 +150,8 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
                   <DialogHeader>
                     <DialogTitle>Nova chave de API</DialogTitle>
                     <DialogDescription>
-                      Dê um nome para identificar esta chave em futuras integrações.
+                      Dê um nome para identificar esta chave em futuras
+                      integrações.
                     </DialogDescription>
                   </DialogHeader>
                   <FormField
@@ -146,14 +161,20 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
                       <FormItem>
                         <FormLabel>Nome</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Ex: N8N - automações" />
+                          <Input
+                            {...field}
+                            placeholder="Ex: N8N - automações"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <DialogFooter>
-                    <Button type="submit" disabled={createKeyAction.status === "executing"}>
+                    <Button
+                      type="submit"
+                      disabled={createKeyAction.status === "executing"}
+                    >
                       {createKeyAction.status === "executing"
                         ? "Gerando..."
                         : "Gerar chave"}
@@ -169,6 +190,7 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
+              <TableHead>Clínica</TableHead>
               <TableHead>Criada em</TableHead>
               <TableHead>Último uso</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -177,7 +199,10 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
           <TableBody>
             {apiKeys.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="text-muted-foreground text-center text-sm"
+                >
                   Nenhuma chave criada até o momento.
                 </TableCell>
               </TableRow>
@@ -185,6 +210,7 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
               apiKeys.map((key) => (
                 <TableRow key={key.id}>
                   <TableCell>{key.name}</TableCell>
+                  <TableCell>{key.clinicName}</TableCell>
                   <TableCell>
                     {new Date(key.createdAt).toLocaleString("pt-BR")}
                   </TableCell>

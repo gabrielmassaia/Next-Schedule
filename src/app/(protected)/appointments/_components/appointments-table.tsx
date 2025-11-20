@@ -5,13 +5,28 @@ import { useTransition } from "react";
 
 import { LoadingContent } from "@/_components/Loading/LoadingContent";
 import { Activity } from "@/components/ui/activity";
+import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
+import { appointmentsTable } from "@/db/schema";
 
 import { appointmentsTableColumns } from "./table-columns";
 import { TableFilters } from "./table-filters";
 
 interface AppointmentsTableProps {
-  appointments: any[];
+  appointments: (typeof appointmentsTable.$inferSelect & {
+    client: {
+      id: string;
+      name: string;
+      email: string;
+      phoneNumber: string;
+      sex: "male" | "female";
+    } | null;
+    professional: {
+      id: string;
+      name: string;
+      specialty: string;
+    } | null;
+  })[];
   pageCount: number;
   currentPage: number;
 }
@@ -38,15 +53,19 @@ export function AppointmentsTable({
     <div className="space-y-4">
       {isPending && <LoadingContent className="h-96 justify-center" />}
       <Activity mode={isPending ? "hidden" : "visible"}>
-        <DataTable
-          columns={appointmentsTableColumns}
-          data={appointments}
-          filters={TableFilters}
-          pageCount={pageCount}
-          manualPagination
-          pageIndex={currentPage - 1}
-          onPageChange={handlePageChange}
-        />
+        <Card>
+          <CardContent className="pt-6">
+            <DataTable
+              columns={appointmentsTableColumns}
+              data={appointments}
+              filters={TableFilters}
+              pageCount={pageCount}
+              manualPagination
+              pageIndex={currentPage - 1}
+              onPageChange={handlePageChange}
+            />
+          </CardContent>
+        </Card>
       </Activity>
     </div>
   );

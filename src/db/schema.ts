@@ -163,22 +163,22 @@ export const clinicNichesTableRelations = relations(
   }),
 );
 
-export const clinicsTableRelations = relations(clinicsTable, ({ many, one }) => ({
-  professionals: many(professionalsTable),
-  clients: many(clientsTable),
-  appointments: many(appointmentsTable),
-  usersToClinics: many(usersToClinicsTable),
-  niche: one(clinicNichesTable, {
-    fields: [clinicsTable.nicheId],
-    references: [clinicNichesTable.id],
+export const clinicsTableRelations = relations(
+  clinicsTable,
+  ({ many, one }) => ({
+    professionals: many(professionalsTable),
+    clients: many(clientsTable),
+    appointments: many(appointmentsTable),
+    usersToClinics: many(usersToClinicsTable),
+    niche: one(clinicNichesTable, {
+      fields: [clinicsTable.nicheId],
+      references: [clinicNichesTable.id],
+    }),
   }),
-}));
+);
 
 export const clientSexEnum = pgEnum("client_sex", ["male", "female"]);
-export const clientStatusEnum = pgEnum("client_status", [
-  "active",
-  "inactive",
-]);
+export const clientStatusEnum = pgEnum("client_status", ["active", "inactive"]);
 
 export const clientsTable = pgTable("clients", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -251,13 +251,11 @@ export const plansTable = pgTable("plans", {
   description: text("description").notNull(),
   priceInCents: integer("price_in_cents"),
   priority: integer("priority").notNull(),
-  limits: jsonb("limits")
-    .notNull()
-    .$type<{
-      clinics: number | null;
-      professionalsPerClinic: number | null;
-      clientsPerClinic: number | null;
-    }>(),
+  limits: jsonb("limits").notNull().$type<{
+    clinics: number | null;
+    professionalsPerClinic: number | null;
+    clientsPerClinic: number | null;
+  }>(),
   features: text("features").array().notNull(),
   stripePriceId: text("stripe_price_id"),
   stripePriceEnvKey: text("stripe_price_env_key"),
@@ -270,9 +268,9 @@ export const plansTable = pgTable("plans", {
 
 export const integrationApiKeysTable = pgTable("integration_api_keys", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: text("user_id")
+  clinicId: uuid("clinic_id")
     .notNull()
-    .references(() => usersTable.id, { onDelete: "cascade" }),
+    .references(() => clinicsTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   hashedKey: text("hashed_key").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -282,9 +280,9 @@ export const integrationApiKeysTable = pgTable("integration_api_keys", {
 export const integrationApiKeysTableRelations = relations(
   integrationApiKeysTable,
   ({ one }) => ({
-    user: one(usersTable, {
-      fields: [integrationApiKeysTable.userId],
-      references: [usersTable.id],
+    clinic: one(clinicsTable, {
+      fields: [integrationApiKeysTable.clinicId],
+      references: [clinicsTable.id],
     }),
   }),
 );

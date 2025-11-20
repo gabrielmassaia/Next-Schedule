@@ -29,11 +29,33 @@ export default async function ApiKeyPage() {
     redirect("/signature");
   }
 
-  const apiKeys = await db
-    .select()
-    .from(integrationApiKeysTable)
-    .where(eq(integrationApiKeysTable.userId, session.user.id))
-    .orderBy(desc(integrationApiKeysTable.createdAt));
+  // Get active clinic from cookies
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const activeClinicId = cookieStore.get("active-clinic-id")?.value;
+
+  if (!activeClinicId) {
+    return (
+      <PageContainer>
+        <PageHeader>
+          <PageHeaderContent>
+            <PageTitle>Chaves de API</PageTitle>
+            <PageDescription>
+              Selecione uma clínica para gerenciar as chaves de API.
+            </PageDescription>
+          </PageHeaderContent>
+        </PageHeader>
+      </PageContainer>
+    );
+  }
+
+  const apiKeys = await db.query.integrationApiKeysTable.findMany({
+    where: eq(integrationApiKeysTable.clinicId, activeClinicId),
+    orderBy: desc(integrationApiKeysTable.createdAt),
+    with: {
+      clinic: true,
+    },
+  });
 
   return (
     <PageContainer>
@@ -41,8 +63,8 @@ export default async function ApiKeyPage() {
         <PageHeaderContent>
           <PageTitle>Chaves de API</PageTitle>
           <PageDescription>
-            Gerencie e monitore as chaves de API utilizadas nas integrações do Next
-            Schedule.
+            Gerencie e monitore as chaves de API utilizadas nas integrações do
+            Next Schedule.
           </PageDescription>
         </PageHeaderContent>
       </PageHeader>
@@ -51,6 +73,7 @@ export default async function ApiKeyPage() {
           apiKeys={apiKeys.map((key) => ({
             id: key.id,
             name: key.name,
+            clinicName: key.clinic.name,
             createdAt: key.createdAt.toISOString(),
             lastUsedAt: key.lastUsedAt ? key.lastUsedAt.toISOString() : null,
           }))}

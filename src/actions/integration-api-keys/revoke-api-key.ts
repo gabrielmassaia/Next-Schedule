@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { integrationApiKeysTable } from "@/db/schema";
+import { integrationApiKeysTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -22,7 +22,28 @@ export const revokeApiKey = actionClient
     });
 
     if (!session?.user) {
-      throw new Error("Não autenticado");
+      throw new Error("Usuário não autenticado");
+    }
+
+    // Get active clinic from cookies
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const activeClinicId = cookieStore.get("active-clinic-id")?.value;
+
+    if (!activeClinicId) {
+      throw new Error("Nenhuma clínica ativa selecionada");
+    }
+
+    // Verify user has access to this clinic
+    const membership = await db.query.usersToClinicsTable.findFirst({
+      where: and(
+        eq(usersToClinicsTable.userId, session.user.id),
+        eq(usersToClinicsTable.clinicId, activeClinicId),
+      ),
+    });
+
+    if (!membership) {
+      throw new Error("Você não tem acesso a esta clínica");
     }
 
     await db
@@ -30,9 +51,10 @@ export const revokeApiKey = actionClient
       .where(
         and(
           eq(integrationApiKeysTable.id, parsedInput.id),
-          eq(integrationApiKeysTable.userId, session.user.id),
+          eq(integrationApiKeysTable.clinicId, activeClinicId),
         ),
       );
 
     revalidatePath("/subscription");
+    revalidatePath("/apikey");
   });
