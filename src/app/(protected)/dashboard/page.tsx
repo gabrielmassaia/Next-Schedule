@@ -97,33 +97,27 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                 to={to}
               />
             </div>
-            <div className="col-span-1 lg:col-span-3">
-              <Card className="h-full">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="text-muted-foreground" />
-                    <CardTitle className="text-base">
-                      Agendamentos de hoje
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <DataTable
-                    columns={appointmentsTableColumns}
-                    data={todayAppointments}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
-            <div className="col-span-1 lg:col-span-4">
+            <div className="col-span-1 flex flex-col gap-4 lg:col-span-3">
               <TopProfessionals professionals={topProfessionals} />
-            </div>
-            <div className="col-span-1 lg:col-span-3">
               <TopSpecialties topSpecialties={topSpecialties} />
             </div>
           </div>
+          <Card className="w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Calendar className="text-muted-foreground" />
+                <CardTitle className="text-base">
+                  Agendamentos de hoje
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={appointmentsTableColumns}
+                data={todayAppointments}
+              />
+            </CardContent>
+          </Card>
         </PageContent>
       </PageContainer>
     </>
