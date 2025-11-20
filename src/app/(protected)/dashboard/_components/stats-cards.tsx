@@ -1,11 +1,5 @@
-import {
-  CalendarIcon,
-  DollarSignIcon,
-  UserIcon,
-  UsersIcon,
-} from "lucide-react";
+import { Calendar, DollarSign, UserRound, Users } from "lucide-react";
 
-import { formatCurrencyInCents } from "@/_helpers/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatsCardsProps {
@@ -21,49 +15,59 @@ const StatsCards = ({
   totalClients,
   totalProfessionals,
 }: StatsCardsProps) => {
-  const stats = [
-    {
-      title: "Faturamento",
-      value: totalRevenue ? formatCurrencyInCents(totalRevenue) : "R$ 0,00",
-      icon: DollarSignIcon,
-    },
-    {
-      title: "Agendamentos",
-      value: totalAppointments.toString(),
-      icon: CalendarIcon,
-    },
-    {
-      title: "Clientes",
-      value: totalClients.toString(),
-      icon: UserIcon,
-    },
-    {
-      title: "Profissionais",
-      value: totalProfessionals.toString(),
-      icon: UsersIcon,
-    },
-  ];
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => {
-        const Icon = stat.icon;
-        return (
-          <Card key={stat.title} className="gap-2">
-            <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-              <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
-                <Icon className="text-primary h-4 w-4" />
-              </div>
-              <CardTitle className="text-muted-foreground text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        );
-      })}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+          <div className="bg-primary/10 text-primary rounded-full p-2">
+            <DollarSign className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {totalRevenue !== null
+              ? (totalRevenue / 100).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })
+              : "R$ 0,00"}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Agendamentos</CardTitle>
+          <div className="bg-primary/10 text-primary rounded-full p-2">
+            <Calendar className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalAppointments}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+          <div className="bg-primary/10 text-primary rounded-full p-2">
+            <Users className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalClients}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Profissionais</CardTitle>
+          <div className="bg-primary/10 text-primary rounded-full p-2">
+            <UserRound className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalProfessionals}</div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

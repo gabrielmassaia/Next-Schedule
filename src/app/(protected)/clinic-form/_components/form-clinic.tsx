@@ -3,11 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
 import { createClinic } from "@/actions/create-clinic";
+import { authClient } from "@/lib/auth-client";
+import { useActiveClinic } from "@/providers/active-clinic";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import {
@@ -54,15 +57,9 @@ const clinicFormSchema = z.object({
     .email({ message: "E-mail inválido" })
     .optional()
     .or(z.literal("")),
-  addressLine1: z
-    .string()
-    .trim()
-    .min(1, { message: "Endereço é obrigatório" }),
+  addressLine1: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
   addressLine2: z.string().trim().optional(),
-  city: z
-    .string()
-    .trim()
-    .min(1, { message: "Cidade é obrigatória" }),
+  city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
   state: z
     .string()
     .trim()
@@ -80,6 +77,8 @@ interface FormClinicProps {
 }
 
 export default function FormClinic({ niches }: FormClinicProps) {
+  const router = useRouter();
+  const { refreshClinics } = useActiveClinic();
   const form = useForm<z.infer<typeof clinicFormSchema>>({
     resolver: zodResolver(clinicFormSchema),
     defaultValues: {
@@ -110,13 +109,22 @@ export default function FormClinic({ niches }: FormClinicProps) {
         state: data.state,
         zipCode: data.zipCode,
       });
+
+      // Atualizar lista de clínicas no contexto
+      await refreshClinics();
+
+      // Forçar refresh do session para manter consistência
+      await authClient.getSession();
+      router.refresh();
     } catch (error) {
       if (isRedirectError(error)) {
         return;
       }
 
       console.error(error);
-      toast.error("Erro ao criar clínica");
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro ao criar clínica";
+      toast.error(errorMessage);
     }
   }
 

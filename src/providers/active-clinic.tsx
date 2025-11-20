@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { getUserClinics } from "@/actions/get-user-clinics";
 import { authClient } from "@/lib/auth-client";
 import type { ClinicSummary } from "@/lib/clinic-session";
 
@@ -18,6 +19,7 @@ interface ActiveClinicContextValue {
   activeClinic: ClinicSummary | null;
   isLoading: boolean;
   setActiveClinic: (clinicId: string) => Promise<void>;
+  refreshClinics: () => Promise<void>;
 }
 
 const ActiveClinicContext = createContext<ActiveClinicContextValue | undefined>(
@@ -34,6 +36,31 @@ export function ActiveClinicProvider({
   const [activeClinicId, setActiveClinicId] = useState<string | null>(null);
   const [activeClinic, setActiveClinic] = useState<ClinicSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const refreshClinics = useCallback(async () => {
+    try {
+      const updatedClinics = await getUserClinics();
+      setClinics(updatedClinics);
+
+      // Se a clínica ativa não estiver mais na lista (foi excluída), atualiza
+      if (
+        activeClinicId &&
+        !updatedClinics.find((c) => c.id === activeClinicId)
+      ) {
+        if (updatedClinics.length > 0) {
+          // A lógica de setar a nova clínica ativa deve ser tratada pelo backend/redirect,
+          // mas aqui garantimos que o estado local fique consistente
+          setActiveClinicId(updatedClinics[0].id);
+          setActiveClinic(updatedClinics[0]);
+        } else {
+          setActiveClinicId(null);
+          setActiveClinic(null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh clinics:", error);
+    }
+  }, [activeClinicId]);
 
   const setActiveClinicHandler = useCallback(
     async (clinicId: string) => {
@@ -64,12 +91,17 @@ export function ActiveClinicProvider({
         return;
       }
 
-      const userClinics = (session.data?.user?.clinics ??
+      // Inicializa com os dados da sessão, mas busca atualizados em seguida
+      const sessionClinics = (session.data?.user?.clinics ??
         []) as ClinicSummary[];
-      setClinics(userClinics);
+      setClinics(sessionClinics);
       setIsLoading(true);
 
       try {
+        // Busca clínicas atualizadas do servidor
+        const updatedClinics = await getUserClinics();
+        setClinics(updatedClinics);
+
         const response = await fetch("/api/clinics/active", {
           method: "GET",
           credentials: "include",
@@ -80,24 +112,31 @@ export function ActiveClinicProvider({
         const data = (await response.json()) as {
           activeClinicId: string | null;
         };
-        const activeClinicFromCookie = userClinics.find(
+
+        // Usa a lista atualizada para encontrar a clínica ativa
+        const activeClinicFromCookie = updatedClinics.find(
           (clinic) => clinic.id === data.activeClinicId,
         );
-        setActiveClinicId(
-          activeClinicFromCookie?.id ?? userClinics[0]?.id ?? null,
-        );
-        setActiveClinic(activeClinicFromCookie ?? userClinics[0] ?? null);
+
+        const newActiveId =
+          activeClinicFromCookie?.id ?? updatedClinics[0]?.id ?? null;
+        const newActiveClinic =
+          activeClinicFromCookie ?? updatedClinics[0] ?? null;
+
+        setActiveClinicId(newActiveId);
+        setActiveClinic(newActiveClinic);
         setIsLoading(false);
       } catch (error) {
         console.error(error);
-        setActiveClinicId(userClinics[0]?.id ?? null);
-        setActiveClinic(userClinics[0] ?? null);
+        // Fallback para dados da sessão se falhar
+        setActiveClinicId(sessionClinics[0]?.id ?? null);
+        setActiveClinic(sessionClinics[0] ?? null);
         setIsLoading(false);
       }
     };
 
     fetchActiveClinic();
-  }, [session.data?.user]);
+  }, [session.data?.user]); // Removido session.data?.user?.clinics para evitar loop se a session mudar constantemente
 
   const contextValue = useMemo(
     () => ({
@@ -106,8 +145,16 @@ export function ActiveClinicProvider({
       activeClinic,
       isLoading,
       setActiveClinic: setActiveClinicHandler,
+      refreshClinics,
     }),
-    [clinics, activeClinicId, activeClinic, isLoading, setActiveClinicHandler],
+    [
+      clinics,
+      activeClinicId,
+      activeClinic,
+      isLoading,
+      setActiveClinicHandler,
+      refreshClinics,
+    ],
   );
 
   return (

@@ -54,7 +54,11 @@ export function Header() {
               </span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent
+            align="end"
+            className="w-56"
+            key={clinics.length}
+          >
             <DropdownMenuLabel>Clínicas</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {clinics.length ? (

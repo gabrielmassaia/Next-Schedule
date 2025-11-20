@@ -40,7 +40,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { clinicNichesTable } from "@/db/schema";
+import { authClient } from "@/lib/auth-client";
 import type { ClinicSummary } from "@/lib/clinic-session";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 const clinicFormSchema = z.object({
   name: z
@@ -93,6 +95,7 @@ export function ClinicSettingsForm({
   niches,
 }: ClinicSettingsFormProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const { refreshClinics } = useActiveClinic();
 
   const form = useForm<z.infer<typeof clinicFormSchema>>({
     resolver: zodResolver(clinicFormSchema),
@@ -138,6 +141,8 @@ export function ClinicSettingsForm({
     setIsDeleting(true);
     try {
       await deleteClinic(clinic.id);
+      await refreshClinics();
+      await authClient.getSession();
     } catch (error) {
       if (isRedirectError(error)) {
         return;

@@ -89,32 +89,40 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
             totalClients={totalClients.total}
             totalProfessionals={totalProfessionals.total}
           />
-          <div className="grid grid-cols-[2.25fr_1fr] gap-4">
-            <AppointmentsChart
-              dailyAppointmentsData={dailyAppointmentsData}
-              from={from}
-              to={to}
-            />
-            <TopProfessionals professionals={topProfessionals} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+            <div className="col-span-1 lg:col-span-4">
+              <AppointmentsChart
+                dailyAppointmentsData={dailyAppointmentsData}
+                from={from}
+                to={to}
+              />
+            </div>
+            <div className="col-span-1 lg:col-span-3">
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="text-muted-foreground" />
+                    <CardTitle className="text-base">
+                      Agendamentos de hoje
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <DataTable
+                    columns={appointmentsTableColumns}
+                    data={todayAppointments}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <div className="grid grid-cols-[2.25fr_1fr] gap-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Calendar className="text-muted-foreground" />
-                  <CardTitle className="text-base">
-                    Agendamentos de hoje
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <DataTable
-                  columns={appointmentsTableColumns}
-                  data={todayAppointments}
-                />
-              </CardContent>
-            </Card>
-            <TopSpecialties topSpecialties={topSpecialties} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+            <div className="col-span-1 lg:col-span-4">
+              <TopProfessionals professionals={topProfessionals} />
+            </div>
+            <div className="col-span-1 lg:col-span-3">
+              <TopSpecialties topSpecialties={topSpecialties} />
+            </div>
           </div>
         </PageContent>
       </PageContainer>
