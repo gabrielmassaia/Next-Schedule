@@ -58,6 +58,15 @@ export const createClinic = async (input: CreateClinicInput) => {
     throw new Error("Nicho não encontrado");
   }
 
+  // Validar CNPJ duplicado
+  const existingClinicWithCnpj = await db.query.clinicsTable.findFirst({
+    where: eq(clinicsTable.cnpj, input.cnpj),
+  });
+
+  if (existingClinicWithCnpj) {
+    throw new Error("Já existe uma clínica cadastrada com este CNPJ");
+  }
+
   const [clinic] = await db
     .insert(clinicsTable)
     .values({

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -57,6 +57,32 @@ export const upsertClient = actionClient
           "Limite de clientes do plano atingido. Faça upgrade para cadastrar mais.",
         );
       }
+    }
+
+    // Validar email duplicado (exceto se for update do mesmo cliente)
+    const existingClientWithEmail = await db.query.clientsTable.findFirst({
+      where: and(
+        eq(clientsTable.clinicId, clinicId),
+        eq(clientsTable.email, clientData.email),
+        clientId ? ne(clientsTable.id, clientId) : undefined,
+      ),
+    });
+
+    if (existingClientWithEmail) {
+      throw new Error("Já existe um cliente com este email nesta clínica");
+    }
+
+    // Validar telefone duplicado (exceto se for update do mesmo cliente)
+    const existingClientWithPhone = await db.query.clientsTable.findFirst({
+      where: and(
+        eq(clientsTable.clinicId, clinicId),
+        eq(clientsTable.phoneNumber, clientData.phoneNumber),
+        clientId ? ne(clientsTable.id, clientId) : undefined,
+      ),
+    });
+
+    if (existingClientWithPhone) {
+      throw new Error("Já existe um cliente com este telefone nesta clínica");
     }
 
     await db

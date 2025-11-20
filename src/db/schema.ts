@@ -8,6 +8,7 @@ import {
   text,
   time,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -81,7 +82,7 @@ export const clinicNichesTable = pgTable("clinic_niches", {
 export const clinicsTable = pgTable("clinics", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  cnpj: text("cnpj").notNull(),
+  cnpj: text("cnpj").notNull().unique(),
   phone: text("phone").notNull(),
   email: text("email"),
   addressLine1: text("address_line1").notNull(),
@@ -181,21 +182,30 @@ export const clinicsTableRelations = relations(
 export const clientSexEnum = pgEnum("client_sex", ["male", "female"]);
 export const clientStatusEnum = pgEnum("client_status", ["active", "inactive"]);
 
-export const clientsTable = pgTable("clients", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  clinicId: uuid("clinic_id")
-    .notNull()
-    .references(() => clinicsTable.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phoneNumber: text("phone_number").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  sex: clientSexEnum("sex").notNull(),
-  status: clientStatusEnum("status").notNull().default("active"),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const clientsTable = pgTable(
+  "clients",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clinicId: uuid("clinic_id")
+      .notNull()
+      .references(() => clinicsTable.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phoneNumber: text("phone_number").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    sex: clientSexEnum("sex").notNull(),
+    status: clientStatusEnum("status").notNull().default("active"),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    // Email único por clínica
+    emailClinicUnique: unique().on(table.email, table.clinicId),
+    // Telefone único por clínica
+    phoneClinicUnique: unique().on(table.phoneNumber, table.clinicId),
+  }),
+);
 
 export const clientsTableRelations = relations(
   clientsTable,
