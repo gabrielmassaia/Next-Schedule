@@ -42,25 +42,37 @@ export function ActiveClinicProvider({
       const updatedClinics = await getUserClinics();
       setClinics(updatedClinics);
 
-      // Se a clínica ativa não estiver mais na lista (foi excluída), atualiza
-      if (
-        activeClinicId &&
-        !updatedClinics.find((c) => c.id === activeClinicId)
-      ) {
-        if (updatedClinics.length > 0) {
-          // A lógica de setar a nova clínica ativa deve ser tratada pelo backend/redirect,
-          // mas aqui garantimos que o estado local fique consistente
-          setActiveClinicId(updatedClinics[0].id);
-          setActiveClinic(updatedClinics[0]);
-        } else {
-          setActiveClinicId(null);
-          setActiveClinic(null);
-        }
+      const response = await fetch("/api/clinics/active", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      let activeClinicIdFromCookie: string | null = null;
+      if (response.ok) {
+        const data = (await response.json()) as {
+          activeClinicId: string | null;
+        };
+        activeClinicIdFromCookie = data.activeClinicId;
       }
+
+      const activeClinicFromCookie = updatedClinics.find(
+        (clinic) => clinic.id === activeClinicIdFromCookie,
+      );
+
+      // Se tivermos uma clínica no cookie e ela existir na lista, usamos ela
+      // Caso contrário, se tivermos clínicas na lista, usamos a primeira (fallback)
+      // Se não tivermos clínicas, null
+      const newActiveId =
+        activeClinicFromCookie?.id ?? updatedClinics[0]?.id ?? null;
+      const newActiveClinic =
+        activeClinicFromCookie ?? updatedClinics[0] ?? null;
+
+      setActiveClinicId(newActiveId);
+      setActiveClinic(newActiveClinic);
     } catch (error) {
       console.error("Failed to refresh clinics:", error);
     }
-  }, [activeClinicId]);
+  }, []);
 
   const setActiveClinicHandler = useCallback(
     async (clinicId: string) => {
