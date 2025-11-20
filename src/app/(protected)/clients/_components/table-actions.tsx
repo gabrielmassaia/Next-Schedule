@@ -95,7 +95,7 @@ export default function ClientTableActions({
     <>
       <Dialog open={upsertDialogIsOpen} onOpenChange={setUpsertDialogIsOpen}>
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <MoreVerticalIcon className="h-4 w-4" />
             </Button>
@@ -152,8 +152,7 @@ export default function ClientTableActions({
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Tem certeza que deseja excluir permanentemente esse
-                    cliente?
+                    Tem certeza que deseja excluir permanentemente esse cliente?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     Esta ação não pode ser desfeita. O cliente será excluído
