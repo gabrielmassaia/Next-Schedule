@@ -27,7 +27,7 @@ export async function getAppointments({
   date,
   specialty,
 }: GetAppointmentsParams) {
-  const { activeClinic } = await requirePlan("essential");
+  const { activeClinic } = await requirePlan();
   if (!activeClinic) {
     return {
       appointments: [],

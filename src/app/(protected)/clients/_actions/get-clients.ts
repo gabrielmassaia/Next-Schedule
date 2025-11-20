@@ -19,7 +19,7 @@ export async function getClients({
   query,
   status,
 }: GetClientsParams) {
-  const { activeClinic, plan } = await requirePlan("essential");
+  const { activeClinic, plan } = await requirePlan();
   if (!activeClinic) {
     return { clients: [], totalCount: 0, pageCount: 0, hasReachedLimit: false };
   }

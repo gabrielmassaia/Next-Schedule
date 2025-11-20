@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { clientsTable, professionalsTable } from "@/db/schema";
 
 export async function getFormData() {
-  const { activeClinic } = await requirePlan("essential");
+  const { activeClinic } = await requirePlan();
   if (!activeClinic) {
     return { clients: [], professionals: [] };
   }

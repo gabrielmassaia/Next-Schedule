@@ -31,7 +31,7 @@ interface DashboardPageProps {
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const { activeClinic } = await requirePlan("essential");
+  const { activeClinic } = await requirePlan();
   if (!activeClinic) {
     return null;
   }

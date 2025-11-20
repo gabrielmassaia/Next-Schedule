@@ -26,7 +26,7 @@ interface AppointmentsPageProps {
 
 const AppointmentsPage = async (props: AppointmentsPageProps) => {
   const searchParams = await props.searchParams;
-  const { activeClinic } = await requirePlan("essential");
+  const { activeClinic } = await requirePlan();
   if (!activeClinic) {
     return null;
   }

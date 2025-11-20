@@ -17,7 +17,7 @@ import AddProfessionalButton from "./_components/add-professional-button";
 import ProfessionalCard from "./_components/professional-card";
 
 export default async function ProfessionalsPage() {
-  const { activeClinic, plan } = await requirePlan("essential");
+  const { activeClinic, plan } = await requirePlan();
   if (!activeClinic) {
     return null;
   }
@@ -54,7 +54,10 @@ export default async function ProfessionalsPage() {
       <PageContent>
         <div className="grid grid-cols-3 gap-6">
           {professionals.map((professional) => (
-            <ProfessionalCard key={professional.id} professional={professional} />
+            <ProfessionalCard
+              key={professional.id}
+              professional={professional}
+            />
           ))}
         </div>
       </PageContent>

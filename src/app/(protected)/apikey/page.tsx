@@ -15,7 +15,7 @@ import { integrationApiKeysTable } from "@/db/schema";
 import { IntegrationApiKeys } from "../subscription/_components/integration-api-keys";
 
 export default async function ApiKeyPage() {
-  const { activeClinic } = await requirePlan("essential");
+  const { activeClinic } = await requirePlan();
   if (!activeClinic) {
     return null;
   }
