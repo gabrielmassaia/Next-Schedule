@@ -4,11 +4,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const CAROUSEL_IMAGES = [
-  "/login/carousel-1.jpg",
-  "/login/carousel-2.jpg",
-  "/login/carousel-3.jpg",
-  "/login/carousel-4.jpg",
-  "/login/carousel-5.jpg",
+  "/login/carousel-1.png",
+  "/login/carousel-2.png",
+  "/login/carousel-3.png",
+  "/login/carousel-4.png",
+  "/login/carousel-5.png",
 ];
 
 const ROTATION_INTERVAL = 5000; // 5 seconds
