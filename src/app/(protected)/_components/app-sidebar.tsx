@@ -64,11 +64,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b bg-white p-4">
-        {/* <Image src="/logo.png" alt="Next Schedule" width={136} height={28} /> */}
-        <h1 className="text-lg font-bold">Next Schedule</h1>
+      <SidebarHeader className="bg-sidebar border-b p-4">
+        <h1 className="text-xl font-bold">Next Schedule</h1>
       </SidebarHeader>
-      <SidebarContent className="bg-white">
+      <SidebarContent className="bg-sidebar">
         <SidebarGroup>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -144,7 +143,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="text-muted-foreground border-t bg-white p-4 text-center text-xs">
+      <SidebarFooter className="text-muted-foreground bg-sidebar border-t p-4 text-center text-xs">
         <p>© 2025 Next Schedule</p>
       </SidebarFooter>
     </Sidebar>

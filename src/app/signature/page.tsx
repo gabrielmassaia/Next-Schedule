@@ -20,12 +20,12 @@ export default async function SubscriptionPage() {
   const userPlanSlug = session.user.plan ?? null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-linear-to-b from-gray-50 via-white to-gray-100 p-6">
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6">
       <div className="mb-10 w-full max-w-3xl text-center">
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900">
+        <h1 className="text-foreground mb-4 text-4xl font-extrabold tracking-tight">
           Transforme o agendamento da sua clínica com inteligência artificial
         </h1>
-        <p className="mb-6 text-lg text-gray-600 md:text-xl">
+        <p className="text-muted-foreground mb-6 text-lg md:text-xl">
           O Next Schedule combina automação, relatórios em tempo real e um
           agente de IA que responde clientes em segundos. Escolha o plano ideal
           e conquiste uma operação eficiente desde o primeiro atendimento.
@@ -63,38 +63,38 @@ export default async function SubscriptionPage() {
         </div>
       </div>
 
-      <div className="mt-12 w-full max-w-4xl rounded-2xl border border-gray-200 bg-white/70 p-8 text-center shadow-lg backdrop-blur">
-        <h2 className="text-2xl font-semibold text-gray-900">
+      <div className="bg-card/70 mt-12 w-full max-w-4xl rounded-2xl border border-gray-200 p-8 text-center shadow-lg backdrop-blur">
+        <h2 className="text-foreground text-2xl font-semibold">
           Por que clínicas líderes escolhem o Next Schedule?
         </h2>
-        <p className="mt-4 text-sm text-gray-600 md:text-base">
+        <p className="text-muted-foreground mt-4 text-sm md:text-base">
           Nossos clientes registram uma economia média de 15 horas semanais com
           o agente de IA, que confirma consultas, envia lembretes personalizados
           e mantém sua agenda sempre cheia. Você tem visibilidade total dos
           dados para tomar decisões rápidas.
         </p>
         <div className="mt-6 grid gap-4 text-left sm:grid-cols-3">
-          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="bg-card rounded-lg border border-gray-100 p-4 shadow-sm">
+            <p className="text-card-foreground text-sm font-semibold">
               Integração total
             </p>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="text-muted-foreground mt-2 text-sm">
               Conecte prontuários, pagamentos e comunicação em um só lugar.
             </p>
           </div>
-          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="bg-card rounded-lg border border-gray-100 p-4 shadow-sm">
+            <p className="text-card-foreground text-sm font-semibold">
               Escala ilimitada
             </p>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="text-muted-foreground mt-2 text-sm">
               Gerencie múltiplas unidades mantendo padrões e governança.
             </p>
           </div>
-          <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="bg-card rounded-lg border border-gray-100 p-4 shadow-sm">
+            <p className="text-card-foreground text-sm font-semibold">
               Onboarding assistido
             </p>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="text-muted-foreground mt-2 text-sm">
               Equipe especializada acompanha a configuração do seu fluxo ideal.
             </p>
           </div>

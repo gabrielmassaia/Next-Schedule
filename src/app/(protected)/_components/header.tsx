@@ -3,6 +3,7 @@
 import { LogOut, Settings, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -32,19 +33,17 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-white px-4">
+    <header className="bg-background/95 supports-backdrop-filter:bg-background/60 hidden h-16 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur sm:flex">
       <div className="flex items-center gap-2">
         <SidebarTrigger />
       </div>
       <div className="flex items-center gap-2">
-        {/* Dropdown de Clínicas */}
-        {/* Dropdown de Clínicas */}
         <ClinicSwitcher />
-
+        <ModeToggle />
         {/* Dropdown de Usuário */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md p-2 transition-colors outline-none hover:bg-slate-100">
+            <button className="hover:bg-accent flex items-center gap-2 rounded-md p-2 transition-colors outline-none">
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-medium">{session.data?.user.name}</p>
                 <p className="text-muted-foreground text-xs">

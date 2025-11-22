@@ -14,22 +14,29 @@ export const createStripeCheckout = actionClient
     const session = await auth.api.getSession({
       headers: await headers(),
     });
-    if (!session?.user) {
-      throw new Error("Unauthorized");
-    }
+
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
     const plan = await getPlanBySlug(parsedInput.planSlug);
-    if (!plan.stripePriceId) {
-      throw new Error("Plano indisponível para checkout");
+    if (!plan.stripePriceId) throw new Error("Plano sem priceId configurado");
+
+    // Detectar ambiente Stripe
+    const isProduction = process.env.VERCEL_ENV === "production";
+
+    const stripeSecret = isProduction
+      ? process.env.STRIPE_SECRET_KEY_PROD
+      : process.env.STRIPE_SECRET_KEY_TEST;
+
+    if (!stripeSecret) {
+      throw new Error(
+        `Stripe secret key (${isProduction ? "PROD" : "TEST"}) não encontrada`,
+      );
     }
-    if (plan.comingSoon) {
-      throw new Error("Este plano ainda não está disponível para contratação");
-    }
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("Stripe secret key not found");
-    }
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+
+    const stripe = new Stripe(stripeSecret, {
       apiVersion: "2025-08-27.basil",
     });
+
     const checkoutContext = {
       userId: session.user.id,
       planSlug: plan.slug,
@@ -42,7 +49,7 @@ export const createStripeCheckout = actionClient
         payment_method_types: ["card"],
         mode: "subscription",
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/authentication`,
         client_reference_id: session.user.id,
         subscription_data: {
           metadata: checkoutContext,
@@ -62,11 +69,5 @@ export const createStripeCheckout = actionClient
         throw error;
       });
 
-    console.info("[createStripeCheckout] Session created", {
-      ...checkoutContext,
-      sessionId,
-    });
-    return {
-      sessionId,
-    };
+    return { sessionId };
   });

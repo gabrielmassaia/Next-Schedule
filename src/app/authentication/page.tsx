@@ -18,9 +18,9 @@ export default async function AuthenticationPage() {
   }
 
   return (
-    <div className="flex h-screen w-screen flex-col lg:flex-row">
+    <div className="flex min-h-screen w-full flex-col lg:flex-row">
       {/* Left Side - Login Form */}
-      <div className="bg-background flex w-full items-center justify-center p-8 lg:w-1/2 lg:p-12">
+      <div className="bg-background flex w-full flex-1 items-center justify-center p-8 lg:w-1/2 lg:p-12">
         <div className="w-full max-w-md space-y-8">
           {/* Logo/Branding */}
           <div className="text-center">

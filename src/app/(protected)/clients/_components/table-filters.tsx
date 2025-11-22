@@ -56,9 +56,9 @@ export function TableFilters() {
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
-        <div className="relative w-64">
+    <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+      <div className="flex w-full flex-col items-start gap-2 space-x-0 md:flex-row md:items-center md:space-x-2">
+        <div className="relative w-full md:w-64">
           <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Buscar clientes..."
@@ -71,7 +71,7 @@ export function TableFilters() {
           value={searchParams.get("status")?.toString() || "all"}
           onValueChange={handleStatusChange}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue>
               {
                 statusOptions[
@@ -89,7 +89,11 @@ export function TableFilters() {
             ))}
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={clearFilters}>
+        <Button
+          variant="outline"
+          onClick={clearFilters}
+          className="w-full md:w-auto"
+        >
           Limpar filtros
         </Button>
       </div>

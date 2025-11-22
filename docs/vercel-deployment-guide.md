@@ -66,7 +66,7 @@ GOOGLE_CLIENT_ID=seu-google-client-id
 GOOGLE_CLIENT_SECRET=seu-google-client-secret
 
 # Stripe (se estiver usando)
-STRIPE_SECRET_KEY=sk_live_...
+STRIPE_SECRET_KEY_TEST=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
@@ -130,7 +130,7 @@ Na seção **Environment Variables**, adicione TODAS as variáveis do `.env.prod
 | `BETTER_AUTH_URL`                    | `https://seu-app.vercel.app`                                         |
 | `GOOGLE_CLIENT_ID`                   | `seu-google-client-id`                                               |
 | `GOOGLE_CLIENT_SECRET`               | `seu-google-client-secret`                                           |
-| `STRIPE_SECRET_KEY`                  | `sk_live_...` (se usar Stripe)                                       |
+| `STRIPE_SECRET_KEY_TEST`             | `sk_live_...` (se usar Stripe)                                       |
 | `STRIPE_WEBHOOK_SECRET`              | `whsec_...` (se usar Stripe)                                         |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` (se usar Stripe)                                       |
 | `NEXT_PUBLIC_APP_URL`                | `https://seu-app.vercel.app`                                         |
