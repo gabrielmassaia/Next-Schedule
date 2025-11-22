@@ -70,10 +70,13 @@ const AppointmentsChart = ({
         <CardTitle>Agendamentos e Faturamento</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="min-h-[200px]">
+        <ChartContainer
+          config={chartConfig}
+          className="min-h-[200px] w-full overflow-hidden"
+        >
           <AreaChart
             data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 50, left: 0, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis

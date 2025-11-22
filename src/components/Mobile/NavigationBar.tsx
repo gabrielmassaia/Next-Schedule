@@ -1,7 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { ChevronLeft, Home, LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,8 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface NavigationDropdownItem {
   text: string;
@@ -41,7 +42,10 @@ interface NavigationLinkAction {
   className?: string;
 }
 
-type NavigationAction = NavigationButtonAction | NavigationLinkAction | NavigationDropdownAction;
+type NavigationAction =
+  | NavigationButtonAction
+  | NavigationLinkAction
+  | NavigationDropdownAction;
 
 interface NavigationBarProps {
   title: string;
@@ -65,28 +69,27 @@ export function NavigationBar({
   backButtonAriaLabel = "Voltar",
 }: NavigationBarProps) {
   const router = useRouter();
-  
+
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-20 bg-background h-16 flex sm:hidden items-center py-2 px-3",
-        className
+        "bg-background fixed inset-x-0 top-0 z-50 flex h-16 items-center border-b px-3 py-2 sm:hidden",
+        className,
       )}
     >
       <div className="flex flex-1 items-center justify-between gap-1">
         {showBackButton && (
-          <div className="flex items-center gap-1 _min-w-24">
-            
+          <div className="flex min-w-24 items-center gap-1">
             {/* Home */}
             {showHome && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-full bg-background/80"
+                className="bg-background/80 rounded-full"
                 aria-label="Ir para home"
-                onClick={() => router.push("/home")}
+                onClick={() => router.push("/dashboard")}
               >
-                <Home className="w-6 h-6" />
+                <Home className="h-6 w-6" />
               </Button>
             )}
 
@@ -95,10 +98,10 @@ export function NavigationBar({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="rounded-full bg-background/80"
+                  className="bg-background/80 rounded-full"
                   aria-label={backButtonAriaLabel}
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="h-6 w-6" />
                 </Button>
               </Link>
             ) : (
@@ -106,23 +109,23 @@ export function NavigationBar({
                 size="icon"
                 variant="ghost"
                 className="rounded-full"
-                onClick={onBack}
+                onClick={onBack || (() => router.back())}
                 aria-label={backButtonAriaLabel}
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="h-6 w-6" />
               </Button>
             )}
           </div>
         )}
 
         <div className="flex-1 text-center">
-          <h2 className="text-base leading-tight uppercase font-bold _max-w-[160px] max-w-full truncate xs:text-wrap">
+          <h2 className="max-w-full truncate text-base leading-tight font-bold uppercase">
             {title}
           </h2>
         </div>
 
         {(showBackButton || actions.length > 0) && (
-          <div className="flex items-center justify-end gap-1 min-w-12">
+          <div className="flex min-w-12 items-center justify-end gap-1">
             <>
               {actions.map((action, index) => {
                 if (action.type === "link") {
@@ -131,13 +134,13 @@ export function NavigationBar({
                       key={index}
                       href={action.href}
                       className={cn(
-                        "flex items-center gap-1 btn-link text-highlight",
-                        action.className
+                        "flex items-center gap-1",
+                        action.className,
                       )}
                       aria-label={action.ariaLabel}
                     >
                       {action.icon && (
-                        <action.icon className="w-4 h-4 shrink-0" />
+                        <action.icon className="h-4 w-4 shrink-0" />
                       )}
                       {action.text && <span>{action.text}</span>}
                     </Link>
@@ -154,7 +157,7 @@ export function NavigationBar({
                           className="rounded-full"
                           aria-label={action.ariaLabel}
                         >
-                          <action.icon className="w-6 h-6" />
+                          <action.icon className="h-6 w-6" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -181,7 +184,7 @@ export function NavigationBar({
                     onClick={action.onClick}
                     aria-label={action.ariaLabel}
                   >
-                    <action.icon className="w-6 h-6" />
+                    <action.icon className="h-6 w-6" />
                   </Button>
                 );
               })}

@@ -33,16 +33,13 @@ export function Header() {
   };
 
   return (
-    <header className="bg-background/95 supports-backdrop-filter:bg-background/60 flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur">
+    <header className="bg-background/95 supports-backdrop-filter:bg-background/60 hidden h-16 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur sm:flex">
       <div className="flex items-center gap-2">
         <SidebarTrigger />
       </div>
       <div className="flex items-center gap-2">
-        {/* Dropdown de Clínicas */}
-        {/* Dropdown de Clínicas */}
         <ClinicSwitcher />
         <ModeToggle />
-
         {/* Dropdown de Usuário */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

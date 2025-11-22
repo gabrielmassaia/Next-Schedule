@@ -65,8 +65,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="bg-sidebar border-b p-4">
-        {/* <Image src="/logo.png" alt="Next Schedule" width={136} height={28} /> */}
-        <h1 className="text-lg font-bold">Next Schedule</h1>
+        <h1 className="text-xl font-bold">Next Schedule</h1>
       </SidebarHeader>
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
