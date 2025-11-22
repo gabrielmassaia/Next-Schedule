@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { TransitionStartFunction } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
@@ -20,20 +21,31 @@ const statusOptions = {
   inactive: "Inativos",
 } as const;
 
-export function TableFilters() {
+interface TableFiltersProps {
+  onTransition?: TransitionStartFunction;
+}
+
+export function TableFilters({ onTransition }: TableFiltersProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
 
-  const handleSearch = useDebouncedCallback((term: string) => {
+  const handleSearch = useDebouncedCallback((key: string, term: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", "1");
     if (term) {
-      params.set("query", term);
+      params.set(key, term);
     } else {
-      params.delete("query");
+      params.delete(key);
     }
-    replace(`${pathname}?${params.toString()}`);
+
+    if (onTransition) {
+      onTransition(() => {
+        replace(`${pathname}?${params.toString()}`);
+      });
+    } else {
+      replace(`${pathname}?${params.toString()}`);
+    }
   }, 300);
 
   const handleStatusChange = (value: string) => {
@@ -44,7 +56,14 @@ export function TableFilters() {
     } else {
       params.set("status", value);
     }
-    replace(`${pathname}?${params.toString()}`);
+
+    if (onTransition) {
+      onTransition(() => {
+        replace(`${pathname}?${params.toString()}`);
+      });
+    } else {
+      replace(`${pathname}?${params.toString()}`);
+    }
   };
 
   const clearFilters = () => {
@@ -52,7 +71,14 @@ export function TableFilters() {
     params.delete("query");
     params.delete("status");
     params.set("page", "1");
-    replace(`${pathname}?${params.toString()}`);
+
+    if (onTransition) {
+      onTransition(() => {
+        replace(`${pathname}?${params.toString()}`);
+      });
+    } else {
+      replace(`${pathname}?${params.toString()}`);
+    }
   };
 
   return (
@@ -62,7 +88,7 @@ export function TableFilters() {
           <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Buscar clientes..."
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => handleSearch("query", e.target.value)}
             defaultValue={searchParams.get("query")?.toString()}
             className="pl-8"
           />
