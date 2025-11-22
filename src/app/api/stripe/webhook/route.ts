@@ -31,7 +31,7 @@ export const POST = async (request: Request) => {
 
     event = stripe.webhooks.constructEvent(body, sig, webhookSecretTest);
     mode = "test";
-  } catch (errTest) {
+  } catch {
     try {
       stripe = new Stripe(process.env.STRIPE_SECRET_KEY_PROD!, {
         apiVersion: "2025-08-27.basil",
@@ -39,7 +39,7 @@ export const POST = async (request: Request) => {
 
       event = stripe.webhooks.constructEvent(body, sig, webhookSecretProd);
       mode = "prod";
-    } catch (errProd) {
+    } catch {
       console.error("Webhook signature invalid for both keys");
       return new NextResponse("Invalid signature", { status: 400 });
     }
