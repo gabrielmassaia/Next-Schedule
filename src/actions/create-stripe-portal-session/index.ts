@@ -1,4 +1,5 @@
 "use server";
+
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import Stripe from "stripe";
@@ -13,21 +14,34 @@ export const createStripePortalSession = actionClient.action(async () => {
   if (!session?.user?.id) {
     throw new Error("Usuário não autenticado");
   }
+
   const userDb = await db.query.usersTable.findFirst({
     where: eq(usersTable.id, session.user.id),
   });
   if (!userDb?.stripeCustomerId) {
     throw new Error("Usuário sem stripeCustomerId");
   }
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("Stripe secret key not found");
+
+  const isProduction = process.env.VERCEL_ENV === "production";
+
+  const stripeSecret = isProduction
+    ? process.env.STRIPE_SECRET_KEY_PROD
+    : process.env.STRIPE_SECRET_KEY_TEST;
+
+  if (!stripeSecret) {
+    throw new Error(
+      `Stripe secret key (${isProduction ? "PROD" : "TEST"}) não encontrada`,
+    );
   }
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+
+  const stripe = new Stripe(stripeSecret, {
     apiVersion: "2025-08-27.basil",
   });
+
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: userDb.stripeCustomerId,
     return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
   });
+
   return { url: portalSession.url };
 });
