@@ -179,7 +179,7 @@ export function SubscriptionPlan({
       </CardHeader>
 
       <CardContent className="relative flex flex-1 flex-col justify-between">
-        <div className="space-y-4 rounded-xl border border-gray-100 bg-white/70 p-5 shadow-sm backdrop-blur">
+        <div className="bg-card/70 space-y-4 rounded-xl border border-gray-100 p-5 shadow-sm backdrop-blur">
           {plan?.features.map((feature, index) => (
             <div key={index} className="flex items-start gap-3">
               <span className="bg-primary/10 text-primary rounded-full p-1">
