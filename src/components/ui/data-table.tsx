@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React from "react";
+import React, { TransitionStartFunction } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +25,17 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  filters?: React.ComponentType<{ table: TanstackTable<TData> }>;
+  filters?: React.ComponentType<{
+    table: TanstackTable<TData>;
+    onTransition?: TransitionStartFunction;
+  }>;
   pageCount?: number;
   manualPagination?: boolean;
   rowCount?: number;
   onPageChange?: (page: number) => void;
   pageIndex?: number;
   pageSize?: number;
+  onTransition?: TransitionStartFunction;
 }
 
 export function DataTable<TData, TValue>({
@@ -44,6 +48,7 @@ export function DataTable<TData, TValue>({
   onPageChange,
   pageIndex,
   pageSize = 30,
+  onTransition,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -78,7 +83,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {FiltersComponent && <FiltersComponent table={table} />}
+      {FiltersComponent && (
+        <FiltersComponent table={table} onTransition={onTransition} />
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

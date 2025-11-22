@@ -63,6 +63,7 @@ export function AppointmentsTable({
               manualPagination
               pageIndex={currentPage - 1}
               onPageChange={handlePageChange}
+              onTransition={startTransition}
             />
           </CardContent>
         </Card>

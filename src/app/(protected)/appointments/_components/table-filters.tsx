@@ -1,12 +1,17 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { TransitionStartFunction } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function TableFilters() {
+interface TableFiltersProps {
+  onTransition?: TransitionStartFunction;
+}
+
+export function TableFilters({ onTransition }: TableFiltersProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -19,7 +24,14 @@ export function TableFilters() {
     } else {
       params.delete(key);
     }
-    replace(`${pathname}?${params.toString()}`);
+
+    if (onTransition) {
+      onTransition(() => {
+        replace(`${pathname}?${params.toString()}`);
+      });
+    } else {
+      replace(`${pathname}?${params.toString()}`);
+    }
   }, 300);
 
   const handleClearFilters = () => {
@@ -29,7 +41,14 @@ export function TableFilters() {
     params.delete("date");
     params.delete("specialty");
     params.set("page", "1");
-    replace(`${pathname}?${params.toString()}`);
+
+    if (onTransition) {
+      onTransition(() => {
+        replace(`${pathname}?${params.toString()}`);
+      });
+    } else {
+      replace(`${pathname}?${params.toString()}`);
+    }
   };
 
   return (
