@@ -60,6 +60,56 @@ function generateTimeSlots(
   return slots;
 }
 
+/**
+ * @swagger
+ * /api/integrations/available-slots:
+ *   get:
+ *     summary: Get available time slots for a professional
+ *     tags:
+ *       - Appointments
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: professionalId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2024-12-25"
+ *     responses:
+ *       200:
+ *         description: List of available slots
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 availableSlots:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     example: "09:00"
+ *                 professionalId:
+ *                   type: string
+ *                 professionalName:
+ *                   type: string
+ *                 date:
+ *                   type: string
+ *                 appointmentPriceInCents:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Professional not found
+ */
 export async function GET(request: NextRequest) {
   try {
     const headerKey = request.headers

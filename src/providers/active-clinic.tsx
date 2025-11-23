@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-import { getUserClinics } from "@/actions/get-user-clinics";
+import { getUserClinics } from "@/actions/get-user-clinics/get-user-clinics";
 import { authClient } from "@/lib/auth-client";
 import type { ClinicSummary } from "@/lib/clinic-session";
 

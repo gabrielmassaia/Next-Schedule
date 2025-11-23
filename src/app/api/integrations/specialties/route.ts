@@ -25,6 +25,33 @@ async function validateApiKey(apiKey: string) {
   return apiKeyRecord;
 }
 
+/**
+ * @swagger
+ * /api/integrations/specialties:
+ *   get:
+ *     summary: List all specialties
+ *     tags:
+ *       - Specialties
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: List of specialties
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 specialties:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
 export async function GET(request: NextRequest) {
   try {
     const headerKey = request.headers

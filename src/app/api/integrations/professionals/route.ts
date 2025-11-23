@@ -25,6 +25,57 @@ async function validateApiKey(apiKey: string) {
   return apiKeyRecord;
 }
 
+/**
+ * @swagger
+ * /api/integrations/professionals:
+ *   get:
+ *     summary: List professionals
+ *     tags:
+ *       - Professionals
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: specialty
+ *         schema:
+ *           type: string
+ *         description: Filter by specialty
+ *     responses:
+ *       200:
+ *         description: List of professionals
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 professionals:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       name:
+ *                         type: string
+ *                       specialty:
+ *                         type: string
+ *                       appointmentPriceInCents:
+ *                         type: integer
+ *                       availableFromWeekDay:
+ *                         type: integer
+ *                       availableToWeekDay:
+ *                         type: integer
+ *                       availableFromTime:
+ *                         type: string
+ *                       availableToTime:
+ *                         type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
 export async function GET(request: NextRequest) {
   try {
     const headerKey = request.headers

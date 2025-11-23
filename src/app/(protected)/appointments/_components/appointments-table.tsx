@@ -1,15 +1,19 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useMemo, useTransition } from "react";
 
 import { Activity } from "@/components/ui/activity";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { LoadingContent } from "@/components/ui/Loading/LoadingContent";
-import { appointmentsTable } from "@/db/schema";
+import {
+  appointmentsTable,
+  clientsTable,
+  professionalsTable,
+} from "@/db/schema";
 
-import { appointmentsTableColumns } from "./table-columns";
+import { getAppointmentsTableColumns } from "./table-columns";
 import { TableFilters } from "./table-filters";
 
 interface AppointmentsTableProps {
@@ -25,21 +29,31 @@ interface AppointmentsTableProps {
       id: string;
       name: string;
       specialty: string;
+      appointmentPriceInCents: number;
     } | null;
   })[];
   pageCount: number;
   currentPage: number;
+  clients: (typeof clientsTable.$inferSelect)[];
+  professionals: (typeof professionalsTable.$inferSelect)[];
 }
 
 export function AppointmentsTable({
   appointments,
   pageCount,
   currentPage,
+  clients,
+  professionals,
 }: AppointmentsTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  const columns = useMemo(
+    () => getAppointmentsTableColumns(clients, professionals),
+    [clients, professionals],
+  );
 
   const handlePageChange = (page: number) => {
     startTransition(() => {
@@ -56,7 +70,7 @@ export function AppointmentsTable({
         <Card>
           <CardContent className="pt-6">
             <DataTable
-              columns={appointmentsTableColumns}
+              columns={columns}
               data={appointments}
               filters={TableFilters}
               pageCount={pageCount}

@@ -6,6 +6,25 @@ import { DEFAULT_PLAN_SLUG, getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 
+/**
+ * @swagger
+ * /api/stripe/webhook:
+ *   post:
+ *     summary: Stripe Webhook
+ *     tags:
+ *       - Webhooks
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook received
+ *       400:
+ *         description: Invalid signature or missing header
+ */
 export const POST = async (request: Request) => {
   const sig = request.headers.get("stripe-signature");
   if (!sig) {

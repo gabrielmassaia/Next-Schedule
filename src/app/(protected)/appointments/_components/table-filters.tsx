@@ -6,6 +6,13 @@ import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TableFiltersProps {
   onTransition?: TransitionStartFunction;
@@ -40,6 +47,7 @@ export function TableFilters({ onTransition }: TableFiltersProps) {
     params.delete("professionalName");
     params.delete("date");
     params.delete("specialty");
+    params.delete("status");
     params.set("page", "1");
 
     if (onTransition) {
@@ -78,6 +86,22 @@ export function TableFilters({ onTransition }: TableFiltersProps) {
           onChange={(e) => handleSearch("date", e.target.value)}
           className="w-full sm:w-40"
         />
+        <Select
+          value={searchParams.get("status") || "all"}
+          onValueChange={(value) =>
+            handleSearch("status", value === "all" ? "" : value)
+          }
+        >
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="scheduled">Agendado</SelectItem>
+            <SelectItem value="completed">Realizado</SelectItem>
+            <SelectItem value="cancelled">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
         <Button variant="outline" onClick={handleClearFilters}>
           Limpar
         </Button>
