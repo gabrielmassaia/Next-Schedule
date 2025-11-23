@@ -1,42 +1,50 @@
-# Swagger Integration Walkthrough
+# Appointment Editing Feature Walkthrough
 
-I have successfully integrated Swagger/OpenAPI documentation into your Next.js project using `next-swagger-doc` and `swagger-ui-react`.
+This walkthrough details the implementation of the appointment editing feature, which includes both an API endpoint for integration (N8N) and a UI update for internal use.
 
-## Accessing the Documentation
+## Changes
 
-You can now access the interactive API documentation at:
-**[http://localhost:3000/api-doc](http://localhost:3000/api-doc)** (Public/Integrations)
-**[http://localhost:3000/api-doc/internal](http://localhost:3000/api-doc/internal)** (Internal API)
+### API Integration
 
-## Implementation Details
+- **PUT /api/integrations/appointments**: Added a new endpoint to update appointments.
+  - Accepts `id` as a query parameter.
+  - Accepts `date`, `time`, and `professionalId` in the body.
+  - Validates availability before updating.
+  - Protected by API Key.
 
-1.  **Dependencies**: Installed `next-swagger-doc` and `swagger-ui-react` (and types).
-2.  **Configuration**: Refactored `src/lib/swagger.ts` to support dual specs (`getPublicApiDocs` and `getInternalApiDocs`).
-3.  **UI Pages**:
-    - `src/app/api-doc/page.tsx`: Renders Public API docs.
-    - `src/app/api-doc/internal/page.tsx`: Renders Internal API docs.
-4.  **Annotations**: Added JSDoc comments to both integration and internal routes.
-5.  **New Endpoints**: Added `DELETE /api/integrations/appointments` for cancelling appointments.
+### Internal UI
 
-## How to Add New Endpoints
+- **Server Action**: Created `updateAppointment` in `src/actions/update-appointment.ts` to handle updates securely.
+- **AddAppointmentForm**: Refactored to support editing mode.
+  - Accepts `initialData`.
+  - Pre-fills form fields with existing appointment data.
+  - Calls `updateAppointment` instead of `addAppointment` when editing.
+- **AppointmentsTable**:
+  - Added an "Editar" option to the actions dropdown.
+  - Opens the `AddAppointmentForm` in a modal with the appointment data.
+  - Updated table columns and actions to pass necessary data (`clients`, `professionals`).
 
-To document a new API route, simply add a JSDoc comment above the exported function (GET, POST, etc.) in your `route.ts` file.
+## Verification Results
 
-**Example:**
+### Appointment Status & Editing Fix
 
-```typescript
-/**
- * @swagger
- * /api/my-new-route:
- *   get:
- *     description: Returns a hello world message
- *     responses:
- *       200:
- *         description: Hello World!
- */
-export async function GET(request: Request) {
-  // ...
-}
-```
+- **Status Field**: Added `status` column to `appointments` table (`scheduled`, `completed`, `cancelled`).
+- **UI Updates**:
+  - Added Status column to `AppointmentsTable` with color-coded badges.
+  - "Cancelled" status shows a red badge and a warning tooltip ("Será excluído em 1 semana").
+  - Replaced "Excluir" action with "Cancelar" (Soft Delete).
+- **Bug Fix**: Fixed issue where date/time fields were disabled during editing by ensuring `Select` components are controlled and `Calendar` logic permits the initial date.
 
-The scanner configured in `src/lib/swagger.ts` will automatically pick up these comments and update the documentation page.
+### Automated Build
+
+- Ran `npm run build` to verify type safety and build integrity.
+- Fixed unused import errors in `table-actions.tsx`.
+- Fixed type mismatch in `getAppointments` by adding `appointmentPriceInCents`.
+- Fixed `DashboardPage` import error by creating `DashboardAppointmentsTable` client component.
+
+### Manual Verification Steps
+
+1.  **API**: Use Swagger UI or Postman to send a `PUT` request to `/api/integrations/appointments?id={id}` with new data.
+2.  **UI Editing**: Go to `/appointments`, click "Editar", and verify that you can change the date and time.
+3.  **UI Status**: Cancel an appointment and verify the red "Cancelado" badge and tooltip.
+4.  **Dashboard**: Verify that the dashboard loads correctly.

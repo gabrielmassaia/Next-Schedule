@@ -21,6 +21,7 @@ interface AppointmentsPageProps {
     professionalName?: string;
     date?: string;
     specialty?: string;
+    status?: string;
   }>;
 }
 
@@ -36,6 +37,7 @@ const AppointmentsPage = async (props: AppointmentsPageProps) => {
   const professionalName = searchParams.professionalName;
   const date = searchParams.date;
   const specialty = searchParams.specialty;
+  const status = searchParams.status;
 
   const [{ clients, professionals }, { appointments, pageCount }] =
     await Promise.all([
@@ -46,6 +48,7 @@ const AppointmentsPage = async (props: AppointmentsPageProps) => {
         professionalName,
         date,
         specialty,
+        status,
       }),
     ]);
 
@@ -70,6 +73,8 @@ const AppointmentsPage = async (props: AppointmentsPageProps) => {
           appointments={appointments}
           pageCount={pageCount}
           currentPage={page}
+          clients={clients}
+          professionals={professionals}
         />
       </PageContent>
     </PageContainer>

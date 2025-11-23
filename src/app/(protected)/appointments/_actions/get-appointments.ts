@@ -17,6 +17,7 @@ interface GetAppointmentsParams {
   professionalName?: string;
   date?: string;
   specialty?: string;
+  status?: string;
 }
 
 export async function getAppointments({
@@ -26,6 +27,7 @@ export async function getAppointments({
   professionalName,
   date,
   specialty,
+  status,
 }: GetAppointmentsParams) {
   const { activeClinic } = await requirePlan();
   if (!activeClinic) {
@@ -53,6 +55,12 @@ export async function getAppointments({
           lte(appointmentsTable.date, new Date(`${date}T23:59:59`)),
         )
       : undefined,
+    status
+      ? eq(
+          appointmentsTable.status,
+          status as "scheduled" | "completed" | "cancelled",
+        )
+      : undefined,
   );
 
   const [appointments, totalCount] = await Promise.all([
@@ -64,6 +72,7 @@ export async function getAppointments({
         clinicId: appointmentsTable.clinicId,
         clientId: appointmentsTable.clientId,
         professionalId: appointmentsTable.professionalId,
+        status: appointmentsTable.status,
         createdAt: appointmentsTable.createdAt,
         updatedAt: appointmentsTable.updatedAt,
         client: {
@@ -79,6 +88,7 @@ export async function getAppointments({
           name: professionalsTable.name,
           specialty: professionalsTable.specialty,
           avatarImageUrl: professionalsTable.avatarImageUrl,
+          appointmentPriceInCents: professionalsTable.appointmentPriceInCents,
         },
       })
       .from(appointmentsTable)

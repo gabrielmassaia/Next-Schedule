@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { requirePlan } from "@/_helpers/require-plan";
 import { ClinicSelectionModal } from "@/components/clinic-selection-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
 import {
   PageActions,
   PageContainer,
@@ -18,8 +17,9 @@ import {
 import { getDashboard } from "@/data/get-dashboard";
 import { readActiveClinicIdFromCookies } from "@/lib/clinic-session";
 
-import { appointmentsTableColumns } from "../appointments/_components/table-columns";
+import { getFormData } from "../appointments/_actions/get-form-data";
 import AppointmentsChart from "./_components/appointments-chart";
+import { DashboardAppointmentsTable } from "./_components/dashboard-appointments-table";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
 import TopProfessionals from "./_components/top-professionals";
@@ -48,20 +48,27 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     const endOfMonth = dayjs().endOf("month").format("YYYY-MM-DD");
     redirect(`/dashboard?from=${startOfMonth}&to=${endOfMonth}`);
   }
-  const {
-    totalRevenue,
-    totalAppointments,
-    totalClients,
-    totalProfessionals,
-    topProfessionals,
-    topSpecialties,
-    todayAppointments,
-    dailyAppointmentsData,
-  } = await getDashboard({
-    from,
-    to,
-    clinicId: activeClinic.id,
-  });
+
+  const [
+    {
+      totalRevenue,
+      totalAppointments,
+      totalClients,
+      totalProfessionals,
+      topProfessionals,
+      topSpecialties,
+      todayAppointments,
+      dailyAppointmentsData,
+    },
+    { clients, professionals },
+  ] = await Promise.all([
+    getDashboard({
+      from,
+      to,
+      clinicId: activeClinic.id,
+    }),
+    getFormData(),
+  ]);
 
   return (
     <>
@@ -112,9 +119,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
               </div>
             </CardHeader>
             <CardContent>
-              <DataTable
-                columns={appointmentsTableColumns}
-                data={todayAppointments}
+              <DashboardAppointmentsTable
+                appointments={todayAppointments}
+                clients={clients}
+                professionals={professionals}
               />
             </CardContent>
           </Card>

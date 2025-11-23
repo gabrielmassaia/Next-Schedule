@@ -15,6 +15,7 @@ import { z } from "zod";
 
 import { addAppointment } from "@/actions/add-appointment";
 import { getAvailableTimes } from "@/actions/get-available-times";
+import { updateAppointment } from "@/actions/update-appointment";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -45,7 +46,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { clientsTable, professionalsTable } from "@/db/schema";
+import {
+  appointmentsTable,
+  clientsTable,
+  professionalsTable,
+} from "@/db/schema";
 import { cn } from "@/lib/utils";
 import { useActiveClinic } from "@/providers/active-clinic";
 
@@ -72,6 +77,7 @@ interface AddAppointmentFormProps {
   clients: (typeof clientsTable.$inferSelect)[];
   professionals: (typeof professionalsTable.$inferSelect)[];
   onSuccess?: () => void;
+  initialData?: typeof appointmentsTable.$inferSelect;
 }
 
 const AddAppointmentForm = ({
@@ -79,8 +85,11 @@ const AddAppointmentForm = ({
   professionals,
   onSuccess,
   isOpen,
+  initialData,
 }: AddAppointmentFormProps) => {
   const { activeClinicId } = useActiveClinic();
+  const isEditing = !!initialData;
+
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -103,6 +112,7 @@ const AddAppointmentForm = ({
       selectedDate,
       selectedProfessionalId,
       activeClinicId,
+      initialData?.id, // Add ID to query key to force refresh if editing different appointment
     ],
     queryFn: () =>
       getAvailableTimes({
@@ -113,34 +123,54 @@ const AddAppointmentForm = ({
     enabled: !!selectedDate && !!selectedProfessionalId && !!activeClinicId,
   });
 
-  // Atualizar o preço quando o profissional for selecionado
   useEffect(() => {
     if (selectedProfessionalId) {
       const selectedProfessional = professionals.find(
         (professional) => professional.id === selectedProfessionalId,
       );
+
       if (selectedProfessional) {
-        form.setValue(
-          "appointmentPrice",
-          selectedProfessional.appointmentPriceInCents / 100,
-        );
+        const currentPrice = form.getValues("appointmentPrice");
+        if (currentPrice === 0 && !initialData) {
+          form.setValue(
+            "appointmentPrice",
+            selectedProfessional.appointmentPriceInCents / 100,
+          );
+        } else if (selectedProfessionalId !== initialData?.professionalId) {
+          form.setValue(
+            "appointmentPrice",
+            selectedProfessional.appointmentPriceInCents / 100,
+          );
+        }
       }
     } else {
-      form.setValue("appointmentPrice", 0);
+      if (!initialData) {
+        form.setValue("appointmentPrice", 0);
+      }
     }
-  }, [selectedProfessionalId, professionals, form]);
+  }, [selectedProfessionalId, professionals, form, initialData]);
 
   useEffect(() => {
     if (isOpen) {
-      form.reset({
-        clientId: "",
-        professionalId: "",
-        appointmentPrice: 0,
-        date: undefined,
-        time: "",
-      });
+      if (initialData) {
+        form.reset({
+          clientId: initialData.clientId,
+          professionalId: initialData.professionalId,
+          appointmentPrice: initialData.appointmentPriceInCents / 100,
+          date: new Date(initialData.date),
+          time: dayjs(initialData.date).format("HH:mm"),
+        });
+      } else {
+        form.reset({
+          clientId: "",
+          professionalId: "",
+          appointmentPrice: 0,
+          date: undefined,
+          time: "",
+        });
+      }
     }
-  }, [isOpen, form]);
+  }, [isOpen, form, initialData]);
 
   const createAppointmentAction = useAction(addAppointment, {
     onSuccess: () => {
@@ -152,17 +182,36 @@ const AddAppointmentForm = ({
     },
   });
 
+  const updateAppointmentAction = useAction(updateAppointment, {
+    onSuccess: () => {
+      toast.success("Agendamento atualizado com sucesso.");
+      onSuccess?.();
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError || "Erro ao atualizar agendamento.");
+    },
+  });
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (!activeClinicId) {
       toast.error("Selecione uma clínica para criar o agendamento");
       return;
     }
 
-    createAppointmentAction.execute({
-      ...values,
-      clinicId: activeClinicId,
-      appointmentPriceInCents: values.appointmentPrice * 100,
-    });
+    if (isEditing && initialData) {
+      updateAppointmentAction.execute({
+        ...values,
+        id: initialData.id,
+        clinicId: activeClinicId,
+        appointmentPriceInCents: values.appointmentPrice * 100,
+      });
+    } else {
+      createAppointmentAction.execute({
+        ...values,
+        clinicId: activeClinicId,
+        appointmentPriceInCents: values.appointmentPrice * 100,
+      });
+    }
   };
 
   const isDateAvailable = (date: Date) => {
@@ -178,17 +227,26 @@ const AddAppointmentForm = ({
     );
   };
 
-  const isDateTimeEnabled = selectedClientId && selectedProfessionalId;
+  const isDateTimeEnabled = isEditing
+    ? !!selectedProfessionalId
+    : !!(selectedClientId && selectedProfessionalId);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const isPending =
+    createAppointmentAction.isPending || updateAppointmentAction.isPending;
+
   return (
     <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
-        <DialogTitle>Novo agendamento</DialogTitle>
+        <DialogTitle>
+          {isEditing ? "Editar agendamento" : "Novo agendamento"}
+        </DialogTitle>
         <DialogDescription>
-          Crie um novo agendamento para sua clínica.
+          {isEditing
+            ? "Edite os dados do agendamento."
+            : "Crie um novo agendamento para sua clínica."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -201,7 +259,8 @@ const AddAppointmentForm = ({
                 <FormLabel>Cliente</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
+                  disabled={isEditing}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -227,10 +286,7 @@ const AddAppointmentForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Profissional</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um profissional" />
@@ -308,6 +364,14 @@ const AddAppointmentForm = ({
                       disabled={(date) => {
                         const compareDate = new Date(date);
                         compareDate.setHours(0, 0, 0, 0);
+                        // Allow the initial date even if it's in the past or technically "unavailable" (e.g. schedule changed)
+                        if (
+                          initialData &&
+                          compareDate.getTime() ===
+                            new Date(initialData.date).setHours(0, 0, 0, 0)
+                        ) {
+                          return false;
+                        }
                         return compareDate < today || !isDateAvailable(date);
                       }}
                       initialFocus
@@ -327,7 +391,7 @@ const AddAppointmentForm = ({
                 <FormLabel>Horário</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
                   disabled={!isDateTimeEnabled || !selectedDate}
                 >
                   <FormControl>
@@ -359,9 +423,21 @@ const AddAppointmentForm = ({
                         <SelectItem
                           key={time.value}
                           value={time.value}
-                          disabled={!time.available}
+                          disabled={
+                            !time.available &&
+                            time.value !==
+                              (initialData
+                                ? dayjs(initialData.date).format("HH:mm")
+                                : "")
+                          } // Allow selecting current time if editing
                         >
-                          {time.label} {!time.available && "(Indisponível)"}
+                          {time.label}{" "}
+                          {!time.available &&
+                            time.value !==
+                              (initialData
+                                ? dayjs(initialData.date).format("HH:mm")
+                                : "") &&
+                            "(Indisponível)"}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -372,10 +448,14 @@ const AddAppointmentForm = ({
           />
 
           <DialogFooter>
-            <Button type="submit" disabled={createAppointmentAction.isPending}>
-              {createAppointmentAction.isPending
-                ? "Criando..."
-                : "Criar agendamento"}
+            <Button type="submit" disabled={isPending}>
+              {isPending
+                ? isEditing
+                  ? "Atualizando..."
+                  : "Criando..."
+                : isEditing
+                  ? "Atualizar agendamento"
+                  : "Criar agendamento"}
             </Button>
           </DialogFooter>
         </form>
