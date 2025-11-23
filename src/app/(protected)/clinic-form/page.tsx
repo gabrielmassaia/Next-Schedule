@@ -1,18 +1,11 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { getClinicNiches } from "@/data/clinic-niches";
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
-import FormClinic from "./_components/form-clinic";
+import { ClinicCreationModal } from "./_components/clinic-creation-modal";
 
 export default async function ClinicFormPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -36,17 +29,9 @@ export default async function ClinicFormPage() {
 
   return (
     <div>
-      <Dialog open>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Adicionar clínica</DialogTitle>
-            <DialogDescription>
-              Adicione uma clínica para continuar.
-            </DialogDescription>
-          </DialogHeader>
-          <FormClinic niches={niches} />
-        </DialogContent>
-      </Dialog>
+      <div>
+        <ClinicCreationModal niches={niches} />
+      </div>
     </div>
   );
 }

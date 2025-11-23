@@ -10,7 +10,12 @@ import { toast } from "sonner";
 import z from "zod";
 
 import { deleteClinic } from "@/actions/delete-clinic";
+import { upsertInsurancePlans } from "@/actions/insurance-plans";
+import { upsertOperatingHours } from "@/actions/operating-hours";
 import { updateClinic } from "@/actions/update-clinic";
+import { InsurancePlansInput } from "@/app/(protected)/clinic-form/_components/insurance-plans-input";
+import { OperatingHoursInput } from "@/app/(protected)/clinic-form/_components/operating-hours-input";
+import { PaymentMethodsInput } from "@/app/(protected)/clinic-form/_components/payment-methods-input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -40,9 +46,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { clinicNichesTable } from "@/db/schema";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  clinicInsurancePlansTable,
+  clinicNichesTable,
+  clinicOperatingHoursTable,
+  clinicsTable,
+} from "@/db/schema";
 import { authClient } from "@/lib/auth-client";
-import type { ClinicSummary } from "@/lib/clinic-session";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const clinicFormSchema = z.object({
@@ -84,10 +96,44 @@ const clinicFormSchema = z.object({
     .trim()
     .min(8, { message: "CEP é obrigatório" })
     .max(9, { message: "CEP deve conter no máximo 9 caracteres" }),
+  // Operating Hours
+  operatingHours: z.array(
+    z.object({
+      id: z.string().optional(),
+      dayOfWeek: z.number(),
+      isActive: z.boolean(),
+      startTime: z.string(),
+      endTime: z.string(),
+    }),
+  ),
+  // Lunch Break
+  hasLunchBreak: z.boolean(),
+  lunchBreakStart: z.string().optional(),
+  lunchBreakEnd: z.string().optional(),
+  // Service Type & Insurance
+  serviceType: z.enum(["convenio", "particular", "ambos"]).optional(),
+  insurancePlans: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      ansRegistration: z.string().optional(),
+      isManual: z.boolean(),
+    }),
+  ),
+  // Payment Methods
+  paymentMethods: z.array(z.string()),
+  // Parking
+  hasParking: z.boolean(),
 });
 
+type FullClinic = typeof clinicsTable.$inferSelect & {
+  operatingHours: (typeof clinicOperatingHoursTable.$inferSelect)[];
+  insurancePlans: (typeof clinicInsurancePlansTable.$inferSelect)[];
+  niche: typeof clinicNichesTable.$inferSelect | null;
+};
+
 interface ClinicSettingsFormProps {
-  clinic: ClinicSummary;
+  clinic: FullClinic;
   niches: (typeof clinicNichesTable.$inferSelect)[];
 }
 
@@ -99,11 +145,46 @@ export function ClinicSettingsForm({
   const router = useRouter();
   const { refreshClinics } = useActiveClinic();
 
+  // Prepare default operating hours if none exist
+  const defaultOperatingHours = [
+    { dayOfWeek: 1, isActive: false, startTime: "08:00", endTime: "18:00" },
+    { dayOfWeek: 2, isActive: false, startTime: "08:00", endTime: "18:00" },
+    { dayOfWeek: 3, isActive: false, startTime: "08:00", endTime: "18:00" },
+    { dayOfWeek: 4, isActive: false, startTime: "08:00", endTime: "18:00" },
+    { dayOfWeek: 5, isActive: false, startTime: "08:00", endTime: "18:00" },
+    { dayOfWeek: 6, isActive: false, startTime: "08:00", endTime: "12:00" },
+    { dayOfWeek: 0, isActive: false, startTime: "08:00", endTime: "12:00" },
+  ];
+
+  // Merge existing operating hours with defaults
+  const operatingHours = defaultOperatingHours.map((defaultOh) => {
+    const existing = clinic.operatingHours.find(
+      (oh) => oh.dayOfWeek === defaultOh.dayOfWeek,
+    );
+    return existing
+      ? {
+          id: existing.id,
+          dayOfWeek: existing.dayOfWeek,
+          isActive: existing.isActive,
+          startTime: existing.startTime,
+          endTime: existing.endTime,
+        }
+      : defaultOh;
+  });
+
+  // Map insurance plans
+  const insurancePlans = clinic.insurancePlans.map((plan) => ({
+    id: plan.id,
+    name: plan.planName,
+    ansRegistration: plan.ansRegistration ?? undefined,
+    isManual: plan.isManual,
+  }));
+
   const form = useForm<z.infer<typeof clinicFormSchema>>({
     resolver: zodResolver(clinicFormSchema),
     defaultValues: {
       name: clinic.name,
-      nicheId: clinic.niche?.id ?? niches[0]?.id ?? "",
+      nicheId: clinic.nicheId,
       cnpj: clinic.cnpj,
       phone: clinic.phone,
       email: clinic.email ?? "",
@@ -112,6 +193,16 @@ export function ClinicSettingsForm({
       city: clinic.city,
       state: clinic.state,
       zipCode: clinic.zipCode,
+      operatingHours: operatingHours,
+      hasLunchBreak: clinic.hasLunchBreak ?? false,
+      lunchBreakStart: clinic.lunchBreakStart ?? "12:00",
+      lunchBreakEnd: clinic.lunchBreakEnd ?? "13:00",
+      serviceType:
+        (clinic.serviceType as "convenio" | "particular" | "ambos") ??
+        undefined,
+      insurancePlans: insurancePlans,
+      paymentMethods: (clinic.paymentMethods as string[]) ?? [],
+      hasParking: clinic.hasParking ?? false,
     },
   });
 
@@ -129,8 +220,24 @@ export function ClinicSettingsForm({
         city: data.city,
         state: data.state,
         zipCode: data.zipCode,
+        hasLunchBreak: data.hasLunchBreak,
+        lunchBreakStart: data.hasLunchBreak ? data.lunchBreakStart : undefined,
+        lunchBreakEnd: data.hasLunchBreak ? data.lunchBreakEnd : undefined,
+        serviceType: data.serviceType,
+        paymentMethods: data.paymentMethods,
+        hasParking: data.hasParking,
       });
+
+      // Save operating hours
+      await upsertOperatingHours(clinic.id, data.operatingHours);
+
+      // Save insurance plans if any
+      if (data.insurancePlans) {
+        await upsertInsurancePlans(clinic.id, data.insurancePlans);
+      }
+
       toast.success("Clínica atualizada com sucesso");
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast.error(
@@ -172,158 +279,340 @@ export function ClinicSettingsForm({
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <Tabs defaultValue="general" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                  <TabsTrigger value="address">Endereço</TabsTrigger>
+                  <TabsTrigger value="settings">Configurações</TabsTrigger>
+                  <TabsTrigger value="financial">Financeiro</TabsTrigger>
+                </TabsList>
 
-              <FormField
-                control={form.control}
-                name="nicheId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nicho da clínica</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione um nicho" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {niches.map((niche) => (
-                          <SelectItem key={niche.id} value={niche.id}>
-                            {niche.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <TabsContent value="general" className="mt-4 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Nome da clínica{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Minha Clínica" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="nicheId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Nicho de atuação{" "}
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um nicho" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {niches.map((niche) => (
+                                <SelectItem key={niche.id} value={niche.id}>
+                                  {niche.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail (opcional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <FormField
+                      control={form.control}
+                      name="cnpj"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            CNPJ <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="00.000.000/0000-00"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="addressLine1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Telefone <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="(00) 00000-0000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-              <FormField
-                control={form.control}
-                name="addressLine2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Complemento</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="contato@minhaclinica.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>UF</FormLabel>
-                      <FormControl>
-                        <Input {...field} maxLength={2} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CEP</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                <TabsContent value="address" className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            CEP <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="00000-000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="md:col-span-2">
+                      <FormField
+                        control={form.control}
+                        name="addressLine1"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Endereço <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Rua, Número, Bairro"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="addressLine2"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Complemento</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Apto, Sala, Bloco" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Cidade <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="São Paulo" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            UF <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="SP" maxLength={2} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="settings" className="mt-4 space-y-6">
+                  <OperatingHoursInput />
+
+                  <div className="space-y-4 rounded-lg border p-4">
+                    <FormField
+                      control={form.control}
+                      name="hasLunchBreak"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              Horário de Almoço
+                            </FormLabel>
+                            <FormDescription>
+                              A clínica fecha para horário de almoço?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch("hasLunchBreak") && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="lunchBreakStart"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Início do Almoço</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="lunchBreakEnd"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Fim do Almoço</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border p-4">
+                    <FormField
+                      control={form.control}
+                      name="hasParking"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              Estacionamento
+                            </FormLabel>
+                            <FormDescription>
+                              A clínica possui estacionamento próprio ou
+                              conveniado?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="financial" className="mt-4 space-y-6">
+                  <PaymentMethodsInput />
+
+                  <div className="space-y-4 rounded-lg border p-4">
+                    <h3 className="text-lg font-medium">Convênios e Planos</h3>
+                    <FormField
+                      control={form.control}
+                      name="serviceType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Atendimento</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo de atendimento" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="particular">
+                                Particular
+                              </SelectItem>
+                              <SelectItem value="convenio">Convênio</SelectItem>
+                              <SelectItem value="ambos">Ambos</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {(form.watch("serviceType") === "convenio" ||
+                      form.watch("serviceType") === "ambos") && (
+                      <InsurancePlansInput
+                        nicheName={
+                          niches.find((n) => n.id === form.watch("nicheId"))
+                            ?.name || ""
+                        }
+                      />
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={form.formState.isSubmitting}>

@@ -24,6 +24,13 @@ interface UpdateClinicInput {
   state: string;
   zipCode: string;
   nicheId: string;
+  // New fields
+  hasLunchBreak: boolean;
+  lunchBreakStart?: string;
+  lunchBreakEnd?: string;
+  serviceType?: "convenio" | "particular" | "ambos";
+  paymentMethods: string[];
+  hasParking: boolean;
 }
 
 export const updateClinic = async (input: UpdateClinicInput) => {
@@ -75,6 +82,12 @@ export const updateClinic = async (input: UpdateClinicInput) => {
       state: input.state,
       zipCode: input.zipCode,
       nicheId: input.nicheId,
+      hasLunchBreak: input.hasLunchBreak,
+      lunchBreakStart: input.lunchBreakStart,
+      lunchBreakEnd: input.lunchBreakEnd,
+      serviceType: input.serviceType,
+      paymentMethods: input.paymentMethods,
+      hasParking: input.hasParking,
     })
     .where(eq(clinicsTable.id, input.clinicId));
 
