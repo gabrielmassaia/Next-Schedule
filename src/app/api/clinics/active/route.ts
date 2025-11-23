@@ -33,7 +33,18 @@ export async function GET(request: NextRequest) {
     cookieClinicId,
   );
 
-  return NextResponse.json({ activeClinicId });
+  const response = NextResponse.json({ activeClinicId });
+
+  // Se calculamos um ID mas o cookie estava diferente (ou null), atualizamos o cookie
+  if (activeClinicId && activeClinicId !== cookieClinicId) {
+    response.cookies.set(ACTIVE_CLINIC_COOKIE, activeClinicId, {
+      path: "/",
+      httpOnly: false,
+      sameSite: "lax",
+    });
+  }
+
+  return response;
 }
 
 export async function POST(request: NextRequest) {
