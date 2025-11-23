@@ -21,6 +21,57 @@ const schema = z.object({
   appointmentPriceInCents: z.number().int().positive(),
 });
 
+/**
+ * @swagger
+ * /api/integrations/appointments:
+ *   post:
+ *     summary: Create a new appointment
+ *     tags:
+ *       - Appointments
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clientId
+ *               - professionalId
+ *               - date
+ *               - time
+ *               - appointmentPriceInCents
+ *             properties:
+ *               clientId:
+ *                 type: string
+ *                 format: uuid
+ *               professionalId:
+ *                 type: string
+ *                 format: uuid
+ *               date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-12-25"
+ *               time:
+ *                 type: string
+ *                 example: "14:30"
+ *               appointmentPriceInCents:
+ *                 type: integer
+ *                 example: 15000
+ *     responses:
+ *       200:
+ *         description: Appointment created successfully
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Client or Professional not found
+ *       409:
+ *         description: Time slot unavailable
+ */
 export async function POST(request: NextRequest) {
   try {
     const headerKey = request.headers

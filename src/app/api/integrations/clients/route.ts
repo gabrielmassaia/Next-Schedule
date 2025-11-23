@@ -38,6 +38,36 @@ async function validateApiKey(apiKey: string) {
   return apiKeyRecord;
 }
 
+/**
+ * @swagger
+ * /api/integrations/clients:
+ *   get:
+ *     summary: Get a client by email and phone number
+ *     tags:
+ *       - Clients
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: email
+ *       - in: query
+ *         name: phoneNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Client found
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Client not found
+ */
 export async function GET(request: NextRequest) {
   try {
     const headerKey = request.headers
@@ -93,6 +123,50 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * @swagger
+ * /api/integrations/clients:
+ *   post:
+ *     summary: Create a new client
+ *     tags:
+ *       - Clients
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - phoneNumber
+ *               - sex
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phoneNumber:
+ *                 type: string
+ *                 minLength: 11
+ *                 maxLength: 11
+ *               sex:
+ *                 type: string
+ *                 enum: [male, female]
+ *     responses:
+ *       201:
+ *         description: Client created successfully
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       409:
+ *         description: Client already exists
+ */
 export async function POST(request: NextRequest) {
   try {
     const headerKey = request.headers
