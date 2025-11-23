@@ -7,6 +7,29 @@ import { usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { ACTIVE_CLINIC_COOKIE, selectActiveClinic } from "@/lib/clinic-session";
 
+/**
+ * @swagger
+ * /api/clinics/active:
+ *   get:
+ *     summary: Get active clinic ID
+ *     tags:
+ *       - Clinics
+ *     security:
+ *       - CookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Active clinic ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 activeClinicId:
+ *                   type: string
+ *                   nullable: true
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
@@ -47,6 +70,37 @@ export async function GET(request: NextRequest) {
   return response;
 }
 
+/**
+ * @swagger
+ * /api/clinics/active:
+ *   post:
+ *     summary: Set active clinic
+ *     tags:
+ *       - Clinics
+ *     security:
+ *       - CookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clinicId
+ *             properties:
+ *               clinicId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Active clinic set
+ *       400:
+ *         description: Missing clinicId
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Clinic not found
+ */
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as { clinicId?: string };
   const clinicId = body?.clinicId;
