@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run generate:swagger && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:swagger": "node scripts/generate-swagger.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
