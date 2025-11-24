@@ -1,37 +1,12 @@
-import fs from "fs/promises";
-import path from "path";
-
-import { createSwaggerSpec } from "next-swagger-doc";
-
-type SwaggerOptions = {
-  /**
-   * Se verdadeiro, tenta carregar um JSON pré-gerado em `public/`. Isso evita que a
-   * varredura precise acessar os arquivos de rota (que não existem na build final da Vercel).
-   */
-  usePrebuiltSpec?: boolean;
-};
+const fs = require("fs/promises");
+const path = require("path");
+const { createSwaggerSpec } = require("next-swagger-doc");
 
 const PUBLIC_SPEC_PATH = path.join(process.cwd(), "public", "swagger-public.json");
 const INTERNAL_SPEC_PATH = path.join(process.cwd(), "public", "swagger-internal.json");
 
-const readSpecFromDisk = async (filePath: string) => {
-  try {
-    const file = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(file);
-  } catch {
-    return null;
-  }
-};
-
-export const getPublicApiDocs = async (options: SwaggerOptions = {}) => {
-  const usePrebuiltSpec = options.usePrebuiltSpec ?? true;
-
-  if (usePrebuiltSpec) {
-    const prebuilt = await readSpecFromDisk(PUBLIC_SPEC_PATH);
-    if (prebuilt) return prebuilt;
-  }
-
-  const spec = createSwaggerSpec({
+function buildPublicSpec() {
+  return createSwaggerSpec({
     apiFolder: "src/app/api/integrations",
     definition: {
       openapi: "3.0.0",
@@ -58,18 +33,10 @@ export const getPublicApiDocs = async (options: SwaggerOptions = {}) => {
       security: [],
     },
   });
-  return spec;
-};
+}
 
-export const getInternalApiDocs = async (options: SwaggerOptions = {}) => {
-  const usePrebuiltSpec = options.usePrebuiltSpec ?? true;
-
-  if (usePrebuiltSpec) {
-    const prebuilt = await readSpecFromDisk(INTERNAL_SPEC_PATH);
-    if (prebuilt) return prebuilt;
-  }
-
-  const spec = createSwaggerSpec({
+function buildInternalSpec() {
+  return createSwaggerSpec({
     apiFolder: "src/app/api",
     definition: {
       openapi: "3.0.0",
@@ -84,12 +51,34 @@ export const getInternalApiDocs = async (options: SwaggerOptions = {}) => {
           CookieAuth: {
             type: "apiKey",
             in: "cookie",
-            name: "session", // Adjust based on your auth cookie name
+            name: "session",
           },
         },
       },
       security: [{ CookieAuth: [] }],
     },
   });
-  return spec;
-};
+}
+
+async function writeSpec(filePath, spec) {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(spec, null, 2));
+}
+
+async function main() {
+  const [publicSpec, internalSpec] = [buildPublicSpec(), buildInternalSpec()];
+
+  await Promise.all([
+    writeSpec(PUBLIC_SPEC_PATH, publicSpec),
+    writeSpec(INTERNAL_SPEC_PATH, internalSpec),
+  ]);
+
+  console.log("Swagger specs generated at:");
+  console.log(`- ${PUBLIC_SPEC_PATH}`);
+  console.log(`- ${INTERNAL_SPEC_PATH}`);
+}
+
+main().catch((error) => {
+  console.error("Failed to generate Swagger specs:", error);
+  process.exit(1);
+});
