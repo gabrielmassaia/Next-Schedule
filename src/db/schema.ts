@@ -79,6 +79,12 @@ export const clinicNichesTable = pgTable("clinic_niches", {
     .$onUpdate(() => new Date()),
 });
 
+export const serviceTypeEnum = pgEnum("service_type", [
+  "convenio",
+  "particular",
+  "ambos",
+]);
+
 export const clinicsTable = pgTable("clinics", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -93,6 +99,14 @@ export const clinicsTable = pgTable("clinics", {
   nicheId: uuid("niche_id")
     .notNull()
     .references(() => clinicNichesTable.id, { onDelete: "restrict" }),
+  // Lunch break fields
+  hasLunchBreak: boolean("has_lunch_break").default(false).notNull(),
+  lunchBreakStart: time("lunch_break_start"),
+  lunchBreakEnd: time("lunch_break_end"),
+  // Service type and payment
+  serviceType: serviceTypeEnum("service_type"),
+  paymentMethods: jsonb("payment_methods").$type<string[]>().default([]),
+  hasParking: boolean("has_parking").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -172,9 +186,16 @@ export const clinicsTableRelations = relations(
     appointments: many(appointmentsTable),
     usersToClinics: many(usersToClinicsTable),
     integrationApiKeys: many(integrationApiKeysTable),
+    operatingHours: many(clinicOperatingHoursTable),
+    insurancePlans: many(clinicInsurancePlansTable),
+    specialties: many(specialtiesTable),
     niche: one(clinicNichesTable, {
       fields: [clinicsTable.nicheId],
       references: [clinicNichesTable.id],
+    }),
+    agentSettings: one(clinicAgentSettingsTable, {
+      fields: [clinicsTable.id],
+      references: [clinicAgentSettingsTable.clinicId],
     }),
   }),
 );
@@ -300,6 +321,138 @@ export const integrationApiKeysTableRelations = relations(
   ({ one }) => ({
     clinic: one(clinicsTable, {
       fields: [integrationApiKeysTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+  }),
+);
+
+// Clinic Operating Hours Table
+export const clinicOperatingHoursTable = pgTable(
+  "clinic_operating_hours",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clinicId: uuid("clinic_id")
+      .notNull()
+      .references(() => clinicsTable.id, { onDelete: "cascade" }),
+    dayOfWeek: integer("day_of_week").notNull(), // 0-6 (Sunday-Saturday)
+    isActive: boolean("is_active").notNull().default(true),
+    startTime: time("start_time").notNull(),
+    endTime: time("end_time").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    // Unique constraint: one entry per clinic per day
+    uniqueClinicDay: unique().on(table.clinicId, table.dayOfWeek),
+  }),
+);
+
+export const clinicOperatingHoursTableRelations = relations(
+  clinicOperatingHoursTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [clinicOperatingHoursTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+  }),
+);
+
+// Clinic Insurance Plans Table
+export const clinicInsurancePlansTable = pgTable("clinic_insurance_plans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clinicId: uuid("clinic_id")
+    .notNull()
+    .references(() => clinicsTable.id, { onDelete: "cascade" }),
+  planName: text("plan_name").notNull(),
+  ansRegistration: text("ans_registration"), // ANS registration number
+  isManual: boolean("is_manual").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const clinicInsurancePlansTableRelations = relations(
+  clinicInsurancePlansTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [clinicInsurancePlansTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+  }),
+);
+
+// Specialties Table
+export const specialtiesTable = pgTable(
+  "specialties",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clinicId: uuid("clinic_id").references(() => clinicsTable.id, {
+      onDelete: "cascade",
+    }), // null for default specialties
+    name: text("name").notNull(),
+    nicheId: uuid("niche_id").references(() => clinicNichesTable.id, {
+      onDelete: "set null",
+    }),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    // Unique constraint: specialty name per clinic
+    uniqueClinicSpecialty: unique().on(table.clinicId, table.name),
+  }),
+);
+
+export const specialtiesTableRelations = relations(
+  specialtiesTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [specialtiesTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+    niche: one(clinicNichesTable, {
+      fields: [specialtiesTable.nicheId],
+      references: [clinicNichesTable.id],
+    }),
+  }),
+);
+
+// Clinic Agent Settings Table (Persona)
+export const clinicAgentSettingsTable = pgTable(
+  "clinic_agent_settings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clinicId: uuid("clinic_id")
+      .notNull()
+      .references(() => clinicsTable.id, { onDelete: "cascade" }),
+    assistantTone: text("assistant_tone"),
+    welcomeMessage: text("welcome_message"),
+    rules: jsonb("rules").$type<Record<string, unknown>>(),
+    appointmentFlow: jsonb("appointment_flow").$type<Record<string, unknown>>(),
+    forbiddenTopics: jsonb("forbidden_topics").$type<Record<string, unknown>>(),
+    availability: text("availability"),
+    autoResponsesEnabled: boolean("auto_responses_enabled").default(true),
+    language: text("language").default("pt-BR"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    uniqueClinic: unique().on(table.clinicId),
+  }),
+);
+
+export const clinicAgentSettingsTableRelations = relations(
+  clinicAgentSettingsTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [clinicAgentSettingsTable.clinicId],
       references: [clinicsTable.id],
     }),
   }),

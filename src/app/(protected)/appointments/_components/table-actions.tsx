@@ -1,11 +1,12 @@
 "use client";
 
-import { EditIcon, MoreVerticalIcon, TrashIcon } from "lucide-react";
+import { EditIcon, MoreVerticalIcon, Trash2Icon, XCircleIcon } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { cancelAppointment } from "@/actions/cancel-appointment";
+import { deleteAppointment } from "@/actions/delete-appointment";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +65,7 @@ const AppointmentsTableActions = ({
   const { activeClinicId } = useActiveClinic();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const cancelAppointmentAction = useAction(cancelAppointment, {
     onSuccess: () => {
@@ -75,6 +77,16 @@ const AppointmentsTableActions = ({
     },
   });
 
+  const deleteAppointmentAction = useAction(deleteAppointment, {
+    onSuccess: () => {
+      toast.success("Agendamento excluído permanentemente.");
+      setIsDeleteOpen(false);
+    },
+    onError: () => {
+      toast.error("Erro ao excluir agendamento.");
+    },
+  });
+
   const handleCancelAppointmentClick = () => {
     if (!appointment) return;
     if (!activeClinicId) {
@@ -82,6 +94,18 @@ const AppointmentsTableActions = ({
       return;
     }
     cancelAppointmentAction.execute({
+      id: appointment.id,
+      clinicId: activeClinicId,
+    });
+  };
+
+  const handleDeleteAppointmentClick = () => {
+    if (!appointment) return;
+    if (!activeClinicId) {
+      toast.error("Selecione uma clínica antes de excluir agendamentos");
+      return;
+    }
+    deleteAppointmentAction.execute({
       id: appointment.id,
       clinicId: activeClinicId,
     });
@@ -114,9 +138,32 @@ const AppointmentsTableActions = ({
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancelAppointmentClick}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-orange-600 hover:bg-orange-700"
             >
               Cancelar Agendamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Tem certeza que deseja excluir esse agendamento?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é <strong>permanente</strong> e não pode ser desfeita. O
+              agendamento será removido completamente do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAppointmentClick}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Excluir Permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -139,10 +186,17 @@ const AppointmentsTableActions = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setIsCancelOpen(true)}
+            className="text-orange-600"
+          >
+            <XCircleIcon className="mr-2 h-4 w-4" />
+            Cancelar
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setIsDeleteOpen(true)}
             className="text-red-600"
           >
-            <TrashIcon className="mr-2 h-4 w-4" />
-            Cancelar
+            <Trash2Icon className="mr-2 h-4 w-4" />
+            Excluir
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

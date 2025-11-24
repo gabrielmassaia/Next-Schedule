@@ -3,12 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, TrashIcon } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import z from "zod";
 
 import { deleteProfessional } from "@/actions/delete-professional";
+import { getClinicSpecialties } from "@/actions/specialties";
 import { upsertProfessional } from "@/actions/upsert-professional";
 import {
   AlertDialog,
@@ -49,8 +51,6 @@ import {
 } from "@/components/ui/select";
 import { professionalsTable } from "@/db/schema";
 import { useActiveClinic } from "@/providers/active-clinic";
-
-import { medicalSpecialties } from "../_constants";
 
 const formSchema = z
   .object({
@@ -97,6 +97,31 @@ export default function UpsertProfessionalForm({
   onSuccess,
 }: UpsertProfessionalFormProps) {
   const { activeClinicId } = useActiveClinic();
+  const [specialties, setSpecialties] = React.useState<
+    { id: string; name: string }[]
+  >([]);
+  const [loadingSpecialties, setLoadingSpecialties] = React.useState(true);
+
+  // Load specialties for the clinic
+  React.useEffect(() => {
+    if (!activeClinicId) return;
+
+    const loadSpecialties = async () => {
+      try {
+        setLoadingSpecialties(true);
+        const data = await getClinicSpecialties(activeClinicId);
+        setSpecialties(data);
+      } catch (error) {
+        console.error("Error loading specialties:", error);
+        toast.error("Erro ao carregar especialidades");
+      } finally {
+        setLoadingSpecialties(false);
+      }
+    };
+
+    loadSpecialties();
+  }, [activeClinicId]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -213,11 +238,21 @@ export default function UpsertProfessionalForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {medicalSpecialties.map((specialty) => (
-                      <SelectItem key={specialty.value} value={specialty.value}>
-                        {specialty.label}
+                    {loadingSpecialties ? (
+                      <SelectItem value="loading" disabled>
+                        Carregando...
                       </SelectItem>
-                    ))}
+                    ) : specialties.length === 0 ? (
+                      <SelectItem value="empty" disabled>
+                        Nenhuma especialidade disponível
+                      </SelectItem>
+                    ) : (
+                      specialties.map((specialty) => (
+                        <SelectItem key={specialty.id} value={specialty.name}>
+                          {specialty.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -458,8 +493,8 @@ export default function UpsertProfessionalForm({
                       Tem certeza que deseja excluir esse profissional?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Essa ação não pode ser desfeita. Isso irá excluir o profissional
-                      e remover todos os seus dados.
+                      Essa ação não pode ser desfeita. Isso irá excluir o
+                      profissional e remover todos os seus dados.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
