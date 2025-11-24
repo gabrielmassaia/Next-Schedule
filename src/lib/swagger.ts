@@ -1,7 +1,6 @@
 import fs from "fs/promises";
-import path from "path";
-
 import { createSwaggerSpec } from "next-swagger-doc";
+import path from "path";
 
 type SwaggerOptions = {
   /**
