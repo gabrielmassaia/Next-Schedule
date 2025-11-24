@@ -27,9 +27,16 @@ export const upsertClinicSettingsAgent = actionClient
       clinicId: activeClinicId,
       assistantTone: parsedInput.assistantTone,
       welcomeMessage: parsedInput.welcomeMessage,
-      rules: JSON.parse(parsedInput.rules),
-      appointmentFlow: JSON.parse(parsedInput.appointmentFlow),
-      forbiddenTopics: JSON.parse(parsedInput.forbiddenTopics),
+      rules: parsedInput.rules.map((r) => r.value) as unknown as Record<
+        string,
+        unknown
+      >,
+      appointmentFlow: parsedInput.appointmentFlow.map(
+        (r) => r.value,
+      ) as unknown as Record<string, unknown>,
+      forbiddenTopics: parsedInput.forbiddenTopics.map(
+        (r) => r.value,
+      ) as unknown as Record<string, unknown>,
       availability: parsedInput.availability,
       autoResponsesEnabled: parsedInput.autoResponsesEnabled,
       language: parsedInput.language,
@@ -70,12 +77,14 @@ export const getClinicSettingsAgent = async () => {
     availability: settings.availability ?? "",
     autoResponsesEnabled: settings.autoResponsesEnabled ?? true,
     language: settings.language ?? "pt-BR",
-    rules: settings.rules ? JSON.stringify(settings.rules, null, 2) : "{}",
-    appointmentFlow: settings.appointmentFlow
-      ? JSON.stringify(settings.appointmentFlow, null, 2)
-      : "{}",
-    forbiddenTopics: settings.forbiddenTopics
-      ? JSON.stringify(settings.forbiddenTopics, null, 2)
-      : "{}",
+    rules: Array.isArray(settings.rules)
+      ? settings.rules.map((r: string) => ({ value: r }))
+      : [],
+    appointmentFlow: Array.isArray(settings.appointmentFlow)
+      ? settings.appointmentFlow.map((r: string) => ({ value: r }))
+      : [],
+    forbiddenTopics: Array.isArray(settings.forbiddenTopics)
+      ? settings.forbiddenTopics.map((r: string) => ({ value: r }))
+      : [],
   };
 };

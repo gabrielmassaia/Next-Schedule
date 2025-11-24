@@ -55,10 +55,7 @@ import {
   clinicsTable,
 } from "@/db/schema";
 import { authClient } from "@/lib/auth-client";
-import { ClinicPersonaSchema } from "@/lib/validations/clinic-settings";
 import { useActiveClinic } from "@/providers/active-clinic";
-
-import { ClinicPersonaForm } from "./clinic-persona-form";
 
 const clinicFormSchema = z.object({
   name: z
@@ -138,13 +135,11 @@ type FullClinic = typeof clinicsTable.$inferSelect & {
 interface ClinicSettingsFormProps {
   clinic: FullClinic;
   niches: (typeof clinicNichesTable.$inferSelect)[];
-  personaSettings?: ClinicPersonaSchema | null;
 }
 
 export function ClinicSettingsForm({
   clinic,
   niches,
-  personaSettings,
 }: ClinicSettingsFormProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -286,14 +281,12 @@ export function ClinicSettingsForm({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="general">Dados Gerais</TabsTrigger>
                   <TabsTrigger value="address">Endereço</TabsTrigger>
                   <TabsTrigger value="settings">Configurações</TabsTrigger>
                   <TabsTrigger value="financial">Financeiro</TabsTrigger>
-                  <TabsTrigger value="persona">Persona IA</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="general" className="mt-4 space-y-4">
                   <FormField
                     control={form.control}
@@ -619,20 +612,16 @@ export function ClinicSettingsForm({
                   </div>
                 </TabsContent>
 
-                <TabsContent value="persona" className="mt-4">
-                  <ClinicPersonaForm initialData={personaSettings} />
-                </TabsContent>
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Salvar alterações"
+                    )}
+                  </Button>
+                </div>
               </Tabs>
-
-              <div className="flex justify-end">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Salvar alterações"
-                  )}
-                </Button>
-              </div>
             </form>
           </Form>
         </CardContent>

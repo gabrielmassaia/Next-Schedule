@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bot,
   Building2,
   CalendarDays,
   ChevronRight,
@@ -131,6 +132,17 @@ export function AppSidebar() {
                           <Link href="/specialties">
                             <UserRound />
                             <span>Especialidades</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === "/clinic-persona"}
+                        >
+                          <Link href="/clinic-persona">
+                            <Bot />
+                            <span>Personalidade IA</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

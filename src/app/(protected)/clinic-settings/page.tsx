@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 
 import { requirePlan } from "@/_helpers/require-plan";
-import { getClinicSettingsAgent } from "@/actions/clinic-settings-actions";
 import {
   PageContainer,
   PageContent,
@@ -36,7 +35,6 @@ export default async function ClinicSettingsPage() {
   }
 
   const niches = await getClinicNiches();
-  const personaSettings = await getClinicSettingsAgent();
 
   return (
     <PageContainer>
@@ -49,11 +47,7 @@ export default async function ClinicSettingsPage() {
         </PageHeaderContent>
       </PageHeader>
       <PageContent>
-        <ClinicSettingsForm
-          clinic={fullClinic}
-          niches={niches}
-          personaSettings={personaSettings}
-        />
+        <ClinicSettingsForm clinic={fullClinic} niches={niches} />
       </PageContent>
     </PageContainer>
   );
