@@ -377,11 +377,12 @@
         "parameters": [
           {
             "in": "query",
-            "name": "professionalId",
+            "name": "professionalCpf",
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "description": "CPF do profissional (com ou sem formatação)",
+              "example": "12345678900"
             }
           },
           {
@@ -411,7 +412,12 @@
                       }
                     },
                     "professionalId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "ID do profissional"
+                    },
+                    "professionalCpf": {
+                      "type": "string",
+                      "description": "CPF do profissional"
                     },
                     "professionalName": {
                       "type": "string"
