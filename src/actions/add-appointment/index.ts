@@ -11,6 +11,7 @@ import { db } from "@/db";
 import {
   appointmentsTable,
   clientsTable,
+  clinicsTable,
   professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
