@@ -31,6 +31,7 @@ interface UpdateClinicInput {
   serviceType?: "convenio" | "particular" | "ambos";
   paymentMethods: string[];
   hasParking: boolean;
+  timezone: string;
 }
 
 export const updateClinic = async (input: UpdateClinicInput) => {
@@ -88,6 +89,7 @@ export const updateClinic = async (input: UpdateClinicInput) => {
       serviceType: input.serviceType,
       paymentMethods: input.paymentMethods,
       hasParking: input.hasParking,
+      timezone: input.timezone,
     })
     .where(eq(clinicsTable.id, input.clinicId));
 

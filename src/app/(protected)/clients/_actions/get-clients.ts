@@ -10,7 +10,7 @@ interface GetClientsParams {
   page?: number;
   limit?: number;
   query?: string;
-  status?: string;
+  cpf?: string;
 }
 
 export async function getClients({
@@ -18,6 +18,7 @@ export async function getClients({
   limit = 30,
   query,
   status,
+  cpf,
 }: GetClientsParams) {
   const { activeClinic, plan } = await requirePlan();
   if (!activeClinic) {
@@ -25,6 +26,8 @@ export async function getClients({
   }
 
   const offset = (page - 1) * limit;
+
+  const unmaskedCpf = cpf ? cpf.replace(/\D/g, "") : undefined;
 
   const where = and(
     eq(clientsTable.clinicId, activeClinic.id),
@@ -35,6 +38,7 @@ export async function getClients({
           ilike(clientsTable.phoneNumber, `%${query}%`),
         )
       : undefined,
+    unmaskedCpf ? ilike(clientsTable.cpf, `%${unmaskedCpf}%`) : undefined,
     status && status !== "all"
       ? eq(clientsTable.status, status as "active" | "inactive")
       : undefined,

@@ -19,19 +19,8 @@ dayjs.extend(utc);
 export const upsertProfessional = actionClient
   .schema(upsertProfessionalSchema)
   .action(async ({ parsedInput }) => {
-    const availableFromTime = parsedInput.availableFromTime; // 15:30:00
-    const availableToTime = parsedInput.availableToTime; // 16:00:00
-
-    const availableFromTimeUTC = dayjs()
-      .set("hour", parseInt(availableFromTime.split(":")[0]))
-      .set("minute", parseInt(availableFromTime.split(":")[1]))
-      .set("second", parseInt(availableFromTime.split(":")[2]))
-      .utc();
-    const availableToTimeUTC = dayjs()
-      .set("hour", parseInt(availableToTime.split(":")[0]))
-      .set("minute", parseInt(availableToTime.split(":")[1]))
-      .set("second", parseInt(availableToTime.split(":")[2]))
-      .utc();
+    const availableFromTime = parsedInput.availableFromTime;
+    const availableToTime = parsedInput.availableToTime;
 
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -85,8 +74,8 @@ export const upsertProfessional = actionClient
         id: professionalId,
         clinicId,
         workingDays: professionalData.workingDays,
-        availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
-        availableToTime: availableToTimeUTC.format("HH:mm:ss"),
+        availableFromTime,
+        availableToTime,
         appointmentDuration: professionalData.appointmentDuration,
         cpf: professionalData.cpf,
         phone: professionalData.phone,
@@ -97,8 +86,8 @@ export const upsertProfessional = actionClient
           ...professionalData,
           clinicId,
           workingDays: professionalData.workingDays,
-          availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
-          availableToTime: availableToTimeUTC.format("HH:mm:ss"),
+          availableFromTime,
+          availableToTime,
           appointmentDuration: professionalData.appointmentDuration,
           cpf: professionalData.cpf,
           phone: professionalData.phone,

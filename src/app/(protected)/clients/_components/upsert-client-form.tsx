@@ -57,7 +57,7 @@ const formSchema = z.object({
     .refine((val) => val.replace(/\D/g, "").length === 11, {
       message: "Telefone deve ter 11 dígitos",
     }),
-  cpf: z.string().optional(),
+  cpf: z.string().min(1, { message: "CPF é obrigatório" }),
   sex: z.enum(["male", "female"], {
     required_error: "Sexo é obrigatório",
   }),
@@ -153,7 +153,9 @@ export default function UpsertClientForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>
+                  Nome <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -170,7 +172,9 @@ export default function UpsertClientForm({
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>
+                  Email <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="email"
@@ -189,7 +193,9 @@ export default function UpsertClientForm({
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telefone</FormLabel>
+                <FormLabel>
+                  Telefone <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -209,7 +215,9 @@ export default function UpsertClientForm({
             name="cpf"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>CPF</FormLabel>
+                <FormLabel>
+                  CPF <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -229,7 +237,9 @@ export default function UpsertClientForm({
             name="sex"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Sexo</FormLabel>
+                <FormLabel>
+                  Sexo <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}

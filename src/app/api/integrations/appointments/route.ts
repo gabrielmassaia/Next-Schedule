@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -9,9 +11,13 @@ import { db } from "@/db";
 import {
   appointmentsTable,
   clientsTable,
+  clinicsTable,
   integrationApiKeysTable,
   professionalsTable,
 } from "@/db/schema";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const schema = z.object({
   clientId: z.string().uuid(),
@@ -72,6 +78,123 @@ const schema = z.object({
  *       409:
  *         description: Time slot unavailable
  */
+export async function POST(request: NextRequest) {
+  try {
+    const headerKey = request.headers
+      .get("authorization")
+      ?.replace("Bearer", "")
+      .trim();
+    const apiKey = headerKey || request.headers.get("x-api-key");
+
+    if (!apiKey) {
+      return NextResponse.json({ message: "API key ausente" }, { status: 401 });
+    }
+
+    const hashedKey = createHash("sha256").update(apiKey).digest("hex");
+
+    const apiKeyRecord = await db.query.integrationApiKeysTable.findFirst({
+      where: eq(integrationApiKeysTable.hashedKey, hashedKey),
+    });
+
+    if (!apiKeyRecord) {
+      return NextResponse.json(
+        { message: "Chave de API inválida" },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json();
+    const parsed = schema.parse(body);
+
+    // Fetch clinic to get timezone
+    const clinic = await db.query.clinicsTable.findFirst({
+      where: eq(clinicsTable.id, apiKeyRecord.clinicId),
+      columns: {
+        timezone: true,
+      },
+    });
+
+    if (!clinic) {
+      return NextResponse.json(
+        { message: "Clínica não encontrada" },
+        { status: 404 },
+      );
+    }
+
+    const [professional, client] = await Promise.all([
+      db.query.professionalsTable.findFirst({
+        where: and(
+          eq(professionalsTable.id, parsed.professionalId),
+          eq(professionalsTable.clinicId, apiKeyRecord.clinicId),
+        ),
+      }),
+      db.query.clientsTable.findFirst({
+        where: and(
+          eq(clientsTable.id, parsed.clientId),
+          eq(clientsTable.clinicId, apiKeyRecord.clinicId),
+        ),
+      }),
+    ]);
+
+    if (!professional || !client) {
+      return NextResponse.json(
+        { message: "Cliente ou profissional não encontrado na clínica" },
+        { status: 404 },
+      );
+    }
+
+    // Construct date using clinic timezone
+    const appointmentDateTime = dayjs(parsed.date)
+      .tz(clinic.timezone)
+      .set("hour", parseInt(parsed.time.split(":")[0]))
+      .set("minute", parseInt(parsed.time.split(":")[1]))
+      .set("second", 0)
+      .toDate(); // Converts to UTC for DB storage
+
+    const conflict = await db.query.appointmentsTable.findFirst({
+      where: and(
+        eq(appointmentsTable.clinicId, apiKeyRecord.clinicId),
+        eq(appointmentsTable.professionalId, parsed.professionalId),
+        eq(appointmentsTable.date, appointmentDateTime),
+      ),
+    });
+
+    if (conflict) {
+      return NextResponse.json(
+        { message: "Horário indisponível" },
+        { status: 409 },
+      );
+    }
+
+    const [appointment] = await db
+      .insert(appointmentsTable)
+      .values({
+        clinicId: apiKeyRecord.clinicId,
+        professionalId: parsed.professionalId,
+        clientId: parsed.clientId,
+        date: appointmentDateTime,
+        appointmentPriceInCents: parsed.appointmentPriceInCents,
+      })
+      .returning();
+
+    await db
+      .update(integrationApiKeysTable)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(integrationApiKeysTable.id, apiKeyRecord.id));
+
+    return NextResponse.json({ appointment });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { message: "Payload inválido", issues: error.issues },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json({ message: "Erro interno" }, { status: 500 });
+  }
+}
+
 /**
  * @swagger
  * /api/integrations/appointments:
@@ -168,108 +291,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ appointments });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ message: "Erro interno" }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const headerKey = request.headers
-      .get("authorization")
-      ?.replace("Bearer", "")
-      .trim();
-    const apiKey = headerKey || request.headers.get("x-api-key");
-
-    if (!apiKey) {
-      return NextResponse.json({ message: "API key ausente" }, { status: 401 });
-    }
-
-    const hashedKey = createHash("sha256").update(apiKey).digest("hex");
-
-    const apiKeyRecord = await db.query.integrationApiKeysTable.findFirst({
-      where: eq(integrationApiKeysTable.hashedKey, hashedKey),
-    });
-
-    if (!apiKeyRecord) {
-      return NextResponse.json(
-        { message: "Chave de API inválida" },
-        { status: 401 },
-      );
-    }
-
-    const body = await request.json();
-    const parsed = schema.parse(body);
-
-    // API key is already validated and linked to a clinic
-    // No need to check user membership since keys are clinic-scoped
-
-    const [professional, client] = await Promise.all([
-      db.query.professionalsTable.findFirst({
-        where: and(
-          eq(professionalsTable.id, parsed.professionalId),
-          eq(professionalsTable.clinicId, apiKeyRecord.clinicId),
-        ),
-      }),
-      db.query.clientsTable.findFirst({
-        where: and(
-          eq(clientsTable.id, parsed.clientId),
-          eq(clientsTable.clinicId, apiKeyRecord.clinicId),
-        ),
-      }),
-    ]);
-
-    if (!professional || !client) {
-      return NextResponse.json(
-        { message: "Cliente ou profissional não encontrado na clínica" },
-        { status: 404 },
-      );
-    }
-
-    const appointmentDateTime = dayjs(parsed.date)
-      .set("hour", parseInt(parsed.time.split(":")[0]))
-      .set("minute", parseInt(parsed.time.split(":")[1]))
-      .toDate();
-
-    const conflict = await db.query.appointmentsTable.findFirst({
-      where: and(
-        eq(appointmentsTable.clinicId, apiKeyRecord.clinicId),
-        eq(appointmentsTable.professionalId, parsed.professionalId),
-        eq(appointmentsTable.date, appointmentDateTime),
-      ),
-    });
-
-    if (conflict) {
-      return NextResponse.json(
-        { message: "Horário indisponível" },
-        { status: 409 },
-      );
-    }
-
-    const [appointment] = await db
-      .insert(appointmentsTable)
-      .values({
-        clinicId: apiKeyRecord.clinicId,
-        professionalId: parsed.professionalId,
-        clientId: parsed.clientId,
-        date: appointmentDateTime,
-        appointmentPriceInCents: parsed.appointmentPriceInCents,
-      })
-      .returning();
-
-    await db
-      .update(integrationApiKeysTable)
-      .set({ lastUsedAt: new Date() })
-      .where(eq(integrationApiKeysTable.id, apiKeyRecord.id));
-
-    return NextResponse.json({ appointment });
-  } catch (error) {
-    console.error(error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: "Payload inválido", issues: error.issues },
-        { status: 400 },
-      );
-    }
     return NextResponse.json({ message: "Erro interno" }, { status: 500 });
   }
 }
@@ -470,21 +491,40 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Fetch clinic to get timezone
+    const clinic = await db.query.clinicsTable.findFirst({
+      where: eq(clinicsTable.id, apiKeyRecord.clinicId),
+      columns: {
+        timezone: true,
+      },
+    });
+
+    if (!clinic) {
+      return NextResponse.json(
+        { message: "Clínica não encontrada" },
+        { status: 404 },
+      );
+    }
+
     // Prepare data for availability check
     const targetProfessionalId =
       parsed.professionalId || existingAppointment.professionalId;
     const targetDateStr = parsed.date
       ? parsed.date
-      : dayjs(existingAppointment.date).format("YYYY-MM-DD");
+      : dayjs(existingAppointment.date)
+          .tz(clinic.timezone)
+          .format("YYYY-MM-DD");
     const targetTimeStr = parsed.time
       ? parsed.time
-      : dayjs(existingAppointment.date).format("HH:mm");
+      : dayjs(existingAppointment.date).tz(clinic.timezone).format("HH:mm");
 
     // If changing time/date/professional, check availability
     if (parsed.date || parsed.time || parsed.professionalId) {
       const appointmentDateTime = dayjs(targetDateStr)
+        .tz(clinic.timezone)
         .set("hour", parseInt(targetTimeStr.split(":")[0]))
         .set("minute", parseInt(targetTimeStr.split(":")[1]))
+        .set("second", 0)
         .toDate();
 
       // Check if professional exists (if changed)

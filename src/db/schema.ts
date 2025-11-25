@@ -107,6 +107,7 @@ export const clinicsTable = pgTable("clinics", {
   serviceType: serviceTypeEnum("service_type"),
   paymentMethods: jsonb("payment_methods").$type<string[]>().default([]),
   hasParking: boolean("has_parking").default(false).notNull(),
+  timezone: text("timezone").default("America/Sao_Paulo").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

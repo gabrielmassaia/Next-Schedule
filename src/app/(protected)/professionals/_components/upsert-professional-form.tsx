@@ -160,6 +160,36 @@ export default function UpsertProfessionalForm({
     },
   });
 
+  React.useEffect(() => {
+    if (professional) {
+      form.reset({
+        name: professional.name,
+        specialty: professional.specialty,
+        appointmentPrice: professional.appointmentPriceInCents / 100,
+        workingDays: professional.workingDays,
+        availableFromTime: professional.availableFromTime,
+        availableToTime: professional.availableToTime,
+        hasCustomDuration: !!professional.appointmentDuration,
+        appointmentDuration: professional.appointmentDuration ?? 30,
+        cpf: professional.cpf ? maskCPF(professional.cpf) : "",
+        phone: professional.phone ? maskPhone(professional.phone) : "",
+      });
+    } else {
+      form.reset({
+        name: "",
+        specialty: "",
+        appointmentPrice: 0,
+        workingDays: [],
+        availableFromTime: "",
+        availableToTime: "",
+        hasCustomDuration: false,
+        appointmentDuration: 30,
+        cpf: "",
+        phone: "",
+      });
+    }
+  }, [professional, form]);
+
   const hasCustomDuration = form.watch("hasCustomDuration");
   const appointmentDuration = form.watch("appointmentDuration") || 30;
 
@@ -339,7 +369,9 @@ export default function UpsertProfessionalForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>
+                  Nome <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -354,7 +386,9 @@ export default function UpsertProfessionalForm({
               name="cpf"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CPF</FormLabel>
+                  <FormLabel>
+                    CPF <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -373,7 +407,9 @@ export default function UpsertProfessionalForm({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Telefone</FormLabel>
+                  <FormLabel>
+                    Telefone <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -393,7 +429,9 @@ export default function UpsertProfessionalForm({
             name="specialty"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Especialidade</FormLabel>
+                <FormLabel>
+                  Especialidade <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -430,7 +468,9 @@ export default function UpsertProfessionalForm({
             name="appointmentPrice"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Preço da consulta</FormLabel>
+                <FormLabel>
+                  Preço da consulta <span className="text-red-500">*</span>
+                </FormLabel>
                 <NumericFormat
                   value={field.value}
                   onValueChange={(values) => {
@@ -453,7 +493,9 @@ export default function UpsertProfessionalForm({
             name="workingDays"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Dias de Atendimento</FormLabel>
+                <FormLabel>
+                  Dias de Atendimento <span className="text-red-500">*</span>
+                </FormLabel>
                 <div className="space-y-4">
                   {/* Available Days Area */}
                   <div>
@@ -561,7 +603,10 @@ export default function UpsertProfessionalForm({
               name="availableFromTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Horário inicial de disponibilidade</FormLabel>
+                  <FormLabel>
+                    Horário inicial de disponibilidade{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -588,7 +633,10 @@ export default function UpsertProfessionalForm({
               name="availableToTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Horário final de disponibilidade</FormLabel>
+                  <FormLabel>
+                    Horário final de disponibilidade{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}

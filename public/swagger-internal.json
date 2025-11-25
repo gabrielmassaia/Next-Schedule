@@ -438,7 +438,7 @@
     },
     "/api/integrations/clients": {
       "get": {
-        "summary": "Get a client by email and phone number",
+        "summary": "Get a client by email and phone number OR by CPF",
         "tags": [
           "Clients"
         ],
@@ -454,7 +454,6 @@
           {
             "in": "query",
             "name": "email",
-            "required": true,
             "schema": {
               "type": "string",
               "format": "email"
@@ -463,7 +462,13 @@
           {
             "in": "query",
             "name": "phoneNumber",
-            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cpf",
             "schema": {
               "type": "string"
             }
@@ -504,6 +509,7 @@
                   "name",
                   "email",
                   "phoneNumber",
+                  "cpf",
                   "sex"
                 ],
                 "properties": {
@@ -518,6 +524,11 @@
                     "type": "string",
                     "minLength": 11,
                     "maxLength": 11
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 14
                   },
                   "sex": {
                     "type": "string",
@@ -543,6 +554,120 @@
           },
           "409": {
             "description": "Client already exists"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a client",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 11
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 14
+                  },
+                  "sex": {
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client updated successfully"
+          },
+          "400": {
+            "description": "Invalid payload or ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Inactivate a client",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client inactivated successfully"
+          },
+          "400": {
+            "description": "Missing client ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client not found"
           }
         }
       }
@@ -720,11 +845,11 @@
         "parameters": [
           {
             "in": "query",
-            "name": "specialty",
+            "name": "cpf",
             "schema": {
               "type": "string"
             },
-            "description": "Filter by specialty"
+            "description": "Filter by CPF"
           }
         ],
         "responses": {
@@ -750,13 +875,20 @@
                           "specialty": {
                             "type": "string"
                           },
+                          "cpf": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          },
+                          "workingDays": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            },
+                            "description": "Array of working days (0-6, where 0=Sunday)"
+                          },
                           "appointmentPriceInCents": {
-                            "type": "integer"
-                          },
-                          "availableFromWeekDay": {
-                            "type": "integer"
-                          },
-                          "availableToWeekDay": {
                             "type": "integer"
                           },
                           "availableFromTime": {

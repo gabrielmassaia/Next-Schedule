@@ -52,6 +52,13 @@ export const getAvailableTimes = actionClient
       with: {
         operatingHours: true,
       },
+      columns: {
+        id: true,
+        timezone: true,
+        hasLunchBreak: true,
+        lunchBreakStart: true,
+        lunchBreakEnd: true,
+      },
     });
 
     if (!clinic) {
@@ -96,7 +103,8 @@ export const getAvailableTimes = actionClient
         eq(appointmentsTable.clinicId, parsedInput.clinicId),
       ),
     });
-    const appointmentsOnSelectedDate = appointments
+
+    const bookedIntervals = appointments
       .filter((appointment) => {
         if (
           parsedInput.excludeAppointmentId &&
@@ -104,9 +112,19 @@ export const getAvailableTimes = actionClient
         ) {
           return false;
         }
-        return dayjs(appointment.date).isSame(parsedInput.date, "day");
+        return dayjs(appointment.date)
+          .tz(clinic.timezone)
+          .isSame(parsedInput.date, "day");
       })
-      .map((appointment) => dayjs(appointment.date).format("HH:mm:ss"));
+      .map((appointment) => {
+        const start = dayjs(appointment.date).tz(clinic.timezone);
+        const duration = professional.appointmentDuration || 30;
+        return {
+          start,
+          end: start.add(duration, "minute"),
+        };
+      });
+
     const timeSlots = generateTimeSlots(professional.appointmentDuration || 30);
 
     // Determine effective start/end times
@@ -143,12 +161,12 @@ export const getAvailableTimes = actionClient
     }
 
     const effectiveAvailableFrom = dayjs()
-      .utc()
+      .tz(clinic.timezone)
       .set("hour", startHour)
       .set("minute", startMinute)
       .set("second", 0);
     const effectiveAvailableTo = dayjs()
-      .utc()
+      .tz(clinic.timezone)
       .set("hour", endHour)
       .set("minute", endMinute)
       .set("second", 0);
@@ -163,12 +181,12 @@ export const getAvailableTimes = actionClient
       clinic.lunchBreakEnd
     ) {
       lunchStart = dayjs()
-        .utc()
+        .tz(clinic.timezone)
         .set("hour", Number(clinic.lunchBreakStart.split(":")[0]))
         .set("minute", Number(clinic.lunchBreakStart.split(":")[1]))
         .set("second", 0);
       lunchEnd = dayjs()
-        .utc()
+        .tz(clinic.timezone)
         .set("hour", Number(clinic.lunchBreakEnd.split(":")[0]))
         .set("minute", Number(clinic.lunchBreakEnd.split(":")[1]))
         .set("second", 0);
@@ -176,7 +194,7 @@ export const getAvailableTimes = actionClient
 
     const professionalTimeSlots = timeSlots.filter((time) => {
       const slotStart = dayjs()
-        .utc()
+        .tz(clinic.timezone)
         .set("hour", Number(time.split(":")[0]))
         .set("minute", Number(time.split(":")[1]))
         .set("second", 0);
@@ -186,8 +204,8 @@ export const getAvailableTimes = actionClient
 
       // Check range (Start must be >= AvailableFrom, End must be <= AvailableTo)
       if (
-        slotStart.format("HH:mm") < effectiveAvailableFrom.format("HH:mm") ||
-        slotEnd.format("HH:mm") > effectiveAvailableTo.format("HH:mm")
+        slotStart.isBefore(effectiveAvailableFrom) ||
+        slotEnd.isAfter(effectiveAvailableTo)
       ) {
         return false;
       }
@@ -199,11 +217,6 @@ export const getAvailableTimes = actionClient
         const lunchStartStr = lunchStart.format("HH:mm");
         const lunchEndStr = lunchEnd.format("HH:mm");
 
-        // If slot overlaps with lunch break
-        // Overlap condition: Start < LunchEnd AND End > LunchStart
-        // But we want to ensure it fits completely BEFORE or AFTER
-        // So: End <= LunchStart OR Start >= LunchEnd
-
         const fitsBeforeLunch = slotEndStr <= lunchStartStr;
         const fitsAfterLunch = slotStartStr >= lunchEndStr;
 
@@ -212,16 +225,22 @@ export const getAvailableTimes = actionClient
         }
       }
 
+      // Check for overlaps with booked appointments
+      for (const booked of bookedIntervals) {
+        // Overlap condition: Start < BookedEnd AND End > BookedStart
+        if (slotStart.isBefore(booked.end) && slotEnd.isAfter(booked.start)) {
+          return false;
+        }
+      }
+
       return true;
     });
 
-    return professionalTimeSlots
-      .filter((time) => !appointmentsOnSelectedDate.includes(time))
-      .map((time) => {
-        return {
-          value: time,
-          available: true,
-          label: time.substring(0, 5),
-        };
-      });
+    return professionalTimeSlots.map((time) => {
+      return {
+        value: time,
+        available: true,
+        label: time.substring(0, 5),
+      };
+    });
   });

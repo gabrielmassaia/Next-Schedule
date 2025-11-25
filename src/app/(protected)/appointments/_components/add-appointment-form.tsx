@@ -222,10 +222,7 @@ const AddAppointmentForm = ({
     );
     if (!selectedProfessional) return false;
     const dayOfWeek = date.getDay();
-    return (
-      dayOfWeek >= selectedProfessional?.availableFromWeekDay &&
-      dayOfWeek <= selectedProfessional?.availableToWeekDay
-    );
+    return selectedProfessional?.workingDays.includes(dayOfWeek);
   };
 
   const isDateTimeEnabled = !!selectedProfessionalId;
@@ -255,7 +252,9 @@ const AddAppointmentForm = ({
             name="clientId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cliente</FormLabel>
+                <FormLabel>
+                  Cliente <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
@@ -284,7 +283,9 @@ const AddAppointmentForm = ({
             name="professionalId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Profissional</FormLabel>
+                <FormLabel>
+                  Profissional <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -309,7 +310,9 @@ const AddAppointmentForm = ({
             name="appointmentPrice"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Valor da consulta</FormLabel>
+                <FormLabel>
+                  Valor da consulta <span className="text-red-500">*</span>
+                </FormLabel>
                 <NumericFormat
                   value={field.value}
                   onValueChange={(value) => {
@@ -334,7 +337,9 @@ const AddAppointmentForm = ({
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Data</FormLabel>
+                <FormLabel>
+                  Data <span className="text-red-500">*</span>
+                </FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -387,7 +392,9 @@ const AddAppointmentForm = ({
             name="time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Horário</FormLabel>
+                <FormLabel>
+                  Horário <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
