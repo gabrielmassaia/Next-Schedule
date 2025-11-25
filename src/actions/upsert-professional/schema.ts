@@ -5,27 +5,16 @@ export const upsertProfessionalSchema = z
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
     id: z.string().uuid().optional(),
     name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
-    specialty: z
-      .string()
-      .trim()
-      .min(1, { message: "Especialidade é obrigatória" }),
+    specialty: z.string().min(1, { message: "Especialidade é obrigatória" }),
     appointmentPriceInCents: z
       .number()
       .min(1, { message: "Preço da consulta é obrigatório" }),
-    availableFromWeekDay: z
-      .number()
-      .min(0)
-      .max(6)
-      .refine((val) => val >= 0 && val <= 6, {
-        message: "Dia da semana inválido",
-      }),
-    availableToWeekDay: z
-      .number()
-      .min(0)
-      .max(6)
-      .refine((val) => val >= 0 && val <= 6, {
-        message: "Dia da semana inválido",
-      }),
+    appointmentDuration: z.number().optional(),
+    cpf: z.string().optional(),
+    phone: z.string().optional(),
+    workingDays: z
+      .array(z.number().int().min(0).max(6))
+      .min(1, { message: "Selecione pelo menos um dia de atendimento" }),
     availableFromTime: z
       .string()
       .trim()
@@ -45,6 +34,4 @@ export const upsertProfessionalSchema = z
     },
   );
 
-export type UpsertProfessionalSchema = z.infer<
-  typeof upsertProfessionalSchema
->;
+export type UpsertProfessionalSchema = z.infer<typeof upsertProfessionalSchema>;

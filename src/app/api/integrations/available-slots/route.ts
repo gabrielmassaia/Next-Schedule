@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -8,12 +10,16 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   appointmentsTable,
+  clinicsTable,
   integrationApiKeysTable,
   professionalsTable,
 } from "@/db/schema";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const schema = z.object({
-  professionalId: z.string().uuid(),
+  professionalCpf: z.string().min(11).max(14),
   date: z.string().date(),
 });
 
@@ -72,11 +78,12 @@ function generateTimeSlots(
  *       - ApiKeyAuth: []
  *     parameters:
  *       - in: query
- *         name: professionalId
+ *         name: professionalCpf
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
+ *           description: CPF do profissional (com ou sem formatação)
+ *           example: "12345678900"
  *       - in: query
  *         name: date
  *         required: true
@@ -99,6 +106,10 @@ function generateTimeSlots(
  *                     example: "09:00"
  *                 professionalId:
  *                   type: string
+ *                   description: ID do profissional
+ *                 professionalCpf:
+ *                   type: string
+ *                   description: CPF do profissional
  *                 professionalName:
  *                   type: string
  *                 date:
@@ -132,21 +143,36 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const professionalId = searchParams.get("professionalId");
+    const professionalCpf = searchParams.get("professionalCpf");
     const date = searchParams.get("date");
 
-    const parsed = schema.parse({ professionalId, date });
+    const parsed = schema.parse({ professionalCpf, date });
+
+    // Fetch clinic to get timezone
+    const clinic = await db.query.clinicsTable.findFirst({
+      where: eq(clinicsTable.id, apiKeyRecord.clinicId),
+      columns: {
+        timezone: true,
+      },
+    });
+
+    if (!clinic) {
+      return NextResponse.json(
+        { message: "Clínica não encontrada" },
+        { status: 404 },
+      );
+    }
 
     const professional = await db.query.professionalsTable.findFirst({
       where: and(
-        eq(professionalsTable.id, parsed.professionalId),
+        eq(professionalsTable.cpf, parsed.professionalCpf),
         eq(professionalsTable.clinicId, apiKeyRecord.clinicId),
       ),
     });
 
     if (!professional) {
       return NextResponse.json(
-        { message: "Profissional não encontrado" },
+        { message: "Profissional não encontrado com este CPF" },
         { status: 404 },
       );
     }
@@ -154,11 +180,8 @@ export async function GET(request: NextRequest) {
     const requestedDate = dayjs(parsed.date);
     const dayOfWeek = requestedDate.day();
 
-    // Check if the requested date is within professional's working days
-    if (
-      dayOfWeek < professional.availableFromWeekDay ||
-      dayOfWeek > professional.availableToWeekDay
-    ) {
+    // Check if professional works on this day
+    if (!professional.workingDays.includes(dayOfWeek)) {
       return NextResponse.json({
         availableSlots: [],
         message: "Profissional não trabalha neste dia da semana",
@@ -169,26 +192,28 @@ export async function GET(request: NextRequest) {
     const allSlots = generateTimeSlots(
       professional.availableFromTime,
       professional.availableToTime,
+      professional.appointmentDuration || 60,
     );
 
     // Get existing appointments for this professional on this date
-    const startOfDay = requestedDate.startOf("day").toDate();
-    const endOfDay = requestedDate.endOf("day").toDate();
-
     const existingAppointments = await db.query.appointmentsTable.findMany({
       where: and(
-        eq(appointmentsTable.professionalId, parsed.professionalId),
+        eq(appointmentsTable.professionalId, professional.id),
         eq(appointmentsTable.clinicId, apiKeyRecord.clinicId),
-        and(
-          eq(appointmentsTable.date, startOfDay),
-          eq(appointmentsTable.date, endOfDay),
-        ),
       ),
     });
 
-    // Filter out booked slots
+    // Filter appointments for the requested date and convert to clinic timezone
     const bookedTimes = new Set(
-      existingAppointments.map((apt) => dayjs(apt.date).format("HH:mm")),
+      existingAppointments
+        .filter((apt) => {
+          // Convert UTC appointment date to clinic timezone and compare
+          return dayjs(apt.date).tz(clinic.timezone).isSame(parsed.date, "day");
+        })
+        .map((apt) => {
+          // Convert UTC to clinic timezone for time comparison
+          return dayjs(apt.date).tz(clinic.timezone).format("HH:mm");
+        }),
     );
 
     const availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
@@ -196,6 +221,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       availableSlots,
       professionalId: professional.id,
+      professionalCpf: professional.cpf,
       professionalName: professional.name,
       date: parsed.date,
       appointmentPriceInCents: professional.appointmentPriceInCents,

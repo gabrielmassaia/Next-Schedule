@@ -124,6 +124,8 @@ const clinicFormSchema = z.object({
   paymentMethods: z.array(z.string()),
   // Parking
   hasParking: z.boolean(),
+  // Timezone
+  timezone: z.string().min(1, { message: "Fuso horário é obrigatório" }),
 });
 
 type FullClinic = typeof clinicsTable.$inferSelect & {
@@ -203,6 +205,7 @@ export function ClinicSettingsForm({
       insurancePlans: insurancePlans,
       paymentMethods: (clinic.paymentMethods as string[]) ?? [],
       hasParking: clinic.hasParking ?? false,
+      timezone: clinic.timezone ?? "America/Sao_Paulo",
     },
   });
 
@@ -226,6 +229,7 @@ export function ClinicSettingsForm({
         serviceType: data.serviceType,
         paymentMethods: data.paymentMethods,
         hasParking: data.hasParking,
+        timezone: data.timezone,
       });
 
       // Save operating hours
@@ -483,6 +487,42 @@ export function ClinicSettingsForm({
 
                 <TabsContent value="settings" className="mt-4 space-y-6">
                   <OperatingHoursInput />
+
+                  <div className="rounded-lg border p-4">
+                    <FormField
+                      control={form.control}
+                      name="timezone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Fuso Horário <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o fuso horário" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Intl.supportedValuesOf("timeZone").map((tz) => (
+                                <SelectItem key={tz} value={tz}>
+                                  {tz}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            O fuso horário será usado para calcular a
+                            disponibilidade dos profissionais.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="space-y-4 rounded-lg border p-4">
                     <FormField

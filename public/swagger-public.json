@@ -1,0 +1,846 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Next Schedule API - Integração N8N",
+    "description": "API pública para integrações externas (ex: N8N, Zapier) utilizando API Key.",
+    "version": "1.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    }
+  },
+  "security": [],
+  "paths": {
+    "/api/integrations/appointments": {
+      "post": {
+        "summary": "Create a new appointment",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "clientId",
+                  "professionalId",
+                  "date",
+                  "time",
+                  "appointmentPriceInCents"
+                ],
+                "properties": {
+                  "clientId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "professionalId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2024-12-25"
+                  },
+                  "time": {
+                    "type": "string",
+                    "example": "14:30"
+                  },
+                  "appointmentPriceInCents": {
+                    "type": "integer",
+                    "example": 15000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Appointment created successfully"
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client or Professional not found"
+          },
+          "409": {
+            "description": "Time slot unavailable"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get appointments by client ID",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of appointments"
+          },
+          "400": {
+            "description": "Missing client ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel an appointment",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Appointment cancelled successfully"
+          },
+          "400": {
+            "description": "Missing appointment ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Appointment not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update an appointment",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2024-12-25"
+                  },
+                  "time": {
+                    "type": "string",
+                    "example": "14:30"
+                  },
+                  "professionalId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Appointment updated successfully"
+          },
+          "400": {
+            "description": "Invalid payload or missing ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Appointment, Professional or Client not found"
+          },
+          "409": {
+            "description": "Time slot unavailable"
+          }
+        }
+      }
+    },
+    "/api/integrations/available-slots": {
+      "get": {
+        "summary": "Get available time slots for a professional",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "professionalCpf",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "CPF do profissional (com ou sem formatação)",
+              "example": "12345678900"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-12-25"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available slots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "availableSlots": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "example": "09:00"
+                      }
+                    },
+                    "professionalId": {
+                      "type": "string",
+                      "description": "ID do profissional"
+                    },
+                    "professionalCpf": {
+                      "type": "string",
+                      "description": "CPF do profissional"
+                    },
+                    "professionalName": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "appointmentPriceInCents": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Professional not found"
+          }
+        }
+      }
+    },
+    "/api/integrations/clients": {
+      "get": {
+        "summary": "Get a client by email and phone number OR by CPF",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "email",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "in": "query",
+            "name": "phoneNumber",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cpf",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new client",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "phoneNumber",
+                  "cpf",
+                  "sex"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 11
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 14
+                  },
+                  "sex": {
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Client created successfully"
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Client already exists"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a client",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 11
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 14
+                  },
+                  "sex": {
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client updated successfully"
+          },
+          "400": {
+            "description": "Invalid payload or ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Inactivate a client",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client inactivated successfully"
+          },
+          "400": {
+            "description": "Missing client ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      }
+    },
+    "/api/integrations/clinic-persona": {
+      "get": {
+        "summary": "Get clinic AI persona settings",
+        "description": "Retrieves the AI assistant persona configuration for a clinic identified by phone number. This endpoint is used by N8N to configure the AI agent's behavior, tone, rules, and conversation flow.",
+        "tags": [
+          "Clinic Persona"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "phone",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The clinic's phone number",
+            "example": "+5511999999999"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clinic persona settings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "clinicId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Unique identifier of the clinic"
+                    },
+                    "clinicName": {
+                      "type": "string",
+                      "description": "Name of the clinic"
+                    },
+                    "clinicType": {
+                      "type": "string",
+                      "description": "Type/niche of the clinic (e.g., \"Odontologia\", \"Psicologia\")"
+                    },
+                    "persona": {
+                      "type": "object",
+                      "nullable": true,
+                      "description": "AI persona configuration (null if not configured)",
+                      "properties": {
+                        "assistantTone": {
+                          "type": "string",
+                          "description": "The tone the assistant should use (e.g., \"Professional\", \"Friendly\")",
+                          "nullable": true
+                        },
+                        "welcomeMessage": {
+                          "type": "string",
+                          "description": "Welcome message sent to patients",
+                          "nullable": true
+                        },
+                        "rules": {
+                          "type": "array",
+                          "description": "Behavioral rules the assistant must follow",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "appointmentFlow": {
+                          "type": "array",
+                          "description": "Steps the assistant should follow when scheduling appointments",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "forbiddenTopics": {
+                          "type": "array",
+                          "description": "Topics the assistant should not discuss",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "availability": {
+                          "type": "string",
+                          "description": "Clinic's availability schedule",
+                          "nullable": true
+                        },
+                        "language": {
+                          "type": "string",
+                          "description": "Language code (e.g., \"pt-BR\", \"en-US\")",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "clinicId": "550e8400-e29b-41d4-a716-446655440000",
+                  "clinicName": "Clínica Exemplo",
+                  "clinicType": "Odontologia",
+                  "persona": {
+                    "assistantTone": "Profissional e amigável",
+                    "welcomeMessage": "Olá! Bem-vindo à Clínica Exemplo. Como posso ajudá-lo hoje?",
+                    "rules": [
+                      "Não fornecer diagnósticos médicos",
+                      "Sempre confirmar informações do paciente"
+                    ],
+                    "appointmentFlow": [
+                      "Perguntar o nome do paciente",
+                      "Verificar disponibilidade",
+                      "Confirmar data e horário"
+                    ],
+                    "forbiddenTopics": [
+                      "Política",
+                      "Religião"
+                    ],
+                    "availability": "Seg-Sex 08:00-18:00",
+                    "language": "pt-BR"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Phone number is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Phone number is required"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Clinic not found with the provided phone number",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Clinic not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/integrations/professionals": {
+      "get": {
+        "summary": "List professionals",
+        "tags": [
+          "Professionals"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cpf",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by CPF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of professionals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "professionals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "specialty": {
+                            "type": "string"
+                          },
+                          "cpf": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          },
+                          "workingDays": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            },
+                            "description": "Array of working days (0-6, where 0=Sunday)"
+                          },
+                          "appointmentPriceInCents": {
+                            "type": "integer"
+                          },
+                          "availableFromTime": {
+                            "type": "string"
+                          },
+                          "availableToTime": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/integrations/specialties": {
+      "get": {
+        "summary": "List all specialties",
+        "tags": [
+          "Specialties"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of specialties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "specialties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

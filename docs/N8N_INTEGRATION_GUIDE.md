@@ -194,16 +194,23 @@ x-api-key: SUA_API_KEY
     {
       "id": "uuid",
       "name": "Dr. Carlos Santos",
+      "cpf": "12345678900",
       "specialty": "Odontologia",
       "appointmentPriceInCents": 15000,
-      "availableFromWeekDay": 1,
-      "availableToWeekDay": 5,
+      "workingDays": [1, 2, 3, 4, 5],
       "availableFromTime": "08:00",
-      "availableToTime": "18:00"
+      "availableToTime": "18:00",
+      "appointmentDuration": 60
     }
   ]
 }
 ```
+
+**Estrutura de Dados:**
+
+- `workingDays`: Array com os dias da semana que o profissional trabalha
+- `availableFromTime` / `availableToTime`: Horários em formato HH:mm (hora local da clínica)
+- `appointmentDuration`: Duração da consulta em minutos
 
 **Dias da semana:**
 
@@ -225,10 +232,10 @@ x-api-key: SUA_API_KEY
 
 **Query Parameters:**
 
-- `professionalId` (uuid, obrigatório) - ID do profissional
+- `professionalCpf` (string, obrigatório) - CPF do profissional (com ou sem formatação, 11-14 caracteres)
 - `date` (string, obrigatório) - Data no formato YYYY-MM-DD
 
-**Exemplo:** `/api/integrations/available-slots?professionalId=uuid&date=2024-12-25`
+**Exemplo:** `/api/integrations/available-slots?professionalCpf=12345678900&date=2024-12-25`
 
 **Response 200:**
 
@@ -236,6 +243,7 @@ x-api-key: SUA_API_KEY
 {
   "availableSlots": ["08:00", "09:00", "10:00", "14:00", "15:00"],
   "professionalId": "uuid",
+  "professionalCpf": "12345678900",
   "professionalName": "Dr. Carlos Santos",
   "date": "2024-12-25",
   "appointmentPriceInCents": 15000
@@ -250,6 +258,13 @@ x-api-key: SUA_API_KEY
   "message": "Profissional não trabalha neste dia da semana"
 }
 ```
+
+**⚠️ Importante sobre Timezones:**
+
+- ✅ Todos os horários retornados estão no **timezone da clínica**
+- ✅ O sistema converte automaticamente os agendamentos salvos em UTC para o horário local
+- ✅ Você **não precisa** fazer conversão de timezone no N8N
+- ✅ Use os horários exatamente como retornados na requisição de criar agendamento
 
 ---
 
@@ -324,6 +339,34 @@ x-api-key: SUA_API_KEY
     "date": "2024-12-26T15:00:00.000Z",
     "appointmentPriceInCents": 15000
   }
+}
+```
+
+---
+
+### 8. 📋 Listar Agendamentos do Cliente
+
+**Endpoint:** `GET /api/integrations/appointments`
+
+**Query Parameters:**
+
+- `clientId` (uuid, obrigatório) - ID do cliente
+
+**Response 200:**
+
+```json
+{
+  "appointments": [
+    {
+      "id": "uuid",
+      "date": "2024-12-25T14:30:00.000Z",
+      "professional": {
+        "name": "Dr. Carlos Santos",
+        "specialty": "Odontologia"
+      },
+      "status": "pending"
+    }
+  ]
 }
 ```
 
@@ -428,10 +471,12 @@ GET /api/integrations/professionals?specialty=Odontologia
 ### Passo 5: Verificar Horários Disponíveis 📅
 
 ```
-GET /api/integrations/available-slots?professionalId=uuid&date=2024-12-25
+GET /api/integrations/available-slots?professionalCpf=12345678900&date=2024-12-25
 ```
 
 **Ação:** Apresentar os horários livres para o cliente escolher.
+
+**Importante:** Use o CPF do profissional (obtido no Passo 4), não o ID.
 
 **Exemplo de resposta ao cliente:**
 
@@ -545,6 +590,24 @@ POST /api/integrations/appointments
 5 = Sexta-feira
 6 = Sábado
 ```
+
+### Timezones e Horários ⏰
+
+**Importante:** O sistema gerencia timezones automaticamente:
+
+- ✅ **Horários de profissionais** são armazenados em hora local
+- ✅ **Agendamentos** são salvos em UTC no banco de dados
+- ✅ **API retorna horários** já convertidos para hora local da clínica
+- ❌ **Você NÃO deve** fazer conversões de timezone no N8N
+- ✅ **Use os horários** exatamente como retornados pela API
+
+**Exemplo:**
+
+- Clínica em São Paulo (UTC-3)
+- Profissional atende: 08:00 - 18:00 (hora local)
+- API retorna slots: `["08:00", "09:00", "10:00", ...]`
+- Você usa: `"time": "08:00"` na criação do agendamento
+- Sistema salva automaticamente em UTC: `2024-12-25T11:00:00Z`
 
 ---
 

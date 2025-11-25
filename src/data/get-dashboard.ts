@@ -7,6 +7,7 @@ import { db } from "@/db";
 import {
   appointmentsTable,
   clientsTable,
+  clinicsTable,
   professionalsTable,
 } from "@/db/schema";
 
@@ -20,7 +21,18 @@ interface Params {
 }
 
 export const getDashboard = async ({ from, to, clinicId }: Params) => {
-  const tz = "America/Sao_Paulo";
+  const clinic = await db.query.clinicsTable.findFirst({
+    where: eq(clinicsTable.id, clinicId),
+    columns: {
+      timezone: true,
+    },
+  });
+
+  if (!clinic) {
+    throw new Error("Clínica não encontrada");
+  }
+
+  const tz = clinic.timezone;
   const startDate = dayjs.tz(from, tz).startOf("day").toDate();
   const endDate = dayjs.tz(to, tz).endOf("day").toDate();
 

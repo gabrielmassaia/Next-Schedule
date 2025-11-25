@@ -37,10 +37,10 @@ async function validateApiKey(apiKey: string) {
  *       - ApiKeyAuth: []
  *     parameters:
  *       - in: query
- *         name: specialty
+ *         name: cpf
  *         schema:
  *           type: string
- *         description: Filter by specialty
+ *         description: Filter by CPF
  *     responses:
  *       200:
  *         description: List of professionals
@@ -61,11 +61,16 @@ async function validateApiKey(apiKey: string) {
  *                         type: string
  *                       specialty:
  *                         type: string
+ *                       cpf:
+ *                         type: string
+ *                       phone:
+ *                         type: string
+ *                       workingDays:
+ *                         type: array
+ *                         items:
+ *                           type: integer
+ *                         description: Array of working days (0-6, where 0=Sunday)
  *                       appointmentPriceInCents:
- *                         type: integer
- *                       availableFromWeekDay:
- *                         type: integer
- *                       availableToWeekDay:
  *                         type: integer
  *                       availableFromTime:
  *                         type: string
@@ -99,13 +104,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const specialty = searchParams.get("specialty");
+    const cpf = searchParams.get("cpf");
 
-    const where = specialty
-      ? and(
-          eq(professionalsTable.clinicId, apiKeyRecord.clinicId),
-          eq(professionalsTable.specialty, specialty),
-        )
-      : eq(professionalsTable.clinicId, apiKeyRecord.clinicId);
+    const where = and(
+      eq(professionalsTable.clinicId, apiKeyRecord.clinicId),
+      specialty ? eq(professionalsTable.specialty, specialty) : undefined,
+      cpf ? eq(professionalsTable.cpf, cpf) : undefined,
+    );
 
     const professionals = await db.query.professionalsTable.findMany({
       where,
@@ -116,9 +121,10 @@ export async function GET(request: NextRequest) {
         id: p.id,
         name: p.name,
         specialty: p.specialty,
+        cpf: p.cpf,
+        phone: p.phone,
+        workingDays: p.workingDays,
         appointmentPriceInCents: p.appointmentPriceInCents,
-        availableFromWeekDay: p.availableFromWeekDay,
-        availableToWeekDay: p.availableToWeekDay,
         availableFromTime: p.availableFromTime,
         availableToTime: p.availableToTime,
       })),

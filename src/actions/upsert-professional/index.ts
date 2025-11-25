@@ -19,19 +19,8 @@ dayjs.extend(utc);
 export const upsertProfessional = actionClient
   .schema(upsertProfessionalSchema)
   .action(async ({ parsedInput }) => {
-    const availableFromTime = parsedInput.availableFromTime; // 15:30:00
-    const availableToTime = parsedInput.availableToTime; // 16:00:00
-
-    const availableFromTimeUTC = dayjs()
-      .set("hour", parseInt(availableFromTime.split(":")[0]))
-      .set("minute", parseInt(availableFromTime.split(":")[1]))
-      .set("second", parseInt(availableFromTime.split(":")[2]))
-      .utc();
-    const availableToTimeUTC = dayjs()
-      .set("hour", parseInt(availableToTime.split(":")[0]))
-      .set("minute", parseInt(availableToTime.split(":")[1]))
-      .set("second", parseInt(availableToTime.split(":")[2]))
-      .utc();
+    const availableFromTime = parsedInput.availableFromTime;
+    const availableToTime = parsedInput.availableToTime;
 
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -71,8 +60,7 @@ export const upsertProfessional = actionClient
         .from(professionalsTable)
         .where(eq(professionalsTable.clinicId, clinicId));
       if (
-        (totalProfessionals.total ?? 0) >=
-        plan.limits.professionalsPerClinic
+        (totalProfessionals.total ?? 0) >= plan.limits.professionalsPerClinic
       ) {
         throw new Error(
           "Limite de profissionais do seu plano foi atingido. Faça upgrade para cadastrar mais.",
@@ -85,16 +73,24 @@ export const upsertProfessional = actionClient
         ...professionalData,
         id: professionalId,
         clinicId,
-        availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
-        availableToTime: availableToTimeUTC.format("HH:mm:ss"),
+        workingDays: professionalData.workingDays,
+        availableFromTime,
+        availableToTime,
+        appointmentDuration: professionalData.appointmentDuration,
+        cpf: professionalData.cpf,
+        phone: professionalData.phone,
       })
       .onConflictDoUpdate({
         target: [professionalsTable.id],
         set: {
           ...professionalData,
           clinicId,
-          availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
-          availableToTime: availableToTimeUTC.format("HH:mm:ss"),
+          workingDays: professionalData.workingDays,
+          availableFromTime,
+          availableToTime,
+          appointmentDuration: professionalData.appointmentDuration,
+          cpf: professionalData.cpf,
+          phone: professionalData.phone,
         },
       });
     revalidatePath("/professionals");

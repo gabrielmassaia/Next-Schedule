@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
 import { clientsTable } from "@/db/schema";
+import { maskCPF } from "@/lib/masks";
 import { cn } from "@/lib/utils";
 
 import ClientTableActions from "./table-actions";
@@ -28,6 +29,23 @@ export const ClientsTableColumns: ColumnDef<Client>[] = [
         .getValue<string>(id)
         .toLowerCase()
         .includes((value as string).toLowerCase());
+    },
+  },
+  {
+    id: "cpf",
+    accessorKey: "cpf",
+    header: "CPF",
+    cell: ({ row }) => {
+      const cpf = row.original.cpf;
+      const isInactive = row.original.status === "inactive";
+
+      if (!cpf) return "-";
+
+      return (
+        <span className={cn(isInactive && "text-muted-foreground")}>
+          {maskCPF(cpf)}
+        </span>
+      );
     },
   },
   {

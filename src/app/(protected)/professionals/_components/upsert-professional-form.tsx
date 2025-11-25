@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import z from "zod";
 
 import { deleteProfessional } from "@/actions/delete-professional";
+import { getClinicDetails } from "@/actions/get-clinic-details";
 import { getClinicSpecialties } from "@/actions/specialties";
 import { upsertProfessional } from "@/actions/upsert-professional";
 import {
@@ -23,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -43,13 +45,13 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { professionalsTable } from "@/db/schema";
+import { maskCPF, maskPhone, unmask } from "@/lib/masks";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z
@@ -62,12 +64,9 @@ const formSchema = z
     appointmentPrice: z
       .number()
       .min(1, { message: "Preço da consulta é obrigatório" }),
-    availableFromWeekDay: z
-      .string()
-      .min(1, { message: "Dia da semana é obrigatório" }),
-    availableToWeekDay: z
-      .string()
-      .min(1, { message: "Dia da semana é obrigatório" }),
+    workingDays: z
+      .array(z.number())
+      .min(1, { message: "Selecione pelo menos um dia de atendimento" }),
     availableFromTime: z
       .string()
       .trim()
@@ -76,6 +75,10 @@ const formSchema = z
       .string()
       .trim()
       .min(1, { message: "Hora de término é obrigatória" }),
+    hasCustomDuration: z.boolean(),
+    appointmentDuration: z.number().optional(),
+    cpf: z.string().optional(),
+    phone: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -101,25 +104,41 @@ export default function UpsertProfessionalForm({
     { id: string; name: string }[]
   >([]);
   const [loadingSpecialties, setLoadingSpecialties] = React.useState(true);
+  const [clinicDetails, setClinicDetails] = React.useState<{
+    hasLunchBreak: boolean;
+    lunchBreakStart: string | null;
+    lunchBreakEnd: string | null;
+    operatingHours: {
+      dayOfWeek: number;
+      isActive: boolean;
+      startTime: string;
+      endTime: string;
+    }[];
+  } | null>(null);
 
-  // Load specialties for the clinic
+  // Load specialties and clinic details
   React.useEffect(() => {
     if (!activeClinicId) return;
 
-    const loadSpecialties = async () => {
+    const loadData = async () => {
       try {
         setLoadingSpecialties(true);
-        const data = await getClinicSpecialties(activeClinicId);
-        setSpecialties(data);
+        const [specialtiesData, clinicDetailsData] = await Promise.all([
+          getClinicSpecialties(activeClinicId),
+          getClinicDetails(activeClinicId),
+        ]);
+
+        setSpecialties(specialtiesData);
+        setClinicDetails(clinicDetailsData);
       } catch (error) {
-        console.error("Error loading specialties:", error);
-        toast.error("Erro ao carregar especialidades");
+        console.error("Error loading data:", error);
+        toast.error("Erro ao carregar dados da clínica");
       } finally {
         setLoadingSpecialties(false);
       }
     };
 
-    loadSpecialties();
+    loadData();
   }, [activeClinicId]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -131,13 +150,48 @@ export default function UpsertProfessionalForm({
       appointmentPrice: professional?.appointmentPriceInCents
         ? professional.appointmentPriceInCents / 100
         : 0,
-      availableFromWeekDay:
-        professional?.availableFromWeekDay?.toString() ?? "1",
-      availableToWeekDay: professional?.availableToWeekDay?.toString() ?? "5",
+      workingDays: professional?.workingDays ?? [],
       availableFromTime: professional?.availableFromTime ?? "",
       availableToTime: professional?.availableToTime ?? "",
+      hasCustomDuration: !!professional?.appointmentDuration,
+      appointmentDuration: professional?.appointmentDuration ?? 30,
+      cpf: professional?.cpf ? maskCPF(professional.cpf) : "",
+      phone: professional?.phone ? maskPhone(professional.phone) : "",
     },
   });
+
+  React.useEffect(() => {
+    if (professional) {
+      form.reset({
+        name: professional.name,
+        specialty: professional.specialty,
+        appointmentPrice: professional.appointmentPriceInCents / 100,
+        workingDays: professional.workingDays,
+        availableFromTime: professional.availableFromTime,
+        availableToTime: professional.availableToTime,
+        hasCustomDuration: !!professional.appointmentDuration,
+        appointmentDuration: professional.appointmentDuration ?? 30,
+        cpf: professional.cpf ? maskCPF(professional.cpf) : "",
+        phone: professional.phone ? maskPhone(professional.phone) : "",
+      });
+    } else {
+      form.reset({
+        name: "",
+        specialty: "",
+        appointmentPrice: 0,
+        workingDays: [],
+        availableFromTime: "",
+        availableToTime: "",
+        hasCustomDuration: false,
+        appointmentDuration: 30,
+        cpf: "",
+        phone: "",
+      });
+    }
+  }, [professional, form]);
+
+  const hasCustomDuration = form.watch("hasCustomDuration");
+  const appointmentDuration = form.watch("appointmentDuration") || 30;
 
   const upsertProfessionalAction = useAction(upsertProfessional, {
     onSuccess: () => {
@@ -188,12 +242,113 @@ export default function UpsertProfessionalForm({
     upsertProfessionalAction.execute({
       ...values,
       id: professional?.id,
-      availableFromWeekDay: parseInt(values.availableFromWeekDay),
-      availableToWeekDay: parseInt(values.availableToWeekDay),
       appointmentPriceInCents: values.appointmentPrice * 100,
       clinicId: activeClinicId,
+      workingDays: values.workingDays,
+      appointmentDuration: values.hasCustomDuration
+        ? values.appointmentDuration
+        : undefined,
+      cpf: values.cpf ? unmask(values.cpf) : undefined,
+      phone: values.phone ? unmask(values.phone) : undefined,
     });
   };
+
+  // Generate time slots based on valid range and lunch break
+  const generateTimeOptions = () => {
+    if (!clinicDetails) return [];
+
+    const activeDays = clinicDetails.operatingHours.filter((oh) => oh.isActive);
+    if (activeDays.length === 0) return [];
+
+    let minStart = "23:59";
+    let maxEnd = "00:00";
+
+    activeDays.forEach((day) => {
+      if (day.startTime < minStart) minStart = day.startTime;
+      if (day.endTime > maxEnd) maxEnd = day.endTime;
+    });
+
+    if (minStart >= maxEnd) {
+      minStart = "05:00";
+      maxEnd = "23:30";
+    }
+
+    const options = [];
+    const [startHour, startMinute] = minStart.split(":").map(Number);
+    const [endHour, endMinute] = maxEnd.split(":").map(Number);
+
+    let currentHour = startHour;
+    let currentMinute = startMinute;
+
+    const interval = appointmentDuration;
+
+    while (
+      currentHour < endHour ||
+      (currentHour === endHour && currentMinute <= endMinute)
+    ) {
+      const timeString = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}:00`;
+      const label = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+
+      let isLunchBreak = false;
+      if (
+        clinicDetails.hasLunchBreak &&
+        clinicDetails.lunchBreakStart &&
+        clinicDetails.lunchBreakEnd
+      ) {
+        const lunchStart = clinicDetails.lunchBreakStart + ":00";
+        const lunchEnd = clinicDetails.lunchBreakEnd + ":00";
+
+        // Calculate slot end time
+        const slotEndMinute = currentMinute + interval;
+        const slotEndHour = currentHour + Math.floor(slotEndMinute / 60);
+        const normalizedSlotEndMinute = slotEndMinute % 60;
+
+        const slotEndTimeString = `${slotEndHour.toString().padStart(2, "0")}:${normalizedSlotEndMinute.toString().padStart(2, "0")}:00`;
+
+        // Check if slot overlaps with lunch break
+        // Overlap if: Start < LunchEnd AND End > LunchStart
+        // But we want to ensure it fits completely BEFORE or AFTER
+
+        const fitsBeforeLunch = slotEndTimeString <= lunchStart;
+        const fitsAfterLunch = timeString >= lunchEnd;
+
+        if (!fitsBeforeLunch && !fitsAfterLunch) {
+          isLunchBreak = true;
+        }
+      }
+
+      if (!isLunchBreak) {
+        options.push({ value: timeString, label });
+      }
+
+      currentMinute += interval;
+      while (currentMinute >= 60) {
+        currentHour++;
+        currentMinute -= 60;
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
+
+  const getDayLabel = (day: number) => {
+    const days = [
+      "Domingo",
+      "Segunda",
+      "Terça",
+      "Quarta",
+      "Quinta",
+      "Sexta",
+      "Sábado",
+    ];
+    return days[day];
+  };
+
+  const activeDays =
+    clinicDetails?.operatingHours
+      .filter((oh) => oh.isActive)
+      .map((oh) => oh.dayOfWeek) || [];
 
   return (
     <DialogContent>
@@ -214,7 +369,9 @@ export default function UpsertProfessionalForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>
+                  Nome <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -222,12 +379,59 @@ export default function UpsertProfessionalForm({
               </FormItem>
             )}
           />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="cpf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    CPF <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(maskCPF(e.target.value));
+                      }}
+                      maxLength={14}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Telefone <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(maskPhone(e.target.value));
+                      }}
+                      maxLength={16}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="specialty"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Especialidade</FormLabel>
+                <FormLabel>
+                  Especialidade <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -264,7 +468,9 @@ export default function UpsertProfessionalForm({
             name="appointmentPrice"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Preço da consulta</FormLabel>
+                <FormLabel>
+                  Preço da consulta <span className="text-red-500">*</span>
+                </FormLabel>
                 <NumericFormat
                   value={field.value}
                   onValueChange={(values) => {
@@ -281,71 +487,126 @@ export default function UpsertProfessionalForm({
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="workingDays"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Dias de Atendimento <span className="text-red-500">*</span>
+                </FormLabel>
+                <div className="space-y-4">
+                  {/* Available Days Area */}
+                  <div>
+                    {activeDays.filter((day) => !field.value.includes(day))
+                      .length > 0 && (
+                      <span className="text-muted-foreground mb-2 block text-sm">
+                        Adicionar dia:
+                      </span>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {activeDays
+                        .filter((day) => !field.value.includes(day))
+                        .map((day) => (
+                          <Badge
+                            key={day}
+                            variant="outline"
+                            className="hover:bg-secondary cursor-pointer"
+                            onClick={() => {
+                              field.onChange([...field.value, day].sort());
+                            }}
+                          >
+                            {getDayLabel(day)}
+                            <span className="ml-1 text-xs">+</span>
+                          </Badge>
+                        ))}
+                      {activeDays.filter((day) => !field.value.includes(day))
+                        .length === 0 && (
+                        <span className="text-muted-foreground text-sm italic">
+                          Todos os dias disponíveis foram selecionados
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Selected Days Area */}
+                  {field.value.length > 0 && (
+                    <div className="rounded-md border p-4">
+                      <span className="text-muted-foreground mb-2 block text-sm">
+                        Dias selecionados:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {field.value.sort().map((day: number) => (
+                          <Badge
+                            key={day}
+                            variant="default"
+                            className="hover:bg-destructive/90 cursor-pointer"
+                            onClick={() => {
+                              field.onChange(
+                                field.value.filter((d: number) => d !== day),
+                              );
+                            }}
+                          >
+                            {getDayLabel(day)}
+                            <TrashIcon className="ml-1 h-3 w-3" />
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="hasCustomDuration"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-y-0 space-x-2">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel className="text-sm font-normal">
+                  Personalizar tempo médio de atendimento
+                </FormLabel>
+              </FormItem>
+            )}
+          />
+          {hasCustomDuration && (
+            <FormField
+              control={form.control}
+              name="appointmentDuration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tempo em minutos</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="availableFromWeekDay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dia inicial de disponibilidade</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione um dia" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="0">Domingo</SelectItem>
-                      <SelectItem value="1">Segunda</SelectItem>
-                      <SelectItem value="2">Terça</SelectItem>
-                      <SelectItem value="3">Quarta</SelectItem>
-                      <SelectItem value="4">Quinta</SelectItem>
-                      <SelectItem value="5">Sexta</SelectItem>
-                      <SelectItem value="6">Sábado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="availableToWeekDay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dia final de disponibilidade</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value?.toString()}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione um dia" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="0">Domingo</SelectItem>
-                      <SelectItem value="1">Segunda</SelectItem>
-                      <SelectItem value="2">Terça</SelectItem>
-                      <SelectItem value="3">Quarta</SelectItem>
-                      <SelectItem value="4">Quinta</SelectItem>
-                      <SelectItem value="5">Sexta</SelectItem>
-                      <SelectItem value="6">Sábado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="availableFromTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Horário inicial de disponibilidade</FormLabel>
+                  <FormLabel>
+                    Horário inicial de disponibilidade{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -356,53 +617,11 @@ export default function UpsertProfessionalForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Manhã</SelectLabel>
-                        <SelectItem value="05:00:00">05:00</SelectItem>
-                        <SelectItem value="05:30:00">05:30</SelectItem>
-                        <SelectItem value="06:00:00">06:00</SelectItem>
-                        <SelectItem value="06:30:00">06:30</SelectItem>
-                        <SelectItem value="07:00:00">07:00</SelectItem>
-                        <SelectItem value="07:30:00">07:30</SelectItem>
-                        <SelectItem value="08:00:00">08:00</SelectItem>
-                        <SelectItem value="08:30:00">08:30</SelectItem>
-                        <SelectItem value="09:00:00">09:00</SelectItem>
-                        <SelectItem value="09:30:00">09:30</SelectItem>
-                        <SelectItem value="10:00:00">10:00</SelectItem>
-                        <SelectItem value="10:30:00">10:30</SelectItem>
-                        <SelectItem value="11:00:00">11:00</SelectItem>
-                        <SelectItem value="11:30:00">11:30</SelectItem>
-                        <SelectItem value="12:00:00">12:00</SelectItem>
-                        <SelectItem value="12:30:00">12:30</SelectItem>
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Tarde</SelectLabel>
-                        <SelectItem value="13:00:00">13:00</SelectItem>
-                        <SelectItem value="13:30:00">13:30</SelectItem>
-                        <SelectItem value="14:00:00">14:00</SelectItem>
-                        <SelectItem value="14:30:00">14:30</SelectItem>
-                        <SelectItem value="15:00:00">15:00</SelectItem>
-                        <SelectItem value="15:30:00">15:30</SelectItem>
-                        <SelectItem value="16:00:00">16:00</SelectItem>
-                        <SelectItem value="16:30:00">16:30</SelectItem>
-                        <SelectItem value="17:00:00">17:00</SelectItem>
-                        <SelectItem value="17:30:00">17:30</SelectItem>
-                        <SelectItem value="18:00:00">18:00</SelectItem>
-                        <SelectItem value="18:30:00">18:30</SelectItem>
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Noite</SelectLabel>
-                        <SelectItem value="19:00:00">19:00</SelectItem>
-                        <SelectItem value="19:30:00">19:30</SelectItem>
-                        <SelectItem value="20:00:00">20:00</SelectItem>
-                        <SelectItem value="20:30:00">20:30</SelectItem>
-                        <SelectItem value="21:00:00">21:00</SelectItem>
-                        <SelectItem value="21:30:00">21:30</SelectItem>
-                        <SelectItem value="22:00:00">22:00</SelectItem>
-                        <SelectItem value="22:30:00">22:30</SelectItem>
-                        <SelectItem value="23:00:00">23:00</SelectItem>
-                        <SelectItem value="23:30:00">23:30</SelectItem>
-                      </SelectGroup>
+                      {timeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -414,7 +633,10 @@ export default function UpsertProfessionalForm({
               name="availableToTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Horário final de disponibilidade</FormLabel>
+                  <FormLabel>
+                    Horário final de disponibilidade{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -425,53 +647,11 @@ export default function UpsertProfessionalForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Manhã</SelectLabel>
-                        <SelectItem value="05:00:00">05:00</SelectItem>
-                        <SelectItem value="05:30:00">05:30</SelectItem>
-                        <SelectItem value="06:00:00">06:00</SelectItem>
-                        <SelectItem value="06:30:00">06:30</SelectItem>
-                        <SelectItem value="07:00:00">07:00</SelectItem>
-                        <SelectItem value="07:30:00">07:30</SelectItem>
-                        <SelectItem value="08:00:00">08:00</SelectItem>
-                        <SelectItem value="08:30:00">08:30</SelectItem>
-                        <SelectItem value="09:00:00">09:00</SelectItem>
-                        <SelectItem value="09:30:00">09:30</SelectItem>
-                        <SelectItem value="10:00:00">10:00</SelectItem>
-                        <SelectItem value="10:30:00">10:30</SelectItem>
-                        <SelectItem value="11:00:00">11:00</SelectItem>
-                        <SelectItem value="11:30:00">11:30</SelectItem>
-                        <SelectItem value="12:00:00">12:00</SelectItem>
-                        <SelectItem value="12:30:00">12:30</SelectItem>
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Tarde</SelectLabel>
-                        <SelectItem value="13:00:00">13:00</SelectItem>
-                        <SelectItem value="13:30:00">13:30</SelectItem>
-                        <SelectItem value="14:00:00">14:00</SelectItem>
-                        <SelectItem value="14:30:00">14:30</SelectItem>
-                        <SelectItem value="15:00:00">15:00</SelectItem>
-                        <SelectItem value="15:30:00">15:30</SelectItem>
-                        <SelectItem value="16:00:00">16:00</SelectItem>
-                        <SelectItem value="16:30:00">16:30</SelectItem>
-                        <SelectItem value="17:00:00">17:00</SelectItem>
-                        <SelectItem value="17:30:00">17:30</SelectItem>
-                        <SelectItem value="18:00:00">18:00</SelectItem>
-                        <SelectItem value="18:30:00">18:30</SelectItem>
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Noite</SelectLabel>
-                        <SelectItem value="19:00:00">19:00</SelectItem>
-                        <SelectItem value="19:30:00">19:30</SelectItem>
-                        <SelectItem value="20:00:00">20:00</SelectItem>
-                        <SelectItem value="20:30:00">20:30</SelectItem>
-                        <SelectItem value="21:00:00">21:00</SelectItem>
-                        <SelectItem value="21:30:00">21:30</SelectItem>
-                        <SelectItem value="22:00:00">22:00</SelectItem>
-                        <SelectItem value="22:30:00">22:30</SelectItem>
-                        <SelectItem value="23:00:00">23:00</SelectItem>
-                        <SelectItem value="23:30:00">23:30</SelectItem>
-                      </SelectGroup>
+                      {timeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

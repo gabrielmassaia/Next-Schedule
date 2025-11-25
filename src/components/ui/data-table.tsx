@@ -36,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   pageIndex?: number;
   pageSize?: number;
   onTransition?: TransitionStartFunction;
+  isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -49,6 +50,7 @@ export function DataTable<TData, TValue>({
   pageIndex,
   pageSize = 30,
   onTransition,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -106,7 +108,9 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody
+            className={isLoading ? "pointer-events-none opacity-50" : ""}
+          >
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

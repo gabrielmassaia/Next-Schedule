@@ -1,13 +1,22 @@
 "use server";
 
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { appointmentsTable, professionalsTable } from "@/db/schema";
+import {
+  appointmentsTable,
+  clinicsTable,
+  professionalsTable,
+} from "@/db/schema";
 import { actionClient } from "@/lib/next-safe-action";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const updateAppointmentSchema = z.object({
   id: z.string().uuid(),
@@ -31,9 +40,22 @@ export const updateAppointment = actionClient
         appointmentPriceInCents,
       },
     }) => {
+      const clinic = await db.query.clinicsTable.findFirst({
+        where: eq(clinicsTable.id, clinicId),
+        columns: {
+          timezone: true,
+        },
+      });
+
+      if (!clinic) {
+        throw new Error("Clínica não encontrada");
+      }
+
       const appointmentDateTime = dayjs(date)
+        .tz(clinic.timezone)
         .set("hour", parseInt(time.split(":")[0]))
         .set("minute", parseInt(time.split(":")[1]))
+        .set("second", 0)
         .toDate();
 
       // Check if professional exists and belongs to clinic

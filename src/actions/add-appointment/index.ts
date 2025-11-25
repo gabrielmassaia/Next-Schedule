@@ -1,6 +1,8 @@
 "use server";
 
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -9,6 +11,7 @@ import { db } from "@/db";
 import {
   appointmentsTable,
   clientsTable,
+  clinicsTable,
   professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
@@ -17,6 +20,9 @@ import { actionClient } from "@/lib/next-safe-action";
 
 import { getAvailableTimes } from "../get-available-times";
 import { addAppointmentSchema } from "./schema";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const addAppointment = actionClient
   .schema(addAppointmentSchema)
@@ -41,6 +47,17 @@ export const addAppointment = actionClient
       throw new Error("Clínica não encontrada");
     }
 
+    const clinic = await db.query.clinicsTable.findFirst({
+      where: eq(clinicsTable.id, clinicId),
+      columns: {
+        timezone: true,
+      },
+    });
+
+    if (!clinic) {
+      throw new Error("Clínica não encontrada");
+    }
+
     const availableTimes = await getAvailableTimes({
       professionalId: appointmentData.professionalId,
       clinicId,
@@ -57,8 +74,10 @@ export const addAppointment = actionClient
       throw new Error("Horário não disponível");
     }
     const appointmentDateTime = dayjs(appointmentData.date)
+      .tz(clinic.timezone)
       .set("hour", parseInt(appointmentData.time.split(":")[0]))
       .set("minute", parseInt(appointmentData.time.split(":")[1]))
+      .set("second", 0)
       .toDate();
 
     const [professional, client] = await Promise.all([

@@ -16,6 +16,7 @@ interface ClientsPageProps {
     page?: string;
     query?: string;
     status?: string;
+    cpf?: string;
   }>;
 }
 
@@ -24,11 +25,13 @@ export default async function ClientsPage(props: ClientsPageProps) {
   const page = Number(searchParams.page) || 1;
   const query = searchParams.query;
   const status = searchParams.status;
+  const cpf = searchParams.cpf;
 
   const { clients, pageCount, hasReachedLimit } = await getClients({
     page,
     query,
     status,
+    cpf,
   });
 
   return (
