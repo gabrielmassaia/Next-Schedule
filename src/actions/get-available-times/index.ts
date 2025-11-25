@@ -26,6 +26,7 @@ export const getAvailableTimes = actionClient
       clinicId: z.string().uuid(),
       professionalId: z.string(),
       date: z.string().date(), // YYYY-MM-DD,
+      excludeAppointmentId: z.string().optional(),
     }),
   )
   .action(async ({ parsedInput }) => {
@@ -68,6 +69,12 @@ export const getAvailableTimes = actionClient
     });
     const appointmentsOnSelectedDate = appointments
       .filter((appointment) => {
+        if (
+          parsedInput.excludeAppointmentId &&
+          appointment.id === parsedInput.excludeAppointmentId
+        ) {
+          return false;
+        }
         return dayjs(appointment.date).isSame(parsedInput.date, "day");
       })
       .map((appointment) => dayjs(appointment.date).format("HH:mm:ss"));
@@ -93,16 +100,17 @@ export const getAvailableTimes = actionClient
         .set("second", 0);
 
       return (
-        date.format("HH:mm:ss") >=
-          professionalAvailableFrom.format("HH:mm:ss") &&
-        date.format("HH:mm:ss") <= professionalAvailableTo.format("HH:mm:ss")
+        date.format("HH:mm") >= professionalAvailableFrom.format("HH:mm") &&
+        date.format("HH:mm") <= professionalAvailableTo.format("HH:mm")
       );
     });
-    return professionalTimeSlots.map((time) => {
-      return {
-        value: time,
-        available: !appointmentsOnSelectedDate.includes(time),
-        label: time.substring(0, 5),
-      };
-    });
+    return professionalTimeSlots
+      .filter((time) => !appointmentsOnSelectedDate.includes(time))
+      .map((time) => {
+        return {
+          value: time,
+          available: true,
+          label: time.substring(0, 5),
+        };
+      });
   });

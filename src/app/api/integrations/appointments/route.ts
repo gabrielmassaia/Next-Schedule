@@ -72,6 +72,106 @@ const schema = z.object({
  *       409:
  *         description: Time slot unavailable
  */
+/**
+ * @swagger
+ * /api/integrations/appointments:
+ *   get:
+ *     summary: Get appointments by client ID
+ *     tags:
+ *       - Appointments
+ *     security:
+ *       - BearerAuth: []
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: List of appointments
+ *       400:
+ *         description: Missing client ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Client not found
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const headerKey = request.headers
+      .get("authorization")
+      ?.replace("Bearer", "")
+      .trim();
+    const apiKey = headerKey || request.headers.get("x-api-key");
+
+    if (!apiKey) {
+      return NextResponse.json({ message: "API key ausente" }, { status: 401 });
+    }
+
+    const hashedKey = createHash("sha256").update(apiKey).digest("hex");
+
+    const apiKeyRecord = await db.query.integrationApiKeysTable.findFirst({
+      where: eq(integrationApiKeysTable.hashedKey, hashedKey),
+    });
+
+    if (!apiKeyRecord) {
+      return NextResponse.json(
+        { message: "Chave de API inválida" },
+        { status: 401 },
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const clientId = searchParams.get("clientId");
+
+    if (!clientId) {
+      return NextResponse.json(
+        { message: "ID do cliente é obrigatório" },
+        { status: 400 },
+      );
+    }
+
+    const client = await db.query.clientsTable.findFirst({
+      where: and(
+        eq(clientsTable.id, clientId),
+        eq(clientsTable.clinicId, apiKeyRecord.clinicId),
+      ),
+    });
+
+    if (!client) {
+      return NextResponse.json(
+        { message: "Cliente não encontrado" },
+        { status: 404 },
+      );
+    }
+
+    const appointments = await db.query.appointmentsTable.findMany({
+      where: and(
+        eq(appointmentsTable.clientId, clientId),
+        eq(appointmentsTable.clinicId, apiKeyRecord.clinicId),
+      ),
+      with: {
+        professional: true,
+        client: true,
+      },
+      orderBy: (appointments, { desc }) => [desc(appointments.date)],
+    });
+
+    await db
+      .update(integrationApiKeysTable)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(integrationApiKeysTable.id, apiKeyRecord.id));
+
+    return NextResponse.json({ appointments });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: "Erro interno" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const headerKey = request.headers

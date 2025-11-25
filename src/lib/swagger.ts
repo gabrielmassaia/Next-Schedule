@@ -10,8 +10,16 @@ type SwaggerOptions = {
   usePrebuiltSpec?: boolean;
 };
 
-const PUBLIC_SPEC_PATH = path.join(process.cwd(), "public", "swagger-public.json");
-const INTERNAL_SPEC_PATH = path.join(process.cwd(), "public", "swagger-internal.json");
+const PUBLIC_SPEC_PATH = path.join(
+  process.cwd(),
+  "public",
+  "swagger-public.json",
+);
+const INTERNAL_SPEC_PATH = path.join(
+  process.cwd(),
+  "public",
+  "swagger-internal.json",
+);
 
 const readSpecFromDisk = async (filePath: string) => {
   try {
@@ -27,7 +35,10 @@ export const getPublicApiDocs = async (options: SwaggerOptions = {}) => {
 
   if (usePrebuiltSpec) {
     const prebuilt = await readSpecFromDisk(PUBLIC_SPEC_PATH);
-    if (prebuilt) return prebuilt;
+    if (prebuilt) {
+      console.log("Using prebuilt public swagger spec");
+      return prebuilt;
+    }
   }
 
   const spec = createSwaggerSpec({
@@ -65,7 +76,10 @@ export const getInternalApiDocs = async (options: SwaggerOptions = {}) => {
 
   if (usePrebuiltSpec) {
     const prebuilt = await readSpecFromDisk(INTERNAL_SPEC_PATH);
-    if (prebuilt) return prebuilt;
+    if (prebuilt) {
+      console.log("Using prebuilt internal swagger spec");
+      return prebuilt;
+    }
   }
 
   const spec = createSwaggerSpec({

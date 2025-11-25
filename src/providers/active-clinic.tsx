@@ -109,6 +109,17 @@ export function ActiveClinicProvider({
       setClinics(sessionClinics);
       setIsLoading(true);
 
+      // Safety timeout to ensure we don't get stuck in loading state
+      const timeoutId = setTimeout(() => {
+        setIsLoading((loading) => {
+          if (loading) {
+            console.warn("Clinic fetch timed out, using session data");
+            return false;
+          }
+          return loading;
+        });
+      }, 5000);
+
       try {
         // Busca clínicas atualizadas do servidor
         const updatedClinics = await getUserClinics();
@@ -137,12 +148,13 @@ export function ActiveClinicProvider({
 
         setActiveClinicId(newActiveId);
         setActiveClinic(newActiveClinic);
-        setIsLoading(false);
       } catch (error) {
         console.error(error);
         // Fallback para dados da sessão se falhar
         setActiveClinicId(sessionClinics[0]?.id ?? null);
         setActiveClinic(sessionClinics[0] ?? null);
+      } finally {
+        clearTimeout(timeoutId);
         setIsLoading(false);
       }
     };

@@ -36,6 +36,31 @@ Estas rotas são destinadas a integrações externas e requerem autenticação v
   - 404: Cliente ou profissional não encontrado na clínica.
   - 409: Horário indisponível.
 
+#### Listar Agendamentos do Cliente
+
+- **Método:** `GET`
+- **URL:** `/api/integrations/appointments`
+- **Descrição:** Retorna todos os agendamentos de um cliente específico.
+- **Parâmetros de Query:**
+  - `clientId` (Obrigatório): UUID do cliente.
+- **Retorno (Sucesso - 200):**
+  ```json
+  {
+    "appointments": [
+      {
+        "id": "uuid",
+        "date": "YYYY-MM-DDTHH:mm:ss.sssZ",
+        "professional": { ... },
+        "client": { ... },
+        ...
+      }
+    ]
+  }
+  ```
+- **Erros:**
+  - 400: ID do cliente obrigatório.
+  - 404: Cliente não encontrado.
+
 #### Consultar Horários Disponíveis
 
 - **Método:** `GET`

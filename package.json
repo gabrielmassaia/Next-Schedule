@@ -7,7 +7,7 @@
     "build": "npm run generate:swagger && next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:swagger": "node scripts/generate-swagger.cjs"
+    "generate:swagger": "npx tsx scripts/generate-swagger.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

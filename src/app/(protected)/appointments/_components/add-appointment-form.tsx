@@ -91,19 +91,19 @@ const AddAppointmentForm = ({
   const isEditing = !!initialData;
 
   const form = useForm<z.infer<typeof formSchema>>({
-    shouldUnregister: true,
     resolver: zodResolver(formSchema),
     defaultValues: {
-      clientId: "",
-      professionalId: "",
-      appointmentPrice: 0,
-      date: undefined,
-      time: "",
+      clientId: initialData?.clientId || "",
+      professionalId: initialData?.professionalId || "",
+      appointmentPrice: initialData
+        ? initialData.appointmentPriceInCents / 100
+        : 0,
+      date: initialData ? new Date(initialData.date) : undefined,
+      time: initialData ? dayjs(initialData.date).format("HH:mm") : "",
     },
   });
 
   const selectedProfessionalId = form.watch("professionalId");
-  const selectedClientId = form.watch("clientId");
   const selectedDate = form.watch("date");
 
   const { data: availableTimes } = useQuery({
@@ -119,6 +119,7 @@ const AddAppointmentForm = ({
         date: dayjs(selectedDate).format("YYYY-MM-DD"),
         professionalId: selectedProfessionalId,
         clinicId: activeClinicId!,
+        excludeAppointmentId: initialData?.id,
       }),
     enabled: !!selectedDate && !!selectedProfessionalId && !!activeClinicId,
   });
@@ -227,9 +228,7 @@ const AddAppointmentForm = ({
     );
   };
 
-  const isDateTimeEnabled = isEditing
-    ? !!selectedProfessionalId
-    : !!(selectedClientId && selectedProfessionalId);
+  const isDateTimeEnabled = !!selectedProfessionalId;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

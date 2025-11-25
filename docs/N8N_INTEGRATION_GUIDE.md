@@ -329,6 +329,34 @@ x-api-key: SUA_API_KEY
 
 ---
 
+### 8. 📋 Listar Agendamentos do Cliente
+
+**Endpoint:** `GET /api/integrations/appointments`
+
+**Query Parameters:**
+
+- `clientId` (uuid, obrigatório) - ID do cliente
+
+**Response 200:**
+
+```json
+{
+  "appointments": [
+    {
+      "id": "uuid",
+      "date": "2024-12-25T14:30:00.000Z",
+      "professional": {
+        "name": "Dr. Carlos Santos",
+        "specialty": "Odontologia"
+      },
+      "status": "pending"
+    }
+  ]
+}
+```
+
+---
+
 ### 8. ❌ Cancelar Agendamento
 
 **Endpoint:** `DELETE /api/integrations/appointments?id={appointmentId}`
