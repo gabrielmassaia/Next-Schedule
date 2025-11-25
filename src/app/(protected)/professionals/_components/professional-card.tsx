@@ -1,6 +1,12 @@
 "use client";
 
-import { CalendarIcon, ClockIcon, DollarSignIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  ClockIcon,
+  DollarSignIcon,
+  Phone,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 
 import { formatCurrencyInCents } from "@/_helpers/currency";
@@ -16,6 +22,7 @@ import {
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { professionalsTable } from "@/db/schema";
+import { maskCPF, maskPhone } from "@/lib/masks";
 
 import { getAvailability } from "../_helpers/availability";
 import UpsertProfessionalForm from "./upsert-professional-form";
@@ -54,17 +61,29 @@ export default function ProfessionalCard({
       <CardContent className="flex flex-col gap-2">
         <Badge variant="outline">
           <CalendarIcon className="mr-1" />
-          {availability.from.format("dddd")} a {availability.to.format("dddd")}
+          {availability.workingDaysLabels}
         </Badge>
         <Badge variant="outline">
           <ClockIcon className="mr-1" />
-          {availability.from.format("HH:mm")} as{" "}
-          {availability.to.format("HH:mm")}
+          {availability.availableFromTime.substring(0, 5)} às{" "}
+          {availability.availableToTime.substring(0, 5)}
         </Badge>
         <Badge variant="outline">
           <DollarSignIcon className="mr-1" />
           {formatCurrencyInCents(professional.appointmentPriceInCents)}
         </Badge>
+        {professional.phone && (
+          <Badge variant="outline">
+            <Phone className="mr-1" />
+            {maskPhone(professional.phone)}
+          </Badge>
+        )}
+        {professional.cpf && (
+          <Badge variant="outline">
+            <User className="mr-1" />
+            {maskCPF(professional.cpf)}
+          </Badge>
+        )}
       </CardContent>
       <Separator />
       <CardFooter>
@@ -76,11 +95,7 @@ export default function ProfessionalCard({
             <Button className="w-full">Editar Cadastro</Button>
           </DialogTrigger>
           <UpsertProfessionalForm
-            professional={{
-              ...professional,
-              availableFromTime: availability.from.format("HH:mm:ss"),
-              availableToTime: availability.to.format("HH:mm:ss"),
-            }}
+            professional={professional}
             onSuccess={() => setIsUpsertProfessionalDialogOpen(false)}
           />
         </Dialog>

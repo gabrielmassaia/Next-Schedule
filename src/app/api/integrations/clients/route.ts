@@ -7,15 +7,21 @@ import { z } from "zod";
 import { db } from "@/db";
 import { clientsTable, integrationApiKeysTable } from "@/db/schema";
 
-const getClientSchema = z.object({
-  email: z.string().email(),
-  phoneNumber: z.string().length(11),
-});
+const getClientSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phoneNumber: z.string().length(11).optional(),
+    cpf: z.string().optional(),
+  })
+  .refine((data) => data.cpf || (data.email && data.phoneNumber), {
+    message: "Informe CPF ou (Email e Telefone)",
+  });
 
 const createClientSchema = z.object({
   name: z.string().min(3).max(100),
   email: z.string().email().max(100),
   phoneNumber: z.string().length(11),
+  cpf: z.string().optional(),
   sex: z.enum(["male", "female"]),
 });
 
@@ -42,7 +48,7 @@ async function validateApiKey(apiKey: string) {
  * @swagger
  * /api/integrations/clients:
  *   get:
- *     summary: Get a client by email and phone number
+ *     summary: Get a client by email and phone number OR by CPF
  *     tags:
  *       - Clients
  *     security:
@@ -51,13 +57,15 @@ async function validateApiKey(apiKey: string) {
  *     parameters:
  *       - in: query
  *         name: email
- *         required: true
  *         schema:
  *           type: string
  *           format: email
  *       - in: query
  *         name: phoneNumber
- *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: cpf
  *         schema:
  *           type: string
  *     responses:
@@ -92,14 +100,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
     const phoneNumber = searchParams.get("phoneNumber");
+    const cpf = searchParams.get("cpf");
 
-    const parsed = getClientSchema.parse({ email, phoneNumber });
+    const parsed = getClientSchema.parse({
+      email: email || undefined,
+      phoneNumber: phoneNumber || undefined,
+      cpf: cpf || undefined,
+    });
 
     const client = await db.query.clientsTable.findFirst({
       where: and(
         eq(clientsTable.clinicId, apiKeyRecord.clinicId),
-        eq(clientsTable.email, parsed.email),
-        eq(clientsTable.phoneNumber, parsed.phoneNumber),
+        parsed.cpf
+          ? eq(clientsTable.cpf, parsed.cpf)
+          : and(
+              eq(clientsTable.email, parsed.email!),
+              eq(clientsTable.phoneNumber, parsed.phoneNumber!),
+            ),
       ),
     });
 

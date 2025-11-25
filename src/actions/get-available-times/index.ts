@@ -11,6 +11,7 @@ import { generateTimeSlots } from "@/_helpers/time";
 import { db } from "@/db";
 import {
   appointmentsTable,
+  clinicsTable,
   professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
@@ -45,6 +46,18 @@ export const getAvailableTimes = actionClient
     if (!membership) {
       throw new Error("Clínica não encontrada");
     }
+
+    const clinic = await db.query.clinicsTable.findFirst({
+      where: eq(clinicsTable.id, parsedInput.clinicId),
+      with: {
+        operatingHours: true,
+      },
+    });
+
+    if (!clinic) {
+      throw new Error("Clínica não encontrada");
+    }
+
     const professional = await db.query.professionalsTable.findFirst({
       where: and(
         eq(professionalsTable.id, parsedInput.professionalId),
@@ -55,12 +68,28 @@ export const getAvailableTimes = actionClient
       throw new Error("Profissional não encontrado");
     }
     const selectedDayOfWeek = dayjs(parsedInput.date).day();
-    const professionalIsAvailable =
-      selectedDayOfWeek >= professional.availableFromWeekDay &&
-      selectedDayOfWeek <= professional.availableToWeekDay;
-    if (!professionalIsAvailable) {
+
+    // Check if professional works on this day
+    if (!professional.workingDays.includes(selectedDayOfWeek)) {
       return [];
     }
+
+    // Clinic Operating Hours Logic
+    const dayOperatingHours = clinic.operatingHours.find(
+      (oh) => oh.dayOfWeek === selectedDayOfWeek,
+    );
+
+    // If clinic has configured hours (any day), we enforce them.
+    // If no hours configured at all, we assume legacy/open.
+    const hasConfiguredHours = clinic.operatingHours.length > 0;
+
+    if (hasConfiguredHours) {
+      if (!dayOperatingHours || !dayOperatingHours.isActive) {
+        // Closed on this day
+        return [];
+      }
+    }
+
     const appointments = await db.query.appointmentsTable.findMany({
       where: and(
         eq(appointmentsTable.professionalId, parsedInput.professionalId),
@@ -78,32 +107,114 @@ export const getAvailableTimes = actionClient
         return dayjs(appointment.date).isSame(parsedInput.date, "day");
       })
       .map((appointment) => dayjs(appointment.date).format("HH:mm:ss"));
-    const timeSlots = generateTimeSlots();
+    const timeSlots = generateTimeSlots(professional.appointmentDuration || 30);
 
-    const professionalAvailableFrom = dayjs()
+    // Determine effective start/end times
+    let startHour = Number(professional.availableFromTime.split(":")[0]);
+    let startMinute = Number(professional.availableFromTime.split(":")[1]);
+    let endHour = Number(professional.availableToTime.split(":")[0]);
+    let endMinute = Number(professional.availableToTime.split(":")[1]);
+
+    if (hasConfiguredHours && dayOperatingHours) {
+      const clinicStartHour = Number(dayOperatingHours.startTime.split(":")[0]);
+      const clinicStartMinute = Number(
+        dayOperatingHours.startTime.split(":")[1],
+      );
+      const clinicEndHour = Number(dayOperatingHours.endTime.split(":")[0]);
+      const clinicEndMinute = Number(dayOperatingHours.endTime.split(":")[1]);
+
+      // Max Start
+      if (
+        clinicStartHour > startHour ||
+        (clinicStartHour === startHour && clinicStartMinute > startMinute)
+      ) {
+        startHour = clinicStartHour;
+        startMinute = clinicStartMinute;
+      }
+
+      // Min End
+      if (
+        clinicEndHour < endHour ||
+        (clinicEndHour === endHour && clinicEndMinute < endMinute)
+      ) {
+        endHour = clinicEndHour;
+        endMinute = clinicEndMinute;
+      }
+    }
+
+    const effectiveAvailableFrom = dayjs()
       .utc()
-      .set("hour", Number(professional.availableFromTime.split(":")[0]))
-      .set("minute", Number(professional.availableFromTime.split(":")[1]))
-      .set("second", 0)
-      .local();
-    const professionalAvailableTo = dayjs()
+      .set("hour", startHour)
+      .set("minute", startMinute)
+      .set("second", 0);
+    const effectiveAvailableTo = dayjs()
       .utc()
-      .set("hour", Number(professional.availableToTime.split(":")[0]))
-      .set("minute", Number(professional.availableToTime.split(":")[1]))
-      .set("second", 0)
-      .local();
+      .set("hour", endHour)
+      .set("minute", endMinute)
+      .set("second", 0);
+
+    // Lunch Break Logic
+    let lunchStart: dayjs.Dayjs | null = null;
+    let lunchEnd: dayjs.Dayjs | null = null;
+
+    if (
+      clinic.hasLunchBreak &&
+      clinic.lunchBreakStart &&
+      clinic.lunchBreakEnd
+    ) {
+      lunchStart = dayjs()
+        .utc()
+        .set("hour", Number(clinic.lunchBreakStart.split(":")[0]))
+        .set("minute", Number(clinic.lunchBreakStart.split(":")[1]))
+        .set("second", 0);
+      lunchEnd = dayjs()
+        .utc()
+        .set("hour", Number(clinic.lunchBreakEnd.split(":")[0]))
+        .set("minute", Number(clinic.lunchBreakEnd.split(":")[1]))
+        .set("second", 0);
+    }
+
     const professionalTimeSlots = timeSlots.filter((time) => {
-      const date = dayjs()
+      const slotStart = dayjs()
         .utc()
         .set("hour", Number(time.split(":")[0]))
         .set("minute", Number(time.split(":")[1]))
         .set("second", 0);
 
-      return (
-        date.format("HH:mm") >= professionalAvailableFrom.format("HH:mm") &&
-        date.format("HH:mm") <= professionalAvailableTo.format("HH:mm")
-      );
+      const duration = professional.appointmentDuration || 30;
+      const slotEnd = slotStart.add(duration, "minute");
+
+      // Check range (Start must be >= AvailableFrom, End must be <= AvailableTo)
+      if (
+        slotStart.format("HH:mm") < effectiveAvailableFrom.format("HH:mm") ||
+        slotEnd.format("HH:mm") > effectiveAvailableTo.format("HH:mm")
+      ) {
+        return false;
+      }
+
+      // Check lunch break (End must be <= LunchStart OR Start must be >= LunchEnd)
+      if (lunchStart && lunchEnd) {
+        const slotStartStr = slotStart.format("HH:mm");
+        const slotEndStr = slotEnd.format("HH:mm");
+        const lunchStartStr = lunchStart.format("HH:mm");
+        const lunchEndStr = lunchEnd.format("HH:mm");
+
+        // If slot overlaps with lunch break
+        // Overlap condition: Start < LunchEnd AND End > LunchStart
+        // But we want to ensure it fits completely BEFORE or AFTER
+        // So: End <= LunchStart OR Start >= LunchEnd
+
+        const fitsBeforeLunch = slotEndStr <= lunchStartStr;
+        const fitsAfterLunch = slotStartStr >= lunchEndStr;
+
+        if (!fitsBeforeLunch && !fitsAfterLunch) {
+          return false;
+        }
+      }
+
+      return true;
     });
+
     return professionalTimeSlots
       .filter((time) => !appointmentsOnSelectedDate.includes(time))
       .map((time) => {

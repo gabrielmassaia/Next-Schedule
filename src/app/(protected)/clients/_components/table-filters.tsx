@@ -69,6 +69,7 @@ export function TableFilters({ onTransition }: TableFiltersProps) {
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams);
     params.delete("query");
+    params.delete("cpf");
     params.delete("status");
     params.set("page", "1");
 
@@ -87,9 +88,18 @@ export function TableFilters({ onTransition }: TableFiltersProps) {
         <div className="relative w-full md:w-64">
           <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
-            placeholder="Buscar clientes..."
+            placeholder="Buscar por nome..."
             onChange={(e) => handleSearch("query", e.target.value)}
             defaultValue={searchParams.get("query")?.toString()}
+            className="pl-8"
+          />
+        </div>
+        <div className="relative w-full md:w-48">
+          <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
+          <Input
+            placeholder="Buscar por CPF..."
+            onChange={(e) => handleSearch("cpf", e.target.value)}
+            defaultValue={searchParams.get("cpf")?.toString()}
             className="pl-8"
           />
         </div>

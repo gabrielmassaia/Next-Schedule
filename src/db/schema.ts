@@ -147,13 +147,15 @@ export const professionalsTable = pgTable("professionals", {
     .references(() => clinicsTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   avatarImageUrl: text("avatar_image_url"),
-  // 1 - Monday, 2 - Tuesday, 3 - Wednesday, 4 - Thursday, 5 - Friday, 6 - Saturday, 0 - Sunday
-  availableFromWeekDay: integer("available_from_week_day").notNull(),
-  availableToWeekDay: integer("available_to_week_day").notNull(),
+  // Array of working days: 0 - Sunday, 1 - Monday, 2 - Tuesday, 3 - Wednesday, 4 - Thursday, 5 - Friday, 6 - Saturday
+  workingDays: integer("working_days").array().notNull(),
   availableFromTime: time("available_from_time").notNull(),
   availableToTime: time("available_to_time").notNull(),
   specialty: text("specialty").notNull(),
   appointmentPriceInCents: integer("appointment_price_in_cents").notNull(),
+  appointmentDuration: integer("appointment_duration"), // In minutes
+  cpf: text("cpf"),
+  phone: text("phone"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -213,6 +215,7 @@ export const clientsTable = pgTable(
     name: text("name").notNull(),
     email: text("email").notNull(),
     phoneNumber: text("phone_number").notNull(),
+    cpf: text("cpf"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     sex: clientSexEnum("sex").notNull(),
     status: clientStatusEnum("status").notNull().default("active"),

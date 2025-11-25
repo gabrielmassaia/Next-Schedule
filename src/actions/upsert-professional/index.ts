@@ -71,8 +71,7 @@ export const upsertProfessional = actionClient
         .from(professionalsTable)
         .where(eq(professionalsTable.clinicId, clinicId));
       if (
-        (totalProfessionals.total ?? 0) >=
-        plan.limits.professionalsPerClinic
+        (totalProfessionals.total ?? 0) >= plan.limits.professionalsPerClinic
       ) {
         throw new Error(
           "Limite de profissionais do seu plano foi atingido. Faça upgrade para cadastrar mais.",
@@ -85,16 +84,24 @@ export const upsertProfessional = actionClient
         ...professionalData,
         id: professionalId,
         clinicId,
+        workingDays: professionalData.workingDays,
         availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
         availableToTime: availableToTimeUTC.format("HH:mm:ss"),
+        appointmentDuration: professionalData.appointmentDuration,
+        cpf: professionalData.cpf,
+        phone: professionalData.phone,
       })
       .onConflictDoUpdate({
         target: [professionalsTable.id],
         set: {
           ...professionalData,
           clinicId,
+          workingDays: professionalData.workingDays,
           availableFromTime: availableFromTimeUTC.format("HH:mm:ss"),
           availableToTime: availableToTimeUTC.format("HH:mm:ss"),
+          appointmentDuration: professionalData.appointmentDuration,
+          cpf: professionalData.cpf,
+          phone: professionalData.phone,
         },
       });
     revalidatePath("/professionals");

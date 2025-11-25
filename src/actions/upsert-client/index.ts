@@ -91,11 +91,13 @@ export const upsertClient = actionClient
         ...clientData,
         id: clientId,
         clinicId,
+        cpf: clientData.cpf,
       })
       .onConflictDoUpdate({
         target: [clientsTable.id],
         set: {
           ...clientData,
+          cpf: clientData.cpf,
         },
       });
 

@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -35,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { clientsTable } from "@/db/schema";
+import { maskCPF, maskPhone, unmask } from "@/lib/masks";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const formSchema = z.object({
@@ -54,8 +54,10 @@ const formSchema = z.object({
   phoneNumber: z
     .string()
     .min(1, { message: "Telefone é obrigatório" })
-    .length(11, { message: "Telefone deve ter 11 dígitos" })
-    .regex(/^\d+$/, { message: "Telefone deve conter apenas números" }),
+    .refine((val) => val.replace(/\D/g, "").length === 11, {
+      message: "Telefone deve ter 11 dígitos",
+    }),
+  cpf: z.string().optional(),
   sex: z.enum(["male", "female"], {
     required_error: "Sexo é obrigatório",
   }),
@@ -82,6 +84,7 @@ export default function UpsertClientForm({
       name: client?.name ?? "",
       email: client?.email ?? "",
       phoneNumber: client?.phoneNumber ?? "",
+      cpf: client?.cpf ? maskCPF(client.cpf) : "",
       sex: client?.sex ?? "male",
       status: client?.status ?? "active",
     },
@@ -99,6 +102,7 @@ export default function UpsertClientForm({
         name: client.name,
         email: client.email,
         phoneNumber: client.phoneNumber,
+        cpf: client.cpf ? maskCPF(client.cpf) : "",
         sex: client.sex,
         status: client.status,
       });
@@ -127,15 +131,15 @@ export default function UpsertClientForm({
       ...values,
       id: client?.id,
       clinicId: activeClinicId,
+      cpf: values.cpf ? unmask(values.cpf) : undefined,
+      phoneNumber: unmask(values.phoneNumber),
     });
   };
 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>
-          {client ? client.name : "Adicionar cliente"}
-        </DialogTitle>
+        <DialogTitle>{client ? client.name : "Adicionar cliente"}</DialogTitle>
         <DialogDescription>
           {client
             ? "Edite as informações desse cliente."
@@ -179,6 +183,7 @@ export default function UpsertClientForm({
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="phoneNumber"
@@ -186,15 +191,33 @@ export default function UpsertClientForm({
               <FormItem>
                 <FormLabel>Telefone</FormLabel>
                 <FormControl>
-                  <PatternFormat
-                    format="(##) #####-####"
-                    mask="_"
-                    customInput={Input}
-                    value={field.value}
-                    onValueChange={(values) => {
-                      field.onChange(values.value);
+                  <Input
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(maskPhone(e.target.value));
                     }}
+                    maxLength={16}
                     placeholder="Digite o telefone do cliente"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="cpf"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CPF</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(maskCPF(e.target.value));
+                    }}
+                    maxLength={14}
+                    placeholder="Digite o CPF do cliente"
                   />
                 </FormControl>
                 <FormMessage />
