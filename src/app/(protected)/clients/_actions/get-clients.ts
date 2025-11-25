@@ -11,6 +11,7 @@ interface GetClientsParams {
   limit?: number;
   query?: string;
   cpf?: string;
+  status?: string;
 }
 
 export async function getClients({
