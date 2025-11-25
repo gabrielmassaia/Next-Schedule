@@ -67,18 +67,23 @@ Estas rotas são destinadas a integrações externas e requerem autenticação v
 - **URL:** `/api/integrations/available-slots`
 - **Descrição:** Retorna os horários disponíveis para um profissional em uma data específica.
 - **Parâmetros de Query:**
-  - `professionalId` (Obrigatório): UUID do profissional.
+  - `professionalCpf` (Obrigatório): CPF do profissional (com ou sem formatação, 11-14 caracteres).
   - `date` (Obrigatório): Data no formato YYYY-MM-DD.
 - **Retorno (Sucesso - 200):**
   ```json
   {
     "availableSlots": ["09:00", "10:00", ...],
     "professionalId": "uuid",
+    "professionalCpf": "12345678900",
     "professionalName": "Nome",
     "date": "YYYY-MM-DD",
     "appointmentPriceInCents": 10000
   }
   ```
+- **Notas Importantes:**
+  - ✅ Todos os horários retornados estão no **timezone da clínica**
+  - ✅ O sistema converte automaticamente UTC → Local para comparações
+  - ✅ Agendamentos são sempre salvos em UTC no banco de dados
 
 ### Clientes
 
@@ -138,12 +143,20 @@ Estas rotas são destinadas a integrações externas e requerem autenticação v
       {
         "id": "uuid",
         "name": "Nome",
+        "cpf": "12345678900",
         "specialty": "Especialidade",
+        "workingDays": [1, 2, 3, 4, 5],
+        "availableFromTime": "08:00",
+        "availableToTime": "18:00",
+        "appointmentPriceInCents": 15000,
         ...
       }
     ]
   }
   ```
+- **Notas:**
+  - `workingDays`: Array de dias da semana (0=Domingo, 1=Segunda, ..., 6=Sábado)
+  - Horários (`availableFromTime`, `availableToTime`) estão em **hora local** da clínica
 
 ### Especialidades
 
