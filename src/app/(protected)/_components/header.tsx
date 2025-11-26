@@ -16,13 +16,14 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { getPageTitle } from "@/lib/nav-utils";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 import { ClinicSwitcher } from "./clinic-switcher";
 
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const session = authClient.useSession();
+  const { session } = useActiveClinic();
   const pageTitle = getPageTitle(pathname);
 
   const handleSignOut = async () => {

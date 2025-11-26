@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 import { getPageTitle } from "@/lib/nav-utils";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 import { MobileSettingsModal } from "./mobile-settings-modal";
 
 export function MobileLayout() {
   const pathname = usePathname();
   const router = useRouter();
-  const session = authClient.useSession();
+  const { session } = useActiveClinic();
   const title = getPageTitle(pathname);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 

@@ -18,6 +18,7 @@ interface ActiveClinicContextValue {
   activeClinicId: string | null;
   activeClinic: ClinicSummary | null;
   isLoading: boolean;
+  session: ReturnType<typeof authClient.useSession>;
   setActiveClinic: (clinicId: string) => Promise<void>;
   refreshClinics: () => Promise<void>;
 }
@@ -183,6 +184,7 @@ export function ActiveClinicProvider({
       activeClinicId,
       activeClinic,
       isLoading,
+      session,
       setActiveClinic: setActiveClinicHandler,
       refreshClinics,
     }),
@@ -191,6 +193,7 @@ export function ActiveClinicProvider({
       activeClinicId,
       activeClinic,
       isLoading,
+      session,
       setActiveClinicHandler,
       refreshClinics,
     ],

@@ -37,7 +37,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 interface MenuItem {
   title: string;
@@ -55,7 +55,7 @@ interface SettingsMenuItem {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const session = authClient.useSession();
+  const { session } = useActiveClinic();
   const userPlan = session.data?.user.plan;
 
   // Main menu items
