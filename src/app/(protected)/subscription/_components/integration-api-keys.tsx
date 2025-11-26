@@ -146,6 +146,7 @@ export function IntegrationApiKeys({ apiKeys }: IntegrationApiKeysProps) {
                         "Chave copiada para a área de transferência",
                       );
                       setNewKeyValue(null);
+                      setIsDialogOpen(false);
                     }}
                   >
                     Copiar e fechar

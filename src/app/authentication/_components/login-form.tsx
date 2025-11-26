@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -28,6 +29,7 @@ import { authClient } from "@/lib/auth-client";
 
 export default function LoginForm() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const loginSchema = z.object({
     email: z
@@ -56,9 +58,19 @@ export default function LoginForm() {
         password: values.password,
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success("Login realizado com sucesso");
-          router.push("/dashboard");
+
+          // Fetch session to check if user has a plan
+          const session = await authClient.getSession();
+
+          if (session?.data?.user?.plan) {
+            // User has a plan, redirect to dashboard
+            router.push("/dashboard");
+          } else {
+            // User doesn't have a plan, redirect to signature page
+            router.push("/signature");
+          }
         },
         onError: (error) => {
           toast.error("Email ou senha inválidos");
@@ -71,7 +83,7 @@ export default function LoginForm() {
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/signature",
     });
   };
 
@@ -107,7 +119,24 @@ export default function LoginForm() {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite sua senha" {...field} />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Digite sua senha"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
