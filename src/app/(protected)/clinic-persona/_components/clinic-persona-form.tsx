@@ -1,12 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Info, Loader2, Plus, Trash2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { upsertClinicSettingsAgent } from "@/actions/clinic-settings-actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,6 +35,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { FORBIDDEN_TOPICS, GENERAL_RULES } from "@/constants/persona-options";
 import {
   ClinicPersonaSchema,
   clinicPersonaSchema,
@@ -79,15 +87,6 @@ export function ClinicPersonaForm({ initialData }: ClinicPersonaFormProps) {
   });
 
   const {
-    fields: flowFields,
-    append: appendFlow,
-    remove: removeFlow,
-  } = useFieldArray({
-    control: form.control,
-    name: "appointmentFlow",
-  });
-
-  const {
     fields: topicFields,
     append: appendTopic,
     remove: removeTopic,
@@ -99,6 +98,27 @@ export function ClinicPersonaForm({ initialData }: ClinicPersonaFormProps) {
   function onSubmit(values: ClinicPersonaSchema) {
     execute(values);
   }
+
+  const watchedRules = form.watch("rules");
+  const watchedTopics = form.watch("forbiddenTopics");
+
+  const toggleRule = (rule: string) => {
+    const index = watchedRules?.findIndex((r) => r.value === rule);
+    if (index !== undefined && index !== -1) {
+      removeRule(index);
+    } else {
+      appendRule({ value: rule });
+    }
+  };
+
+  const toggleTopic = (topic: string) => {
+    const index = watchedTopics?.findIndex((t) => t.value === topic);
+    if (index !== undefined && index !== -1) {
+      removeTopic(index);
+    } else {
+      appendTopic({ value: topic });
+    }
+  };
 
   return (
     <Form {...form}>
@@ -188,7 +208,22 @@ export function ClinicPersonaForm({ initialData }: ClinicPersonaFormProps) {
                 name="availability"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Disponibilidade</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Disponibilidade</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="text-muted-foreground h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              Defina os horários em que o assistente IA poderá
+                              responder aos pacientes.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <Input placeholder="Ex: Seg-Sex 08:00-18:00" {...field} />
                     </FormControl>
@@ -226,51 +261,72 @@ export function ClinicPersonaForm({ initialData }: ClinicPersonaFormProps) {
           <CardHeader>
             <CardTitle>Regras de Comportamento</CardTitle>
             <CardDescription>
-              Adicione regras específicas que o assistente deve seguir.
+              Selecione regras predefinidas ou adicione personalizadas.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {rulesFields.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
-                <FormField
-                  control={form.control}
-                  name={`rules.${index}.value`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input
-                          placeholder="Ex: Não fornecer diagnósticos médicos..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeRule(index)}
-                >
-                  <Trash2 className="text-destructive h-4 w-4" />
-                </Button>
+          <CardContent className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              {GENERAL_RULES.map((rule) => {
+                const isSelected = watchedRules?.some((r) => r.value === rule);
+                return (
+                  <Badge
+                    key={rule}
+                    variant={isSelected ? "default" : "outline"}
+                    className="hover:bg-primary/90 cursor-pointer"
+                    onClick={() => toggleRule(rule)}
+                  >
+                    {rule}
+                  </Badge>
+                );
+              })}
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-muted-foreground text-sm font-medium">
+                Regras Personalizadas
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => appendRule({ value: "" })}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Regra
-            </Button>
+              {rulesFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`rules.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Ex: Não fornecer diagnósticos médicos..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeRule(index)}
+                  >
+                    <Trash2 className="text-destructive h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => appendRule({ value: "" })}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Regra Personalizada
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Fluxo de Agendamento</CardTitle>
             <CardDescription>
@@ -316,53 +372,76 @@ export function ClinicPersonaForm({ initialData }: ClinicPersonaFormProps) {
               Adicionar Passo
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card>
           <CardHeader>
             <CardTitle>Tópicos Proibidos</CardTitle>
             <CardDescription>
-              Assuntos que o assistente não deve discutir.
+              Selecione tópicos predefinidos ou adicione personalizados.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {topicFields.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
-                <FormField
-                  control={form.control}
-                  name={`forbiddenTopics.${index}.value`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input
-                          placeholder="Ex: Política, religião..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeTopic(index)}
-                >
-                  <Trash2 className="text-destructive h-4 w-4" />
-                </Button>
+          <CardContent className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              {FORBIDDEN_TOPICS.map((topic) => {
+                const isSelected = watchedTopics?.some(
+                  (t) => t.value === topic,
+                );
+                return (
+                  <Badge
+                    key={topic}
+                    variant={isSelected ? "default" : "outline"}
+                    className="hover:bg-primary/90 cursor-pointer"
+                    onClick={() => toggleTopic(topic)}
+                  >
+                    {topic}
+                  </Badge>
+                );
+              })}
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-muted-foreground text-sm font-medium">
+                Tópicos Personalizados
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => appendTopic({ value: "" })}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Tópico
-            </Button>
+              {topicFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`forbiddenTopics.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Ex: Política, religião..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeTopic(index)}
+                  >
+                    <Trash2 className="text-destructive h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => appendTopic({ value: "" })}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Tópico Personalizado
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
