@@ -42,6 +42,7 @@ export default function LoginCarousel() {
             src={image}
             alt={`Carousel image ${index + 1}`}
             fill
+            sizes="50vw"
             className="object-cover"
             priority={index === 0}
           />

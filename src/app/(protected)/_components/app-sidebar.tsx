@@ -10,7 +10,6 @@ import {
   KeyRound,
   LayoutDashboard,
   Settings,
-  Stethoscope,
   UserRound,
   UsersRound,
 } from "lucide-react";
