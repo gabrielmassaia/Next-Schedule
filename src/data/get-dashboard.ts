@@ -138,8 +138,25 @@ export const getDashboard = async ({ from, to, clinicId }: Params) => {
         lte(appointmentsTable.date, todayEnd),
       ),
       with: {
-        client: true,
-        professional: true,
+        client: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+            phoneNumber: true,
+            sex: true,
+            status: true,
+          },
+        },
+        professional: {
+          columns: {
+            id: true,
+            name: true,
+            avatarImageUrl: true,
+            specialty: true,
+            appointmentPriceInCents: true,
+          },
+        },
       },
     }),
     db
