@@ -4,14 +4,13 @@ import {
   CalendarDays,
   LayoutDashboard,
   LucideIcon,
-  Menu,
+  Settings,
   UserRound,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -27,16 +26,19 @@ const navItems: NavItem[] = [
   { name: "Agenda", link: "/appointments", icon: CalendarDays },
   { name: "Profissionais", link: "/professionals", icon: UserRound },
   { name: "Clientes", link: "/clients", icon: UsersRound },
-  { name: "Menu", link: "#", icon: Menu, action: true },
+  { name: "Configurações", link: "#", icon: Settings, action: true },
 ];
 
 interface BottomNavigationProps {
   className?: string;
+  onSettingsClick: () => void;
 }
 
-export function BottomNavigation({ className }: BottomNavigationProps) {
+export function BottomNavigation({
+  className,
+  onSettingsClick,
+}: BottomNavigationProps) {
   const pathname = usePathname();
-  const { toggleSidebar } = useSidebar();
 
   return (
     <div
@@ -58,7 +60,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
               <button
                 key={item.name}
                 className="text-muted-foreground hover:text-foreground flex min-w-[50px] flex-col items-center justify-center gap-1 text-xs font-medium transition-colors"
-                onClick={() => toggleSidebar()}
+                onClick={onSettingsClick}
               >
                 <Icon className="h-5 w-5" />
                 <span>{item.name}</span>
