@@ -3,7 +3,6 @@ import { Calendar } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { requirePlan } from "@/_helpers/require-plan";
-import { ClinicSelectionModal } from "@/components/clinic-selection-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   PageActions,
@@ -15,7 +14,6 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { getDashboard } from "@/data/get-dashboard";
-import { readActiveClinicIdFromCookies } from "@/lib/clinic-session";
 
 import { getFormData } from "../appointments/_actions/get-form-data";
 import AppointmentsChart from "./_components/appointments-chart";
@@ -33,14 +31,10 @@ interface DashboardPageProps {
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const { activeClinic, clinics } = await requirePlan();
+  const { activeClinic } = await requirePlan();
   if (!activeClinic) {
     return null;
   }
-
-  // Verificar se precisa mostrar modal de seleção
-  const cookieClinicId = await readActiveClinicIdFromCookies();
-  const shouldShowModal = clinics.length > 1 && !cookieClinicId;
 
   const { from, to } = await searchParams;
   if (!from || !to) {
@@ -71,64 +65,55 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   ]);
 
   return (
-    <>
-      {shouldShowModal && (
-        <ClinicSelectionModal clinics={clinics} open={true} />
-      )}
-      <PageContainer>
-        <PageHeader>
-          <PageHeaderContent>
-            <PageTitle>Dashboard</PageTitle>
-            <PageDescription>
-              Tenha uma visão geral da sua clínica.
-            </PageDescription>
-          </PageHeaderContent>
-          <PageActions>
-            <DatePicker />
-          </PageActions>
-        </PageHeader>
-        <PageContent>
-          <StatsCards
-            totalRevenue={
-              totalRevenue.total ? Number(totalRevenue.total) : null
-            }
-            totalAppointments={totalAppointments.total}
-            totalClients={totalClients.total}
-            totalProfessionals={totalProfessionals.total}
-          />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
-            <div className="col-span-1 lg:col-span-4">
-              <AppointmentsChart
-                dailyAppointmentsData={dailyAppointmentsData}
-                from={from}
-                to={to}
-              />
-            </div>
-            <div className="col-span-1 flex flex-col gap-4 lg:col-span-3">
-              <TopProfessionals professionals={topProfessionals} />
-              <TopSpecialties topSpecialties={topSpecialties} />
-            </div>
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderContent>
+          <PageTitle>Dashboard</PageTitle>
+          <PageDescription>
+            Tenha uma visão geral da sua clínica.
+          </PageDescription>
+        </PageHeaderContent>
+        <PageActions>
+          <DatePicker />
+        </PageActions>
+      </PageHeader>
+      <PageContent>
+        <StatsCards
+          totalRevenue={totalRevenue.total ? Number(totalRevenue.total) : null}
+          totalAppointments={totalAppointments.total}
+          totalClients={totalClients.total}
+          totalProfessionals={totalProfessionals.total}
+        />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+          <div className="col-span-1 lg:col-span-4">
+            <AppointmentsChart
+              dailyAppointmentsData={dailyAppointmentsData}
+              from={from}
+              to={to}
+            />
           </div>
-          <Card className="w-full">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Calendar className="text-muted-foreground" />
-                <CardTitle className="text-base">
-                  Agendamentos de hoje
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DashboardAppointmentsTable
-                appointments={todayAppointments}
-                clients={clients}
-                professionals={professionals}
-              />
-            </CardContent>
-          </Card>
-        </PageContent>
-      </PageContainer>
-    </>
+          <div className="col-span-1 flex flex-col gap-4 lg:col-span-3">
+            <TopProfessionals professionals={topProfessionals} />
+            <TopSpecialties topSpecialties={topSpecialties} />
+          </div>
+        </div>
+        <Card className="w-full">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Calendar className="text-muted-foreground" />
+              <CardTitle className="text-base">Agendamentos de hoje</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <DashboardAppointmentsTable
+              appointments={todayAppointments}
+              clients={clients}
+              professionals={professionals}
+            />
+          </CardContent>
+        </Card>
+      </PageContent>
+    </PageContainer>
   );
 };
 

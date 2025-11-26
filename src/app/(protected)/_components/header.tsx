@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut, Settings, UserRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,12 +15,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { getPageTitle } from "@/lib/nav-utils";
+import { useActiveClinic } from "@/providers/active-clinic";
 
 import { ClinicSwitcher } from "./clinic-switcher";
 
 export function Header() {
   const router = useRouter();
-  const session = authClient.useSession();
+  const pathname = usePathname();
+  const { session } = useActiveClinic();
+  const pageTitle = getPageTitle(pathname);
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -34,8 +38,9 @@ export function Header() {
 
   return (
     <header className="bg-background/95 supports-backdrop-filter:bg-background/60 hidden h-16 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur sm:flex">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <SidebarTrigger />
+        <h2 className="text-foreground text-lg font-semibold">{pageTitle}</h2>
       </div>
       <div className="flex items-center gap-2">
         <ClinicSwitcher />

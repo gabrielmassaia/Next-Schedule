@@ -2,6 +2,7 @@
 
 import { LogOut, Settings, UserRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { ClinicSwitcher } from "@/app/(protected)/_components/clinic-switcher";
 import { BottomNavigation } from "@/components/Mobile/BottomNavigation";
@@ -16,33 +17,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { getPageTitle } from "@/lib/nav-utils";
+import { useActiveClinic } from "@/providers/active-clinic";
 
-const getTitle = (pathname: string) => {
-  switch (pathname) {
-    case "/dashboard":
-      return "Dashboard";
-    case "/appointments":
-      return "Agendamentos";
-    case "/professionals":
-      return "Profissionais";
-    case "/clients":
-      return "Clientes";
-    case "/clinic-settings":
-      return "Configurações";
-    case "/apikey":
-      return "API Key";
-    case "/subscription":
-      return "Planos";
-    default:
-      return "Next Schedule";
-  }
-};
+import { MobileSettingsModal } from "./mobile-settings-modal";
 
 export function MobileLayout() {
   const pathname = usePathname();
   const router = useRouter();
-  const session = authClient.useSession();
-  const title = getTitle(pathname);
+  const { session } = useActiveClinic();
+  const title = getPageTitle(pathname);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -95,7 +80,11 @@ export function MobileLayout() {
         </div>
       </header>
       <div className="h-16 sm:hidden" /> {/* Spacer for fixed header */}
-      <BottomNavigation />
+      <BottomNavigation onSettingsClick={() => setIsSettingsModalOpen(true)} />
+      <MobileSettingsModal
+        open={isSettingsModalOpen}
+        onOpenChange={setIsSettingsModalOpen}
+      />
     </>
   );
 }

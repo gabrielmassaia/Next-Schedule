@@ -285,7 +285,7 @@ export function ClinicSettingsForm({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                   <TabsTrigger value="general">Dados Gerais</TabsTrigger>
                   <TabsTrigger value="address">Endereço</TabsTrigger>
                   <TabsTrigger value="settings">Configurações</TabsTrigger>

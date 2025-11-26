@@ -18,6 +18,7 @@ interface ActiveClinicContextValue {
   activeClinicId: string | null;
   activeClinic: ClinicSummary | null;
   isLoading: boolean;
+  session: ReturnType<typeof authClient.useSession>;
   setActiveClinic: (clinicId: string) => Promise<void>;
   refreshClinics: () => Promise<void>;
 }
@@ -60,12 +61,16 @@ export function ActiveClinicProvider({
       );
 
       // Se tivermos uma clínica no cookie e ela existir na lista, usamos ela
-      // Caso contrário, se tivermos clínicas na lista, usamos a primeira (fallback)
-      // Se não tivermos clínicas, null
+      // Se o usuário tiver apenas UMA clínica, auto-seleciona
+      // Se tiver múltiplas, aguarda seleção manual (não auto-seleciona)
       const newActiveId =
-        activeClinicFromCookie?.id ?? updatedClinics[0]?.id ?? null;
+        activeClinicFromCookie?.id ??
+        (updatedClinics.length === 1 ? updatedClinics[0]?.id : null) ??
+        null;
       const newActiveClinic =
-        activeClinicFromCookie ?? updatedClinics[0] ?? null;
+        activeClinicFromCookie ??
+        (updatedClinics.length === 1 ? updatedClinics[0] : null) ??
+        null;
 
       setActiveClinicId(newActiveId);
       setActiveClinic(newActiveClinic);
@@ -141,18 +146,29 @@ export function ActiveClinicProvider({
           (clinic) => clinic.id === data.activeClinicId,
         );
 
+        // Se tivermos uma clínica no cookie e ela existir na lista, usamos ela
+        // Se o usuário tiver apenas UMA clínica, auto-seleciona
+        // Se tiver múltiplas, aguarda seleção manual (não auto-seleciona)
         const newActiveId =
-          activeClinicFromCookie?.id ?? updatedClinics[0]?.id ?? null;
+          activeClinicFromCookie?.id ??
+          (updatedClinics.length === 1 ? updatedClinics[0]?.id : null) ??
+          null;
         const newActiveClinic =
-          activeClinicFromCookie ?? updatedClinics[0] ?? null;
+          activeClinicFromCookie ??
+          (updatedClinics.length === 1 ? updatedClinics[0] : null) ??
+          null;
 
         setActiveClinicId(newActiveId);
         setActiveClinic(newActiveClinic);
       } catch (error) {
         console.error(error);
-        // Fallback para dados da sessão se falhar
-        setActiveClinicId(sessionClinics[0]?.id ?? null);
-        setActiveClinic(sessionClinics[0] ?? null);
+        // Fallback: auto-seleciona apenas se tiver uma única clínica
+        const fallbackId =
+          sessionClinics.length === 1 ? sessionClinics[0]?.id : null;
+        const fallbackClinic =
+          sessionClinics.length === 1 ? sessionClinics[0] : null;
+        setActiveClinicId(fallbackId ?? null);
+        setActiveClinic(fallbackClinic ?? null);
       } finally {
         clearTimeout(timeoutId);
         setIsLoading(false);
@@ -168,6 +184,7 @@ export function ActiveClinicProvider({
       activeClinicId,
       activeClinic,
       isLoading,
+      session,
       setActiveClinic: setActiveClinicHandler,
       refreshClinics,
     }),
@@ -176,6 +193,7 @@ export function ActiveClinicProvider({
       activeClinicId,
       activeClinic,
       isLoading,
+      session,
       setActiveClinicHandler,
       refreshClinics,
     ],
