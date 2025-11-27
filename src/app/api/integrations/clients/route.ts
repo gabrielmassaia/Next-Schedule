@@ -119,6 +119,7 @@ export async function GET(request: NextRequest) {
     const client = await db.query.clientsTable.findFirst({
       where: and(
         eq(clientsTable.clinicId, apiKeyRecord.clinicId),
+        eq(clientsTable.status, "active"),
         parsed.cpf
           ? eq(clientsTable.cpf, parsed.cpf)
           : and(

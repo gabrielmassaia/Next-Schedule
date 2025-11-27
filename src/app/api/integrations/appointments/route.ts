@@ -24,7 +24,7 @@ const schema = z.object({
   professionalId: z.string().uuid(),
   date: z.string().date(),
   time: z.string(),
-  appointmentPriceInCents: z.number().int().positive(),
+  appointmentPriceInCents: z.number().int().positive().optional(),
 });
 
 /**
@@ -48,7 +48,6 @@ const schema = z.object({
  *               - professionalId
  *               - date
  *               - time
- *               - appointmentPriceInCents
  *             properties:
  *               clientId:
  *                 type: string
@@ -173,7 +172,9 @@ export async function POST(request: NextRequest) {
         professionalId: parsed.professionalId,
         clientId: parsed.clientId,
         date: appointmentDateTime,
-        appointmentPriceInCents: parsed.appointmentPriceInCents,
+        appointmentPriceInCents:
+          parsed.appointmentPriceInCents ??
+          professional.appointmentPriceInCents,
       })
       .returning();
 
