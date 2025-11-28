@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -139,6 +140,14 @@ export default function LoginForm() {
                       </div>
                     </FormControl>
                     <FormMessage />
+                    <div className="flex justify-end">
+                      <Link
+                        href="/auth/forgot-password"
+                        className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                      >
+                        Esqueceu a senha?
+                      </Link>
+                    </div>
                   </FormItem>
                 )}
               />

@@ -297,7 +297,11 @@ export const plansTable = pgTable("plans", {
   limits: jsonb("limits").notNull().$type<{
     clinics: number | null;
     professionalsPerClinic: number | null;
-    clientsPerClinic: number | null;
+    patientsPerClinic: number | null;
+    dashboard: boolean;
+    aiAgent: boolean;
+    automatedScheduling: boolean;
+    apiKey: boolean;
   }>(),
   features: text("features").array().notNull(),
   stripePriceId: text("stripe_price_id"),
@@ -461,3 +465,11 @@ export const clinicAgentSettingsTableRelations = relations(
     }),
   }),
 );
+
+export const passwordResetTokensTable = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  token: text("token").notNull().unique(),
+  email: text("email").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

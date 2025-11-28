@@ -7,6 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
 import {
   appointmentsTable,
@@ -14,6 +15,7 @@ import {
   clinicsTable,
   integrationApiKeysTable,
   professionalsTable,
+  usersToClinicsTable,
 } from "@/db/schema";
 
 dayjs.extend(utc);
@@ -117,6 +119,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: "Clínica não encontrada" },
         { status: 404 },
+      );
+    }
+
+    // Check plan limits (Enterprise required for automated scheduling)
+    const clinicUsers = await db.query.usersToClinicsTable.findMany({
+      where: eq(usersToClinicsTable.clinicId, apiKeyRecord.clinicId),
+      with: {
+        user: true,
+      },
+    });
+
+    let hasEnterpriseAccess = false;
+
+    for (const userClinic of clinicUsers) {
+      const userPlan = await getPlanBySlug(userClinic.user.plan);
+      if (userPlan.limits.automatedScheduling) {
+        hasEnterpriseAccess = true;
+        break;
+      }
+    }
+
+    if (!hasEnterpriseAccess) {
+      return NextResponse.json(
+        {
+          message:
+            "Funcionalidade disponível apenas no plano Enterprise. Atualize seu plano para utilizar agendamentos automáticos.",
+        },
+        { status: 403 },
       );
     }
 

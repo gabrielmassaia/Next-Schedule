@@ -17,7 +17,7 @@
   },
 
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "never"
+    "source.fixAll.eslint": "explicit"
   },
 
   "prettier.prettierPath": "./node_modules/prettier",

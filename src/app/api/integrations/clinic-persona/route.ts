@@ -1,8 +1,9 @@
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
-import { clinicAgentSettingsTable } from "@/db/schema";
+import { clinicAgentSettingsTable, usersToClinicsTable } from "@/db/schema";
 
 /**
  * @swagger
@@ -146,6 +147,34 @@ export async function GET(req: NextRequest) {
 
   if (!clinic) {
     return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
+  }
+
+  // Check plan limits (Enterprise required for AI Agent)
+  const clinicUsers = await db.query.usersToClinicsTable.findMany({
+    where: eq(usersToClinicsTable.clinicId, clinic.id),
+    with: {
+      user: true,
+    },
+  });
+
+  let hasEnterpriseAccess = false;
+
+  for (const userClinic of clinicUsers) {
+    const userPlan = await getPlanBySlug(userClinic.user.plan);
+    if (userPlan.limits.aiAgent) {
+      hasEnterpriseAccess = true;
+      break;
+    }
+  }
+
+  if (!hasEnterpriseAccess) {
+    return NextResponse.json(
+      {
+        error:
+          "Funcionalidade disponível apenas no plano Enterprise. Atualize seu plano para utilizar o Agente IA.",
+      },
+      { status: 403 },
+    );
   }
 
   const settings = await db.query.clinicAgentSettingsTable.findFirst({

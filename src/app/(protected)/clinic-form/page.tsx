@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getClinicNiches } from "@/data/clinic-niches";
-import { getPlanBySlug } from "@/data/subscription-plans";
 import { auth } from "@/lib/auth";
 
 import { ClinicCreationModal } from "./_components/clinic-creation-modal";
@@ -15,14 +14,6 @@ export default async function ClinicFormPage() {
 
   if (!session.user.plan) {
     redirect("/signature");
-  }
-
-  const clinics = session.user.clinics ?? [];
-  const plan = await getPlanBySlug(session.user.plan);
-  const clinicsLimit = plan.limits.clinics;
-
-  if (typeof clinicsLimit === "number" && clinics.length >= clinicsLimit) {
-    redirect("/subscription");
   }
 
   const niches = await getClinicNiches();

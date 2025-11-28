@@ -4,10 +4,10 @@ import {
   Bone,
   Brain,
   Eye,
+  HammerIcon,
   Hand,
   Heart,
   Hospital,
-  Stethoscope,
 } from "lucide-react";
 
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,7 @@ const getSpecialtyIcon = (specialty: string) => {
   if (specialtyLower.includes("oftalmolog")) return Eye;
   if (specialtyLower.includes("neurolog")) return Brain;
 
-  return Stethoscope;
+  return HammerIcon;
 };
 
 export default function TopSpecialties({

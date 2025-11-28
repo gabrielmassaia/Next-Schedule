@@ -55,6 +55,7 @@ import {
   clinicsTable,
 } from "@/db/schema";
 import { authClient } from "@/lib/auth-client";
+import { maskPhone } from "@/lib/masks";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const clinicFormSchema = z.object({
@@ -371,7 +372,14 @@ export function ClinicSettingsForm({
                             Telefone <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="(00) 00000-0000" {...field} />
+                            <Input
+                              placeholder="(00) 00000-0000"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(maskPhone(e.target.value));
+                              }}
+                              maxLength={15}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

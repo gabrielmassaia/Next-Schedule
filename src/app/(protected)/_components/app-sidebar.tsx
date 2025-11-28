@@ -37,6 +37,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { SubscriptionPlanLimits } from "@/data/subscription-plans";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 interface MenuItem {
@@ -44,6 +45,7 @@ interface MenuItem {
   url: string;
   icon: typeof LayoutDashboard;
   requiresPlan?: string[];
+  requiresLimit?: keyof SubscriptionPlanLimits;
 }
 
 interface SettingsMenuItem {
@@ -51,9 +53,14 @@ interface SettingsMenuItem {
   url: string;
   icon: typeof Building2;
   requiresPlan?: string[];
+  requiresLimit?: keyof SubscriptionPlanLimits;
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  planLimits: SubscriptionPlanLimits;
+}
+
+export function AppSidebar({ planLimits }: AppSidebarProps) {
   const pathname = usePathname();
   const { session } = useActiveClinic();
   const userPlan = session.data?.user.plan;
@@ -65,6 +72,7 @@ export function AppSidebar() {
         title: "Dashboard",
         url: "/dashboard",
         icon: LayoutDashboard,
+        requiresLimit: "dashboard",
       },
       {
         title: "Agendamentos",
@@ -97,6 +105,7 @@ export function AppSidebar() {
         title: "API Key",
         url: "/apikey",
         icon: KeyRound,
+        requiresLimit: "apiKey",
       },
       {
         title: "Especialidades",
@@ -107,6 +116,7 @@ export function AppSidebar() {
         title: "Personalidade IA",
         url: "/clinic-persona",
         icon: Bot,
+        requiresLimit: "aiAgent",
       },
     ],
     [],
@@ -114,15 +124,25 @@ export function AppSidebar() {
 
   // Filter items based on user plan
   const filterByPlan = useCallback(
-    <T extends { requiresPlan?: string[] }>(items: T[]) => {
+    <
+      T extends {
+        requiresPlan?: string[];
+        requiresLimit?: keyof SubscriptionPlanLimits;
+      },
+    >(
+      items: T[],
+    ) => {
       return items.filter((item) => {
+        if (item.requiresLimit && !planLimits[item.requiresLimit]) {
+          return false;
+        }
         if (!item.requiresPlan || item.requiresPlan.length === 0) {
           return true;
         }
         return userPlan && item.requiresPlan.includes(userPlan);
       });
     },
-    [userPlan],
+    [userPlan, planLimits],
   );
 
   const visibleMainItems = useMemo(

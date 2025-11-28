@@ -6,7 +6,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { upsertClinicSettingsAgent } from "@/actions/clinic-settings-actions";
+import { upsertClinicSettingsAgent } from "@/actions/clinic-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

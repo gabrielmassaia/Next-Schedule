@@ -30,6 +30,13 @@ export const createApiKey = actionClient
       throw new Error("Não autenticado");
     }
 
+    const { getPlanBySlug } = await import("@/data/subscription-plans");
+    const plan = await getPlanBySlug(session.user.plan);
+
+    if (!plan.limits.apiKey) {
+      throw new Error("Seu plano não permite criar chaves de API");
+    }
+
     // Get active clinic from cookies
     const activeClinicId = await readActiveClinicIdFromCookies();
 

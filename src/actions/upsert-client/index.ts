@@ -46,13 +46,13 @@ export const upsertClient = actionClient
     }
 
     const plan = await getPlanBySlug(session.user.plan);
-    if (!clientId && typeof plan.limits.clientsPerClinic === "number") {
+    if (!clientId && typeof plan.limits.patientsPerClinic === "number") {
       const [totalClients] = await db
         .select({ total: count() })
         .from(clientsTable)
         .where(eq(clientsTable.clinicId, clinicId));
 
-      if ((totalClients.total ?? 0) >= plan.limits.clientsPerClinic) {
+      if ((totalClients.total ?? 0) >= plan.limits.patientsPerClinic) {
         throw new Error(
           "Limite de clientes do plano atingido. Faça upgrade para cadastrar mais.",
         );
