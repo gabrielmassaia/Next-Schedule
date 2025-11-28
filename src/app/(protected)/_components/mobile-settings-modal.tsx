@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Building2, KeyRound, Stethoscope } from "lucide-react";
+import { Bot, Building2, HammerIcon, KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -10,10 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { SubscriptionPlanLimits } from "@/data/subscription-plans";
 
 interface MobileSettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  planLimits: SubscriptionPlanLimits;
 }
 
 interface SettingsOption {
@@ -21,6 +23,7 @@ interface SettingsOption {
   description: string;
   url: string;
   icon: typeof Building2;
+  requiresLimit?: keyof SubscriptionPlanLimits;
 }
 
 const settingsOptions: SettingsOption[] = [
@@ -35,24 +38,27 @@ const settingsOptions: SettingsOption[] = [
     description: "Gerencie suas chaves de API",
     url: "/apikey",
     icon: KeyRound,
+    requiresLimit: "apiKey",
   },
   {
     title: "Especialidades",
     description: "Gerencie especialidades disponíveis",
     url: "/specialties",
-    icon: Stethoscope,
+    icon: HammerIcon,
   },
   {
     title: "Personalidade IA",
     description: "Configure o comportamento do assistente",
     url: "/clinic-persona",
     icon: Bot,
+    requiresLimit: "aiAgent",
   },
 ];
 
 export function MobileSettingsModal({
   open,
   onOpenChange,
+  planLimits,
 }: MobileSettingsModalProps) {
   const router = useRouter();
 
@@ -60,6 +66,13 @@ export function MobileSettingsModal({
     onOpenChange(false);
     router.push(url);
   };
+
+  const visibleOptions = settingsOptions.filter((option) => {
+    if (option.requiresLimit && !planLimits[option.requiresLimit]) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,7 +84,7 @@ export function MobileSettingsModal({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2 py-4">
-          {settingsOptions.map((option) => {
+          {visibleOptions.map((option) => {
             const Icon = option.icon;
             return (
               <button

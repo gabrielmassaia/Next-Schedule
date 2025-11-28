@@ -16,13 +16,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SubscriptionPlanLimits } from "@/data/subscription-plans";
 import { authClient } from "@/lib/auth-client";
 import { getPageTitle } from "@/lib/nav-utils";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 import { MobileSettingsModal } from "./mobile-settings-modal";
 
-export function MobileLayout() {
+interface MobileLayoutProps {
+  planLimits: SubscriptionPlanLimits;
+}
+
+export function MobileLayout({ planLimits }: MobileLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { session } = useActiveClinic();
@@ -84,6 +89,7 @@ export function MobileLayout() {
       <MobileSettingsModal
         open={isSettingsModalOpen}
         onOpenChange={setIsSettingsModalOpen}
+        planLimits={planLimits}
       />
     </>
   );
