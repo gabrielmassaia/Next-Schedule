@@ -74,7 +74,7 @@ export function Footer() {
             © {new Date().getFullYear()} NextSchedule. Todos os direitos
             reservados.
           </p>
-          <p>Feito com ❤️ para clínicas do futuro.</p>
+          <p>Feito com foco para clínicas do futuro.</p>
         </div>
       </div>
     </footer>
