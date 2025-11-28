@@ -523,12 +523,7 @@ export default function FormClinic({ niches }: FormClinicProps) {
 
                 {(form.watch("serviceType") === "convenio" ||
                   form.watch("serviceType") === "ambos") && (
-                  <InsurancePlansInput
-                    nicheName={
-                      niches.find((n) => n.id === form.watch("nicheId"))
-                        ?.name || ""
-                    }
-                  />
+                  <InsurancePlansInput />
                 )}
               </div>
             </TabsContent>

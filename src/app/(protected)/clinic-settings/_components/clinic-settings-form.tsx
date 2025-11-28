@@ -648,12 +648,7 @@ export function ClinicSettingsForm({
                       )}
                     />
 
-                    <InsurancePlansInput
-                      nicheName={
-                        niches.find((n) => n.id === form.watch("nicheId"))
-                          ?.name || ""
-                      }
-                    />
+                    <InsurancePlansInput />
                   </div>
                 </TabsContent>
 
