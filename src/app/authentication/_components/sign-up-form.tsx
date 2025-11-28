@@ -15,7 +15,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -167,7 +166,6 @@ export default function SignUpForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <CardHeader>
-              <CardTitle>Criar conta</CardTitle>
               <CardDescription>
                 Faça seu registro para continuar.
               </CardDescription>

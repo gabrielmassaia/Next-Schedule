@@ -39,27 +39,30 @@ export function SubscriptionPlan({
     }
   > = {
     essential: {
-      badge: "Para validação",
+      badge: "Para conhecer o sistema",
       tagline:
         "Configure sua clínica em minutos e centralize todos os atendimentos sem custo inicial.",
-      accent: "from-sky-500/10 to-sky-500/5",
-      border: "border-sky-100",
+      accent:
+        "from-sky-500/10 to-sky-500/5 dark:from-sky-500/20 dark:to-sky-500/10",
+      border: "border-sky-100 dark:border-sky-900/50",
       cta: "Começar sem compromisso",
     },
     pro: {
       badge: "Mais popular",
       tagline:
-        "Automatize confirmações com IA, reduza faltas e aumente a receita com insights em tempo real.",
-      accent: "from-purple-500/10 to-purple-500/5",
-      border: "border-purple-200",
+        "Reduza faltas e aumente a receita com insights em tempo real com indicadores do seu negócio.",
+      accent:
+        "from-purple-500/10 to-purple-500/5 dark:from-purple-500/20 dark:to-purple-500/10",
+      border: "border-purple-200 dark:border-purple-900/50",
       cta: "Quero acelerar minha clínica",
     },
     enterprise: {
       badge: "Para redes visionárias",
       tagline:
         "Controle múltiplas unidades com governança avançada e suporte dedicado de especialistas.",
-      accent: "from-amber-500/10 to-amber-500/5",
-      border: "border-amber-200",
+      accent:
+        "from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-amber-500/10",
+      border: "border-amber-200 dark:border-amber-900/50",
       cta: "Conversar com especialista",
     },
   };
@@ -129,9 +132,11 @@ export function SubscriptionPlan({
   return (
     <Card
       className={cn(
-        "relative flex h-full flex-col overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+        "dark:bg-card relative flex h-full flex-col overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
         planHighlight.border,
-        isActive ? "border-primary shadow-lg" : "border-gray-200",
+        isActive
+          ? "border-primary dark:border-primary shadow-lg"
+          : "border-gray-200 dark:border-gray-800",
         className,
       )}
     >
@@ -146,14 +151,16 @@ export function SubscriptionPlan({
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-bold text-gray-900">{plan?.name}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
+                {plan?.name}
+              </h3>
               {planHighlight.badge ? (
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/10 dark:bg-primary/20">
                   {planHighlight.badge}
                 </Badge>
               ) : null}
             </div>
-            <p className="mt-2 text-sm font-medium text-gray-600">
+            <p className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
               {planHighlight.tagline}
             </p>
           </div>
@@ -165,12 +172,14 @@ export function SubscriptionPlan({
         </div>
         <div className="space-y-2 text-gray-600">
           <p>{plan?.description}</p>
-          <div className="flex items-baseline gap-2 text-gray-900">
+          <div className="flex items-baseline gap-2 text-gray-900 dark:text-gray-50">
             <span className="text-3xl font-bold">{priceLabel}</span>
             {typeof plan?.priceInCents === "number" ? (
-              <span className="text-base font-medium text-gray-600">/ mês</span>
+              <span className="text-base font-medium text-gray-600 dark:text-gray-400">
+                / mês
+              </span>
             ) : (
-              <span className="text-base font-medium text-gray-600">
+              <span className="text-base font-medium text-gray-600 dark:text-gray-400">
                 Integrado ao sucesso da sua clínica
               </span>
             )}
@@ -179,13 +188,15 @@ export function SubscriptionPlan({
       </CardHeader>
 
       <CardContent className="relative flex flex-1 flex-col justify-between">
-        <div className="bg-card/70 space-y-4 rounded-xl border border-gray-100 p-5 shadow-sm backdrop-blur">
+        <div className="bg-card/70 dark:bg-card/30 space-y-4 rounded-xl border border-gray-100 p-5 shadow-sm backdrop-blur dark:border-gray-800">
           {plan?.features.map((feature, index) => (
             <div key={index} className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary rounded-full p-1">
+              <span className="bg-primary/10 text-primary dark:bg-primary/20 rounded-full p-1">
                 <CheckCircle2 className="h-5 w-5" />
               </span>
-              <p className="text-sm text-gray-700">{feature}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {feature}
+              </p>
             </div>
           ))}
         </div>
@@ -212,14 +223,16 @@ export function SubscriptionPlan({
           </Button>
 
           {!plan?.comingSoon ? (
-            <p className="flex items-center justify-center gap-2 text-center text-xs text-gray-500">
+            <p className="flex items-center justify-center gap-2 text-center text-xs text-gray-500 dark:text-gray-400">
               <Sparkles className="h-4 w-4 text-amber-500" />
               {plan.slug === "essential"
-                ? "Acelere os agendamentos com inteligência artificial desde o primeiro dia."
-                : "Automatize confirmações com nosso agente de IA e reduza no-shows em até 42%."}
+                ? "Organize sua agenda e simplifique o atendimento desde o primeiro dia."
+                : plan.slug === "pro"
+                  ? "Elimine faltas para maximizar seu faturamento."
+                  : "Gestão centralizada e inteligência avançada para escalar sua rede de clínicas."}
             </p>
           ) : (
-            <p className="text-center text-xs text-gray-500">
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
               Estamos finalizando recursos exclusivos com nossos especialistas
               para sua rede.
             </p>

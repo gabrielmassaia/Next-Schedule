@@ -19,7 +19,7 @@ export default async function Layout({
     <SidebarProvider>
       <ActiveClinicProvider>
         <AppSidebar planLimits={plan.limits} />
-        <div className="flex min-h-screen w-full flex-col bg-slate-50/50">
+        <div className="dark:bg-background flex min-h-screen w-full flex-col bg-slate-50/50">
           <Header />
           <MobileLayout planLimits={plan.limits} />
           <main className="flex-1 p-6 pb-20 sm:pb-6">{children}</main>

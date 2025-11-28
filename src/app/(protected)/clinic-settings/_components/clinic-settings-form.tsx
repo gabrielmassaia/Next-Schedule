@@ -648,15 +648,7 @@ export function ClinicSettingsForm({
                       )}
                     />
 
-                    {(form.watch("serviceType") === "convenio" ||
-                      form.watch("serviceType") === "ambos") && (
-                      <InsurancePlansInput
-                        nicheName={
-                          niches.find((n) => n.id === form.watch("nicheId"))
-                            ?.name || ""
-                        }
-                      />
-                    )}
+                    <InsurancePlansInput />
                   </div>
                 </TabsContent>
 

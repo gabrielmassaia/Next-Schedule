@@ -40,13 +40,7 @@ interface InsurancePlan {
   isManual: boolean;
 }
 
-interface InsurancePlansInputProps {
-  nicheName: string;
-}
-
-const MEDICAL_NICHES = ["Médico", "Odontológico", "Fisioterapia"];
-
-export function InsurancePlansInput({ nicheName }: InsurancePlansInputProps) {
+export function InsurancePlansInput() {
   const form = useFormContext();
   const [searchResults, setSearchResults] = useState<InsurancePlan[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -70,11 +64,6 @@ export function InsurancePlansInput({ nicheName }: InsurancePlansInputProps) {
       setIsSearching(false);
     }
   }, 500);
-
-  // Only show this component for medical niches
-  if (!MEDICAL_NICHES.includes(nicheName)) {
-    return null;
-  }
 
   const addPlan = (plan: InsurancePlan) => {
     const currentPlans = form.getValues("insurancePlans") || [];
