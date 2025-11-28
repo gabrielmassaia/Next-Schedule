@@ -37,7 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clinicNichesTable } from "@/db/schema";
 import { authClient } from "@/lib/auth-client";
-import { maskPhone } from "@/lib/masks";
+import { maskCNPJ, maskPhone, unmask } from "@/lib/masks";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const clinicFormSchema = z.object({
@@ -51,16 +51,8 @@ const clinicFormSchema = z.object({
   nicheId: z
     .string({ required_error: "Nicho da clínica é obrigatório" })
     .uuid({ message: "Nicho inválido" }),
-  cnpj: z
-    .string()
-    .trim()
-    .min(14, { message: "CNPJ é obrigatório" })
-    .max(18, { message: "CNPJ deve conter no máximo 18 caracteres" }),
-  phone: z
-    .string()
-    .trim()
-    .min(10, { message: "Telefone é obrigatório" })
-    .max(18, { message: "Telefone deve conter no máximo 18 caracteres" }),
+  cnpj: z.string().trim().min(1, { message: "CNPJ é obrigatório" }),
+  phone: z.string().trim().min(1, { message: "Telefone é obrigatório" }),
   email: z
     .string()
     .email({ message: "E-mail inválido" })
@@ -152,8 +144,8 @@ export default function FormClinic({ niches }: FormClinicProps) {
       const result = await createClinic({
         name: data.name,
         nicheId: data.nicheId,
-        cnpj: data.cnpj,
-        phone: data.phone,
+        cnpj: unmask(data.cnpj),
+        phone: unmask(data.phone),
         email: data.email || undefined,
         addressLine1: data.addressLine1,
         addressLine2: data.addressLine2,
@@ -269,7 +261,14 @@ export default function FormClinic({ niches }: FormClinicProps) {
                         CNPJ <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="00.000.000/0000-00" {...field} />
+                        <Input
+                          placeholder="00.000.000/0000-00"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(maskCNPJ(e.target.value));
+                          }}
+                          maxLength={18}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

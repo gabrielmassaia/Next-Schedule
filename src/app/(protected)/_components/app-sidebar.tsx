@@ -246,7 +246,7 @@ export function AppSidebar({ planLimits }: AppSidebarProps) {
 
       <SidebarFooter className="border-t p-4">
         <p className="text-muted-foreground text-center text-xs">
-          © 2025 Next Schedule
+          © {new Date().getFullYear()} Next Schedule
         </p>
       </SidebarFooter>
     </Sidebar>

@@ -7,8 +7,10 @@ import { cookies, headers } from "next/headers";
 import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
 import {
+  clientsTable,
   clinicNichesTable,
   clinicsTable,
+  professionalsTable,
   usersToClinicsTable,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -72,6 +74,57 @@ export const createClinic = async (input: CreateClinicInput) => {
 
   if (existingClinicWithCnpj) {
     throw new Error("Já existe uma clínica cadastrada com este CNPJ");
+  }
+
+  // Validar Telefone duplicado (Clínicas, Clientes, Profissionais)
+  const existingClinicWithPhone = await db.query.clinicsTable.findFirst({
+    where: eq(clinicsTable.phone, input.phone),
+  });
+
+  if (existingClinicWithPhone) {
+    throw new Error("Já existe uma clínica cadastrada com este telefone");
+  }
+
+  const existingClientWithPhone = await db.query.clientsTable.findFirst({
+    where: eq(clientsTable.phoneNumber, input.phone),
+  });
+
+  if (existingClientWithPhone) {
+    throw new Error(
+      "Este telefone já está cadastrado para um cliente. O telefone da clínica não pode ser igual ao de um cliente.",
+    );
+  }
+
+  const existingProfessionalWithPhone =
+    await db.query.professionalsTable.findFirst({
+      where: eq(professionalsTable.phone, input.phone),
+    });
+
+  if (existingProfessionalWithPhone) {
+    throw new Error(
+      "Este telefone já está cadastrado para um profissional. O telefone da clínica não pode ser igual ao de um profissional.",
+    );
+  }
+
+  // Validar Email duplicado (Clínicas, Clientes)
+  if (input.email) {
+    const existingClinicWithEmail = await db.query.clinicsTable.findFirst({
+      where: eq(clinicsTable.email, input.email),
+    });
+
+    if (existingClinicWithEmail) {
+      throw new Error("Já existe uma clínica cadastrada com este email");
+    }
+
+    const existingClientWithEmail = await db.query.clientsTable.findFirst({
+      where: eq(clientsTable.email, input.email),
+    });
+
+    if (existingClientWithEmail) {
+      throw new Error(
+        "Este email já está cadastrado para um cliente. O email da clínica não pode ser igual ao de um cliente.",
+      );
+    }
   }
 
   const [clinic] = await db
