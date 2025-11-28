@@ -21,9 +21,8 @@ export default async function ClinicFormPage() {
   const plan = await getPlanBySlug(session.user.plan);
   const clinicsLimit = plan.limits.clinics;
 
-  if (typeof clinicsLimit === "number" && clinics.length >= clinicsLimit) {
-    redirect("/subscription");
-  }
+  // Limit check removed to prevent redirect loops with stale sessions.
+  // The createClinic action enforces the limit.
 
   const niches = await getClinicNiches();
 

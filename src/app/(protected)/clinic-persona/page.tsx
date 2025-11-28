@@ -1,4 +1,5 @@
 import { Bot } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { requirePlan } from "@/_helpers/require-plan";
 import { getClinicSettingsAgent } from "@/actions/clinic-settings";
@@ -14,9 +15,13 @@ import {
 import { ClinicPersonaForm } from "./_components/clinic-persona-form";
 
 export default async function ClinicPersonaPage() {
-  const { activeClinic } = await requirePlan();
+  const { activeClinic, plan } = await requirePlan();
   if (!activeClinic) {
     return null;
+  }
+
+  if (!plan.limits.aiAgent) {
+    redirect("/subscription");
   }
 
   const personaSettings = await getClinicSettingsAgent();

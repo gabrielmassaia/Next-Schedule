@@ -31,9 +31,13 @@ interface DashboardPageProps {
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const { activeClinic } = await requirePlan();
+  const { activeClinic, plan } = await requirePlan();
   if (!activeClinic) {
     return null;
+  }
+
+  if (!plan.limits.dashboard) {
+    redirect("/appointments");
   }
 
   const { from, to } = await searchParams;

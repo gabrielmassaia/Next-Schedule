@@ -60,7 +60,7 @@ export async function getClients({
   ]);
 
   const pageCount = Math.ceil(totalCount / limit);
-  const maxClients = plan.limits.clientsPerClinic;
+  const maxClients = plan.limits.patientsPerClinic;
   const hasReachedLimit =
     typeof maxClients === "number" && totalCount >= maxClients;
 

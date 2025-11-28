@@ -43,6 +43,9 @@ interface RequirePlanResult {
  */
 export async function requirePlan(
   minimumPlanRequired: SubscriptionPlanSlug = DEFAULT_PLAN_SLUG,
+  options: { redirectOnMissingClinic?: boolean } = {
+    redirectOnMissingClinic: true,
+  },
 ): Promise<RequirePlanResult> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
@@ -68,7 +71,7 @@ export async function requirePlan(
     cookieClinicId,
   );
 
-  if (!activeClinic) {
+  if (!activeClinic && options.redirectOnMissingClinic) {
     redirect("/clinic-form");
   }
 

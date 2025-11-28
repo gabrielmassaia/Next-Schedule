@@ -3,8 +3,10 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
 import { clinicAgentSettingsTable } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 import { clinicPersonaSchema } from "@/lib/validations/clinic-settings";
 
@@ -17,6 +19,20 @@ export const upsertClinicSettingsAgent = actionClient
 
     if (!activeClinicId) {
       throw new Error("Nenhuma clínica selecionada");
+    }
+
+    const session = await auth.api.getSession({
+      headers: await (await import("next/headers")).headers(),
+    });
+
+    if (!session?.user) {
+      throw new Error("Não autorizado");
+    }
+
+    const userPlan = await getPlanBySlug(session.user.plan);
+
+    if (!userPlan.limits.aiAgent) {
+      throw new Error("Seu plano não permite configurar o Agente IA");
     }
 
     const existingSettings = await db.query.clinicAgentSettingsTable.findFirst({

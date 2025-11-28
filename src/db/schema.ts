@@ -297,7 +297,11 @@ export const plansTable = pgTable("plans", {
   limits: jsonb("limits").notNull().$type<{
     clinics: number | null;
     professionalsPerClinic: number | null;
-    clientsPerClinic: number | null;
+    patientsPerClinic: number | null;
+    dashboard: boolean;
+    aiAgent: boolean;
+    automatedScheduling: boolean;
+    apiKey: boolean;
   }>(),
   features: text("features").array().notNull(),
   stripePriceId: text("stripe_price_id"),

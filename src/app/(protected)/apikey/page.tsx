@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
 import { requirePlan } from "@/_helpers/require-plan";
 import {
@@ -15,9 +16,13 @@ import { integrationApiKeysTable } from "@/db/schema";
 import { IntegrationApiKeys } from "../subscription/_components/integration-api-keys";
 
 export default async function ApiKeyPage() {
-  const { activeClinic } = await requirePlan();
+  const { activeClinic, plan } = await requirePlan();
   if (!activeClinic) {
     return null;
+  }
+
+  if (!plan.limits.apiKey) {
+    redirect("/subscription");
   }
 
   const apiKeys = await db.query.integrationApiKeysTable.findMany({

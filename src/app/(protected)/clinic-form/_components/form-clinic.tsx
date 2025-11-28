@@ -37,6 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clinicNichesTable } from "@/db/schema";
 import { authClient } from "@/lib/auth-client";
+import { maskPhone } from "@/lib/masks";
 import { useActiveClinic } from "@/providers/active-clinic";
 
 const clinicFormSchema = z.object({
@@ -286,7 +287,14 @@ export default function FormClinic({ niches }: FormClinicProps) {
                         Telefone <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="(00) 00000-0000" {...field} />
+                        <Input
+                          placeholder="(00) 00000-0000"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(maskPhone(e.target.value));
+                          }}
+                          maxLength={15}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
