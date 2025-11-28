@@ -166,8 +166,7 @@
                   "clientId",
                   "professionalId",
                   "date",
-                  "time",
-                  "appointmentPriceInCents"
+                  "time"
                 ],
                 "properties": {
                   "clientId": {

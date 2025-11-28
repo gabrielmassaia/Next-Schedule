@@ -461,3 +461,11 @@ export const clinicAgentSettingsTableRelations = relations(
     }),
   }),
 );
+
+export const passwordResetTokensTable = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  token: text("token").notNull().unique(),
+  email: text("email").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

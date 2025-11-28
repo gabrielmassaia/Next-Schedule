@@ -1,7 +1,7 @@
 import { Bot } from "lucide-react";
 
 import { requirePlan } from "@/_helpers/require-plan";
-import { getClinicSettingsAgent } from "@/actions/clinic-settings-actions";
+import { getClinicSettingsAgent } from "@/actions/clinic-settings";
 import {
   PageContainer,
   PageContent,
