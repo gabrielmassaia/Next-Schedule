@@ -1,20 +1,19 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { Features } from "@/components/landing-page/features";
+import { Footer } from "@/components/landing-page/footer";
+import { Hero } from "@/components/landing-page/hero";
+import { Navbar } from "@/components/landing-page/navbar";
+import { Pricing } from "@/components/landing-page/pricing";
 
-import { auth } from "@/lib/auth";
-
-export default async function Home() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session?.user) {
-    redirect("/dashboard");
-  }
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-
-  return <div>Hello!</div>;
+export default function Home() {
+  return (
+    <div className="selection:bg-primary/30 min-h-screen bg-black text-white">
+      <Navbar />
+      <main>
+        <Hero />
+        <Features />
+        <Pricing />
+      </main>
+      <Footer />
+    </div>
+  );
 }
