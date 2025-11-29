@@ -8,7 +8,11 @@ import LoginCarousel from "./_components/login-carousel";
 import LoginForm from "./_components/login-form";
 import SignUpForm from "./_components/sign-up-form";
 
-export default async function AuthenticationPage() {
+export default async function AuthenticationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -16,6 +20,9 @@ export default async function AuthenticationPage() {
   if (session?.user) {
     redirect("/dashboard");
   }
+
+  const { tab } = await searchParams;
+  const defaultTab = tab === "register" ? "register" : "login";
 
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row">
@@ -31,7 +38,7 @@ export default async function AuthenticationPage() {
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Criar conta</TabsTrigger>

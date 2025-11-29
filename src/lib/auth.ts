@@ -91,6 +91,26 @@ export const auth = betterAuth({
         fieldName: "plan",
         required: false,
       },
+      cpf: {
+        type: "string",
+        fieldName: "cpf",
+        required: false,
+      },
+      phone: {
+        type: "string",
+        fieldName: "phone",
+        required: false,
+      },
+      birthDate: {
+        type: "string",
+        fieldName: "birthDate",
+        required: false,
+      },
+      sex: {
+        type: "string",
+        fieldName: "sex",
+        required: false,
+      },
     },
   },
   session: {

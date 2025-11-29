@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -16,6 +17,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -25,7 +27,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { authClient } from "@/lib/auth-client";
+
+import { TermsModal } from "./terms-modal";
 
 // Função para calcular a força da senha
 function calculatePasswordStrength(password: string): {
@@ -84,6 +95,7 @@ export default function SignUpForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const registerSchema = z
     .object({
@@ -97,12 +109,35 @@ export default function SignUpForm() {
         .trim()
         .min(1, { message: "Email é obrigatório" })
         .email({ message: "Email inválido" }),
+      cpf: z
+        .string()
+        .trim()
+        .min(1, { message: "CPF é obrigatório" })
+        .refine((val) => val.replace(/\D/g, "").length === 11, {
+          message: "CPF inválido",
+        }),
+      phone: z
+        .string()
+        .trim()
+        .min(1, { message: "Telefone é obrigatório" })
+        .refine((val) => val.replace(/\D/g, "").length >= 10, {
+          message: "Telefone inválido",
+        }),
+      birthDate: z
+        .string()
+        .min(1, { message: "Data de nascimento é obrigatória" }),
+      sex: z.enum(["male", "female"], {
+        required_error: "Sexo é obrigatório",
+      }),
       password: z
         .string()
         .trim()
         .min(8, { message: "Senha deve conter pelo menos 8 caracteres" }),
       confirmPassword: z.string().trim().min(1, {
         message: "Confirmação de senha é obrigatória",
+      }),
+      terms: z.boolean().refine((val) => val === true, {
+        message: "Você deve aceitar os termos de uso",
       }),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -126,8 +161,13 @@ export default function SignUpForm() {
     defaultValues: {
       name: "",
       email: "",
+      cpf: "",
+      phone: "",
+      birthDate: "",
+      sex: undefined,
       password: "",
       confirmPassword: "",
+      terms: false,
     },
     mode: "onChange",
   });
@@ -141,7 +181,11 @@ export default function SignUpForm() {
         email: values.email,
         password: values.password,
         name: values.name,
-      },
+        cpf: values.cpf.replace(/\D/g, ""), // Save raw CPF
+        phone: values.phone.replace(/\D/g, ""), // Save raw Phone
+        birthDate: values.birthDate,
+        sex: values.sex,
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       {
         onSuccess: () => {
           toast.success("Conta criada com sucesso");
@@ -162,6 +206,7 @@ export default function SignUpForm() {
 
   return (
     <>
+      <TermsModal open={termsOpen} onOpenChange={setTermsOpen} />
       <Card>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -197,6 +242,89 @@ export default function SignUpForm() {
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cpf"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CPF</FormLabel>
+                      <FormControl>
+                        <PatternFormat
+                          format="###.###.###-##"
+                          customInput={Input}
+                          placeholder="000.000.000-00"
+                          onValueChange={(values) => {
+                            field.onChange(values.value);
+                          }}
+                          value={field.value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <PatternFormat
+                          format="(##) #####-####"
+                          customInput={Input}
+                          placeholder="(00) 00000-0000"
+                          onValueChange={(values) => {
+                            field.onChange(values.value);
+                          }}
+                          value={field.value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="birthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de Nascimento</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sex"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sexo</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Masculino</SelectItem>
+                          <SelectItem value="female">Feminino</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="password"
@@ -273,6 +401,34 @@ export default function SignUpForm() {
                       </div>
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="terms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Aceito os{" "}
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() => setTermsOpen(true)}
+                        >
+                          termos de uso
+                        </button>
+                        , políticas de privacidade e cookies.
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />

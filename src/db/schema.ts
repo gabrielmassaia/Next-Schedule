@@ -21,8 +21,24 @@ export const usersTable = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   plan: text("plan"),
+  cpf: text("cpf").unique(),
+  phone: text("phone"),
+  birthDate: text("birth_date"),
+  sex: text("sex"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const legalDocumentsTable = pgTable("legal_documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  type: text("type").notNull(), // 'terms_of_use', 'privacy_policy', 'cookie_policy'
+  content: text("content").notNull(),
+  version: text("version").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const usersTableRelations = relations(usersTable, ({ many }) => ({
@@ -200,6 +216,12 @@ export const clinicsTableRelations = relations(
       fields: [clinicsTable.id],
       references: [clinicAgentSettingsTable.clinicId],
     }),
+    whatsappNumbers: many(clinicWhatsappNumbersTable),
+    features: one(clinicFeaturesTable, {
+      fields: [clinicsTable.id],
+      references: [clinicFeaturesTable.clinicId],
+    }),
+    webhookEvents: many(n8nWebhookEventsTable),
   }),
 );
 
@@ -461,6 +483,80 @@ export const clinicAgentSettingsTableRelations = relations(
   ({ one }) => ({
     clinic: one(clinicsTable, {
       fields: [clinicAgentSettingsTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+  }),
+);
+
+export const clinicWhatsappNumbersTable = pgTable("clinic_whatsapp_numbers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clinicId: uuid("clinic_id")
+    .notNull()
+    .references(() => clinicsTable.id, { onDelete: "cascade" }),
+  phone: text("phone").notNull().unique(), // E.164
+  isPrimary: boolean("is_primary").default(false).notNull(),
+  provider: text("provider"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const clinicWhatsappNumbersTableRelations = relations(
+  clinicWhatsappNumbersTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [clinicWhatsappNumbersTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+  }),
+);
+
+export const clinicFeaturesTable = pgTable("clinic_features", {
+  clinicId: uuid("clinic_id")
+    .primaryKey()
+    .references(() => clinicsTable.id, { onDelete: "cascade" }),
+  aiAgent: boolean("ai_agent").default(false).notNull(),
+  automatedScheduling: boolean("automated_scheduling").default(false).notNull(),
+  apiKey: boolean("api_key").default(false).notNull(),
+  dashboard: boolean("dashboard").default(false).notNull(),
+  clientsPerClinic: integer("clients_per_clinic"),
+  professionalsPerClinic: integer("professionals_per_clinic"),
+  syncWithPlan: boolean("sync_with_plan").default(true).notNull(),
+  overrides: jsonb("overrides").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const clinicFeaturesTableRelations = relations(
+  clinicFeaturesTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [clinicFeaturesTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+  }),
+);
+
+export const n8nWebhookEventsTable = pgTable("n8n_webhook_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clinicId: uuid("clinic_id").references(() => clinicsTable.id, {
+    onDelete: "set null",
+  }),
+  phone: text("phone"),
+  direction: text("direction"), // inbound | outbound
+  payload: jsonb("payload"),
+  flow: text("flow"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const n8nWebhookEventsTableRelations = relations(
+  n8nWebhookEventsTable,
+  ({ one }) => ({
+    clinic: one(clinicsTable, {
+      fields: [n8nWebhookEventsTable.clinicId],
       references: [clinicsTable.id],
     }),
   }),

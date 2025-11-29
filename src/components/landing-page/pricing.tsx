@@ -56,25 +56,25 @@ function PricingCard({ plan }: { plan: SubscriptionPlan }) {
     }
   > = {
     essential: {
-      badge: "Para conhecer",
+      badge: "Para clínicas pequenas",
       tagline: "Ideal para consultórios individuais e profissionais liberais.",
       accent: "from-sky-500/10 to-sky-500/5",
       border: "border-sky-900/20",
-      cta: "Começar Grátis",
+      cta: "Escolher Essential",
     },
     pro: {
-      badge: "Mais popular",
+      badge: "para redes emergentes",
       tagline: "Para clínicas que buscam crescimento e eficiência.",
       accent: "from-purple-500/20 to-purple-500/10",
       border: "border-purple-500/50",
       cta: "Escolher Pro",
     },
     enterprise: {
-      badge: "Para redes",
+      badge: "Mais escolhido",
       tagline: "Soluções personalizadas para grandes operações.",
       accent: "from-amber-500/10 to-amber-500/5",
       border: "border-amber-900/20",
-      cta: "Falar com Consultor",
+      cta: "Escolher Enterprise",
     },
   };
 
@@ -156,7 +156,7 @@ function PricingCard({ plan }: { plan: SubscriptionPlan }) {
             )}
             variant={plan.slug === "pro" ? "default" : "secondary"}
           >
-            <Link href="/authentication">
+            <Link href="/authentication?tab=register">
               {plan.comingSoon ? "Em breve" : planHighlight.cta}
               {!plan.comingSoon && (
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

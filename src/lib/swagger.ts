@@ -63,9 +63,15 @@ export const getPublicApiDocs = async (options: SwaggerOptions = {}) => {
             in: "header",
             name: "x-api-key",
           },
+          ServiceTokenAuth: {
+            type: "apiKey",
+            in: "header",
+            name: "X-Service-Token",
+            description: "Token de serviço para integração N8N",
+          },
         },
       },
-      security: [],
+      security: [{ ServiceTokenAuth: [] }],
     },
   });
   return spec;

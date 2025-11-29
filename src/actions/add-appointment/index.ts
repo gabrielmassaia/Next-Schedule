@@ -1,28 +1,15 @@
 "use server";
 
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 import { and, eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import {
-  appointmentsTable,
-  clientsTable,
-  clinicsTable,
-  professionalsTable,
-  usersToClinicsTable,
-} from "@/db/schema";
+import { usersToClinicsTable } from "@/db/schema";
+import { createClinicAppointment } from "@/lib/appointments";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
-import { getAvailableTimes } from "../get-available-times";
 import { addAppointmentSchema } from "./schema";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export const addAppointment = actionClient
   .schema(addAppointmentSchema)
@@ -34,7 +21,7 @@ export const addAppointment = actionClient
       throw new Error("Não autorizado");
     }
 
-    const { clinicId, ...appointmentData } = parsedInput;
+    const { clinicId } = parsedInput;
 
     const membership = await db.query.usersToClinicsTable.findFirst({
       where: and(
@@ -47,64 +34,5 @@ export const addAppointment = actionClient
       throw new Error("Clínica não encontrada");
     }
 
-    const clinic = await db.query.clinicsTable.findFirst({
-      where: eq(clinicsTable.id, clinicId),
-      columns: {
-        timezone: true,
-      },
-    });
-
-    if (!clinic) {
-      throw new Error("Clínica não encontrada");
-    }
-
-    const availableTimes = await getAvailableTimes({
-      professionalId: appointmentData.professionalId,
-      clinicId,
-      date: dayjs(appointmentData.date).format("YYYY-MM-DD"),
-    });
-    if (!availableTimes?.data) {
-      throw new Error("Nenhum horário disponível");
-    }
-    const isTimeAvailable = availableTimes.data?.some(
-      (time: { value: string; available: boolean }) =>
-        time.value === appointmentData.time && time.available,
-    );
-    if (!isTimeAvailable) {
-      throw new Error("Horário não disponível");
-    }
-    const appointmentDateTime = dayjs(appointmentData.date)
-      .tz(clinic.timezone)
-      .set("hour", parseInt(appointmentData.time.split(":")[0]))
-      .set("minute", parseInt(appointmentData.time.split(":")[1]))
-      .set("second", 0)
-      .toDate();
-
-    const [professional, client] = await Promise.all([
-      db.query.professionalsTable.findFirst({
-        where: and(
-          eq(professionalsTable.id, appointmentData.professionalId),
-          eq(professionalsTable.clinicId, clinicId),
-        ),
-      }),
-      db.query.clientsTable.findFirst({
-        where: and(
-          eq(clientsTable.id, appointmentData.clientId),
-          eq(clientsTable.clinicId, clinicId),
-        ),
-      }),
-    ]);
-
-    if (!professional || !client) {
-      throw new Error("Cliente ou profissional não pertence a esta clínica");
-    }
-
-    await db.insert(appointmentsTable).values({
-      ...appointmentData,
-      clinicId,
-      date: appointmentDateTime,
-    });
-
-    revalidatePath("/appointments");
-    revalidatePath("/dashboard");
+    await createClinicAppointment(parsedInput);
   });

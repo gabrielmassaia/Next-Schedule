@@ -8,6 +8,7 @@ import { getPlanBySlug } from "@/data/subscription-plans";
 import { db } from "@/db";
 import {
   clientsTable,
+  clinicFeaturesTable,
   clinicNichesTable,
   clinicsTable,
   professionalsTable,
@@ -152,6 +153,17 @@ export const createClinic = async (input: CreateClinicInput) => {
   await db.insert(usersToClinicsTable).values({
     userId: session.user.id,
     clinicId: clinic.id,
+  });
+
+  await db.insert(clinicFeaturesTable).values({
+    clinicId: clinic.id,
+    aiAgent: plan.limits.aiAgent,
+    automatedScheduling: plan.limits.automatedScheduling,
+    apiKey: plan.limits.apiKey,
+    dashboard: plan.limits.dashboard,
+    clientsPerClinic: plan.limits.patientsPerClinic,
+    professionalsPerClinic: plan.limits.professionalsPerClinic,
+    syncWithPlan: true,
   });
 
   const cookieStore = await cookies();
