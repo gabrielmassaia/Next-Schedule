@@ -569,3 +569,30 @@ export const passwordResetTokensTable = pgTable("password_reset_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const consentAcceptancesTable = pgTable("consent_acceptances", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  documentId: uuid("document_id")
+    .notNull()
+    .references(() => legalDocumentsTable.id, { onDelete: "cascade" }),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+});
+
+export const consentAcceptancesTableRelations = relations(
+  consentAcceptancesTable,
+  ({ one }) => ({
+    user: one(usersTable, {
+      fields: [consentAcceptancesTable.userId],
+      references: [usersTable.id],
+    }),
+    document: one(legalDocumentsTable, {
+      fields: [consentAcceptancesTable.documentId],
+      references: [legalDocumentsTable.id],
+    }),
+  }),
+);

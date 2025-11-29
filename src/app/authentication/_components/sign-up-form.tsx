@@ -9,6 +9,7 @@ import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
 import z from "zod";
 
+import { recordConsent } from "@/actions/record-consent";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -187,7 +188,8 @@ export default function SignUpForm() {
         sex: values.sex,
       } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await recordConsent();
           toast.success("Conta criada com sucesso");
           // New users always need to select a plan
           router.push("/signature");
