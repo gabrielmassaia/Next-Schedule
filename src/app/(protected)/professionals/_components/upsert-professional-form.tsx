@@ -499,30 +499,34 @@ export default function UpsertProfessionalForm({
                 <div className="space-y-4">
                   {/* Available Days Area */}
                   <div>
-                    {activeDays.filter((day) => !field.value.includes(day))
-                      .length > 0 && (
+                    {activeDays.filter(
+                      (day) => !(field.value || []).includes(day),
+                    ).length > 0 && (
                       <span className="text-muted-foreground mb-2 block text-sm">
                         Adicionar dia:
                       </span>
                     )}
                     <div className="flex flex-wrap gap-2">
                       {activeDays
-                        .filter((day) => !field.value.includes(day))
+                        .filter((day) => !(field.value || []).includes(day))
                         .map((day) => (
                           <Badge
                             key={day}
                             variant="outline"
                             className="hover:bg-secondary cursor-pointer"
                             onClick={() => {
-                              field.onChange([...field.value, day].sort());
+                              field.onChange(
+                                [...(field.value || []), day].sort(),
+                              );
                             }}
                           >
                             {getDayLabel(day)}
                             <span className="ml-1 text-xs">+</span>
                           </Badge>
                         ))}
-                      {activeDays.filter((day) => !field.value.includes(day))
-                        .length === 0 && (
+                      {activeDays.filter(
+                        (day) => !(field.value || []).includes(day),
+                      ).length === 0 && (
                         <span className="text-muted-foreground text-sm italic">
                           Todos os dias disponíveis foram selecionados
                         </span>
@@ -531,20 +535,22 @@ export default function UpsertProfessionalForm({
                   </div>
 
                   {/* Selected Days Area */}
-                  {field.value.length > 0 && (
+                  {(field.value || []).length > 0 && (
                     <div className="rounded-md border p-4">
                       <span className="text-muted-foreground mb-2 block text-sm">
                         Dias selecionados:
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {field.value.sort().map((day: number) => (
+                        {(field.value || []).sort().map((day: number) => (
                           <Badge
                             key={day}
                             variant="default"
                             className="hover:bg-destructive/90 cursor-pointer"
                             onClick={() => {
                               field.onChange(
-                                field.value.filter((d: number) => d !== day),
+                                (field.value || []).filter(
+                                  (d: number) => d !== day,
+                                ),
                               );
                             }}
                           >
