@@ -37,9 +37,10 @@ jobs:
             echo "ENV_NAME=prod" >> $GITHUB_ENV
             echo "DATABASE_URL=${{ secrets.DATABASE_URL_PROD }}" >> $GITHUB_ENV
             echo "NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL_PROD }}" >> $GITHUB_ENV
-            echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_PROD }}" >> $GITHUB_ENV
-            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY_PROD }}" >> $GITHUB_ENV
-            echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET_PROD }}" >> $GITHUB_ENV
+            echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+            # Fallback to TEST keys for PROD if PROD keys are missing (MVP Mode)
+            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY_PROD || secrets.STRIPE_SECRET_KEY_TEST }}" >> $GITHUB_ENV
+            echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET_PROD || secrets.STRIPE_WEBHOOK_SECRET_TEST }}" >> $GITHUB_ENV
           else
             # Default to Homolog for PRs and other branches
             echo "ENV_NAME=homolog" >> $GITHUB_ENV
